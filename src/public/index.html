@@ -172,6 +172,7 @@ th { position:relative; }
         <div>
             <button onclick="clearLive()">Clear Live</button>
             <button onclick="downloadCSV()">Download CSV</button>
+            <button onclick="copyToTV()">Copy to TV</button>
         </div>
     </div>
     <div class="table-wrapper">
@@ -339,6 +340,17 @@ function formatTimeToAMPM(datetimeStr) {
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12 || 12;
     return `${hours}:${minutes} ${ampm}`;
+}
+// Copy live stocks to clipboard as comma-separated list
+function copyToTV(){
+    if(!liveData.length) return showToast("No live stocks to copy!");
+    const stockList = liveData.map(item => item.stock).join(",");
+    navigator.clipboard.writeText(stockList).then(()=>{
+        showToast("Copied to clipboard!");
+    }).catch(err=>{
+        showToast("Failed to copy!");
+        console.error(err);
+    });
 }
 </script>
 </body>
