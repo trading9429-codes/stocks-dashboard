@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stock Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root {
+  --bg: #f9f9f9;
+  --header-bg: #2c3e50;
+  --header-color: #fff;
+  --tab-bg: #ecf0f1;
+  --tab-active-bg: #3498db;
+  --tab-active-color: #fff;
+  --table-bg: #fff;
+  --table-header-bg: #f4f4f4;
+  --highlight-bg: #d4fcd4;
+  --button-bg: #3498db;
+  --button-hover: #2980b9;
+  --text-color: #333;
+  --toast-bg: #4caf50;
+  --toast-color: #fff;
+}
+
+body.dark {
+  --bg: #1e1e2f;
+  --header-bg: #0d1117;
+  --header-color: #fff;
+  --tab-bg: #2c2c3e;
+  --tab-active-bg: #4c8cff;
+  --tab-active-color: #fff;
+  --table-bg: #2a2a3c;
+  --table-header-bg: #3a3a50;
+  --highlight-bg: #3a5f3a;
+  --button-bg: #4c8cff;
+  --button-hover: #3670d6;
+  --text-color: #ddd;
+  --toast-bg: #76c776;
+}
+
+body { 
+  font-family: "Segoe UI", Arial, sans-serif; 
+  margin:0; 
+  background:var(--bg); 
+  color:var(--text-color); 
+  transition: background 0.3s, color 0.3s;
+}
+
+header { 
+  background:var(--header-bg); 
+  color:var(--header-color); 
+  padding:15px 20px; 
+  display:flex; 
+  justify-content:space-between; 
+  align-items:center; 
+  box-shadow:0 2px 6px rgba(0,0,0,0.2);
+  border-bottom-left-radius:10px;
+  border-bottom-right-radius:10px;
+}
+
+header h1{ margin:0; font-size:1.8em; }
+
+.tabs { 
+  display:flex; 
+  justify-content:center; 
+  margin-top:20px; 
+  flex-wrap:wrap; 
+  gap:5px;
+}
+
+.tab { 
+  padding:10px 20px; 
+  cursor:pointer; 
+  background:var(--tab-bg); 
+  border-radius:5px 5px 0 0; 
+  text-align:center;
+  font-weight:500;
+  transition:all 0.3s;
+}
+
+.tab.active { 
+  background:var(--tab-active-bg); 
+  color:var(--tab-active-color); 
+  box-shadow:0 3px 8px rgba(0,0,0,0.2);
+}
+
+.tab-content { 
+  display:none; 
+  padding:15px; 
+  max-width:1000px; 
+  margin:auto; 
+  background:var(--table-bg); 
+  border-radius:0 5px 5px 5px; 
+  box-shadow:0 2px 12px rgba(0,0,0,0.1); 
+  overflow-x:auto; 
+  margin-bottom:20px;
+}
+
+.tab-content.active { display:block; }
+
+.table-wrapper { max-height:400px; overflow:auto; border-radius:5px; }
+
+table { width:100%; border-collapse:collapse; table-layout:fixed; background:var(--table-bg); border-radius:5px; }
+thead th { position: sticky; top:0; background:var(--table-header-bg); z-index:1; cursor:pointer; user-select:none; padding:12px; }
+th, td { padding:10px; border-bottom:1px solid #ddd; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+tr.highlight { background-color:var(--highlight-bg); transition: background 2s ease; }
+tr td a { color:var(--text-color); text-decoration:none; font-weight:500; }
+tr td a:hover { text-decoration:underline; }
+
+.search-container { margin-top:10px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.search-container input { padding:8px 10px; font-size:1em; flex:1; min-width:150px; border-radius:5px; border:1px solid #ccc; }
+button { padding:6px 12px; cursor:pointer; background:var(--button-bg); color:white; border:none; border-radius:5px; transition:all 0.3s; }
+button:hover { background:var(--button-hover); }
+
+.toast-container { 
+  position: fixed; 
+  top: 20px; 
+  right: 20px; 
+  z-index: 9999; 
+  display: flex; 
+  flex-direction: column-reverse; 
+  gap: 10px; 
+  max-width: 300px;
+}
+
+.toast { 
+  background: var(--toast-bg); 
+  color: var(--toast-color); 
+  padding: 12px 18px; 
+  border-radius: 8px; 
+  opacity: 0; 
+  transform: translateX(120%) translateY(20px); 
+  transition: transform 0.5s cubic-bezier(0.25,1,0.5,1), opacity 0.5s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  cursor: pointer;
+}
+.toast.show { 
+  opacity: 1; 
+  transform: translateX(0) translateY(0); 
+}
+
+th .resizer { display:inline-block; width:5px; height:100%; position:absolute; right:0; top:0; cursor:col-resize; user-select:none; }
+th { position:relative; }
+
+@media(max-width:600px){
+  th, td { font-size:0.85em; padding:6px; }
+  header h1{ font-size:1.2em; }
+  .tab { padding:8px; font-size:0.85em; }
+  .search-container input{ font-size:0.85em; padding:6px;}
+  button{ padding:5px 8px; font-size:0.85em;}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Stock Dashboard</h1>
+  <button onclick="toggleTheme()">Toggle Dark Mode</button>
+</header>
+
+<div class="tabs">
+    <div class="tab active" data-tab="live">Live Stocks</div>
+    <div class="tab" data-tab="history">History</div>
+</div>
+
+<div id="live" class="tab-content">
+    <div class="search-container">
+        <input id="live-search" placeholder="Search Live Stocks...">
+        <button onclick="clearLive()">Clear Live</button>
+    </div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th data-col="time">Time<div class="resizer"></div></th>
+                    <th data-col="stock">Stock<div class="resizer"></div></th>
+                    <th data-col="count">Count<div class="resizer"></div></th>
+                    <th data-col="trigger_price">Price<div class="resizer"></div></th>
+                </tr>
+            </thead>
+            <tbody id="live-tbody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="history" class="tab-content">
+    <div class="search-container">
+        <input id="history-search" placeholder="Search History...">
+        <button onclick="clearHistory()">Clear History</button>
+    </div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th data-col="time">Time<div class="resizer"></div></th>
+                    <th data-col="stock">Stock<div class="resizer"></div></th>
+                    <th data-col="count">Count<div class="resizer"></div></th>
+                    <th data-col="trigger_price">Price<div class="resizer"></div></th>
+                </tr>
+            </thead>
+            <tbody id="history-tbody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// Tabs
+const tabs=document.querySelectorAll('.tab');
+const tabContents=document.querySelectorAll('.tab-content');
+tabs.forEach(tab=>tab.addEventListener('click',()=>{
+    tabs.forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    tabContents.forEach(tc=>tc.classList.remove('active'));
+    document.getElementById(tab.dataset.tab).classList.add('active');
+}));
+
+// Dark mode
+function toggleTheme(){ document.body.classList.toggle('dark'); }
+
+// Toast system
+function showToast(message){
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    const removeToast = () => { toast.classList.remove('show'); setTimeout(()=>toast.remove(),500); };
+    setTimeout(removeToast,4000);
+    toast.addEventListener('click', removeToast);
+}
+
+// Data rendering
+let liveData=[], historyData=[];
+function renderTable(tbodyId,data,isHistory=false,newStocks=[]){
+    const tbody=document.getElementById(tbodyId);
+    tbody.innerHTML="";
+    const searchInput=document.getElementById(isHistory?"history-search":"live-search").value.toLowerCase();
+    data.forEach(item=>{
+        if(searchInput && !Object.values(item).some(v=>String(v).toLowerCase().includes(searchInput))) return;
+        const tr=document.createElement("tr");        
+        const stockLink=`<a href="https://in.tradingview.com/chart/?symbol=NSE:${item.stock}" target="_blank">${item.stock}</a>`;
+        tr.innerHTML=`<td>${item.time}</td><td>${stockLink}</td><td>${item.count}</td><td>${item.trigger_price}</td>`;
+        if(!isHistory && item.count===1){ tr.classList.add('highlight'); setTimeout(()=>tr.classList.remove('highlight'),5000); }
+        if(!isHistory && newStocks.includes(item.stock)) showToast(`New Stock Triggered: ${item.stock}`);
+        tbody.appendChild(tr);
+    });
+    if(!isHistory){ const wrapper=tbody.closest('.table-wrapper'); wrapper.scrollTop=wrapper.scrollHeight; }
+}
+
+// WebSocket auto-detect for Render
+const loc = window.location;
+const wsProtocol = loc.protocol === "https:" ? "wss" : "ws";
+const wsUrl = `${wsProtocol}://${loc.host}`;
+const ws = new WebSocket(wsUrl);
+ws.onmessage=(msg)=>{
+    const {liveStocks,historyStocks,newStocks=[]}=JSON.parse(msg.data);
+    liveData=liveStocks; historyData=historyStocks;
+    renderTable("live-tbody",liveData,false,newStocks);
+    renderTable("history-tbody",historyData,true);
+};
+
+// Search
+document.getElementById("live-search").addEventListener("input",()=>renderTable("live-tbody",liveData));
+document.getElementById("history-search").addEventListener("input",()=>renderTable("history-tbody",historyData,true));
+
+// Clear
+function clearLive(){ fetch("/clear-live",{method:"POST"}); }
+function clearHistory(){ fetch("/clear-history",{method:"POST"}); }
+
+// Sort
+document.querySelectorAll("th[data-col]").forEach(th=>{
+    th.addEventListener("click",()=>{
+        const col=th.dataset.col;
+        const table=th.closest(".tab-content").id;
+        let data=table==="live"?liveData:historyData;
+        const asc=!th.asc; th.asc=!th.asc;
+        data.sort((a,b)=>{
+            if(typeof a[col]==="number") return asc?a[col]-b[col]:b[col]-a[col];
+            return asc?String(a[col]).localeCompare(String(b[col])):String(b[col]).localeCompare(String(a[col]));
+        });
+        renderTable(table+"-tbody",data,table==="history");
+    });
+});
+
+// Column resize
+document.querySelectorAll('th').forEach(th=>{
+    const resizer=th.querySelector('.resizer');
+    let startX,startWidth;
+    resizer.addEventListener('mousedown',e=>{
+        startX=e.pageX; startWidth=th.offsetWidth;
+        const onMouseMove=em=>{ th.style.width=startWidth+(em.pageX-startX)+'px'; };
+        const onMouseUp=()=>{ document.removeEventListener('mousemove',onMouseMove); document.removeEventListener('mouseup',onMouseUp); };
+        document.addEventListener('mousemove',onMouseMove);
+        document.addEventListener('mouseup',onMouseUp);
+    });
+});
+</script>
+</body>
+</html>
