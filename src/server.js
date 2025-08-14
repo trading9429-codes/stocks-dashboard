@@ -14,7 +14,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
     
 const db = new Pool({ connectionString: process.env.DATABASE_URL,
-   ssl: { rejectUnauthorized: false } // Render Postgres requires SSL });
+   ssl: { rejectUnauthorized: false }  });// Render Postgres requires SSL
 // Create table and indexes
 (async () => {
     await db.query(`
