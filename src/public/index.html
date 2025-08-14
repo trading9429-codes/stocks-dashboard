@@ -144,6 +144,8 @@ button:hover { background:var(--button-hover); }
 th .resizer { display:inline-block; width:5px; height:100%; position:absolute; right:0; top:0; cursor:col-resize; user-select:none; }
 th { position:relative; }
 
+.sort-indicator { margin-left:5px; font-size:0.8em; }
+
 @media(max-width:600px){
   th, td { font-size:0.85em; padding:6px; }
   header h1{ font-size:1.2em; }
@@ -167,16 +169,19 @@ th { position:relative; }
 <div id="live" class="tab-content">
     <div class="search-container">
         <input id="live-search" placeholder="Search Live Stocks...">
-        <button onclick="clearLive()">Clear Live</button>
+        <div>
+            <button onclick="clearLive()">Clear Live</button>
+            <button onclick="downloadCSV()">Download CSV</button>
+        </div>
     </div>
     <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
-                    <th data-col="datetime">Time<div class="resizer"></div></th>
-                    <th data-col="stock">Stock<div class="resizer"></div></th>
-                    <th data-col="count">Count<div class="resizer"></div></th>
-                    <th data-col="trigger_price">Price<div class="resizer"></div></th>
+                    <th data-col="datetime">Time<span class="sort-indicator"></span><div class="resizer"></div></th>
+                    <th data-col="stock">Stock<span class="sort-indicator"></span><div class="resizer"></div></th>
+                    <th data-col="count">Count<span class="sort-indicator"></span><div class="resizer"></div></th>
+                    <th data-col="trigger_price">Price<span class="sort-indicator"></span><div class="resizer"></div></th>
                 </tr>
             </thead>
             <tbody id="live-tbody"></tbody>
@@ -187,16 +192,19 @@ th { position:relative; }
 <div id="history" class="tab-content">
     <div class="search-container">
         <input id="history-search" placeholder="Search History...">
-        <button onclick="clearHistory()">Clear History</button>
+        <div>
+            <button onclick="clearHistory()">Clear History</button>
+            <button onclick="downloadCSV(true)">Download CSV</button>
+        </div>
     </div>
     <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
-                    <th data-col="datetime">Time<div class="resizer"></div></th>
-                    <th data-col="stock">Stock<div class="resizer"></div></th>
-                    <th data-col="count">Count<div class="resizer"></div></th>
-                    <th data-col="trigger_price">Price<div class="resizer"></div></th>
+                    <th data-col="datetime">Time<span class="sort-indicator"></span><div class="resizer"></div></th>
+                    <th data-col="stock">Stock<span class="sort-indicator"></span><div class="resizer"></div></th>
+                    <th data-col="count">Count<span class="sort-indicator"></span><div class="resizer"></div></th>
+                    <th data-col="trigger_price">Price<span class="sort-indicator"></span><div class="resizer"></div></th>
                 </tr>
             </thead>
             <tbody id="history-tbody"></tbody>
@@ -227,7 +235,8 @@ function showToast(message){
     toast.className = 'toast';
     toast.textContent = message;
     container.appendChild(toast);
-    requestAnimationFrame(() => toast.classList.add('show'));
+    void toast.offsetWidth;
+    toast.classList.add('show');
     const removeToast = () => { toast.classList.remove('show'); setTimeout(()=>toast.remove(),500); };
     setTimeout(removeToast,4000);
     toast.addEventListener('click', removeToast);
@@ -235,7 +244,6 @@ function showToast(message){
 
 // Data rendering
 let liveData=[], historyData=[];
-// Update renderTable
 function renderTable(tbodyId,data,isHistory=false,newStocks=[]){
     const tbody=document.getElementById(tbodyId);
     tbody.innerHTML="";
@@ -246,21 +254,39 @@ function renderTable(tbodyId,data,isHistory=false,newStocks=[]){
         const stockLink=`<a href="https://in.tradingview.com/chart/?symbol=NSE:${item.stock}" target="_blank">${item.stock}</a>`;
         const displayTime = formatTimeToAMPM(item.datetime);
         tr.innerHTML=`<td>${displayTime}</td><td>${stockLink}</td><td>${item.count}</td><td>${item.trigger_price}</td>`;
-        if(!isHistory && item.count===1){ tr.classList.add('highlight'); setTimeout(()=>tr.classList.remove('highlight'),5000); }
+        if(!isHistory && item.count===1){ 
+            tr.classList.add('highlight'); 
+            setTimeout(()=>tr.classList.remove('highlight'),5000); 
+        }
         if(!isHistory && newStocks.includes(item.stock)) showToast(`New Stock Triggered: ${item.stock}`);
         tbody.appendChild(tr);
     });
     if(!isHistory){ const wrapper=tbody.closest('.table-wrapper'); wrapper.scrollTop=wrapper.scrollHeight; }
 }
 
+// CSV download
+function downloadCSV(isHistory=false){
+    const data = (isHistory ? historyData : liveData).slice();
+    if(!data.length) return showToast("No data to download!");
+    const headers = ["Time","Stock","Count","Price"];
+    const rows = data.map(d=>[d.datetime, d.stock, d.count, d.trigger_price]);
+    let csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r=>r.join(","))].join("\n");
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", isHistory ? "history_stocks.csv" : "live_stocks.csv");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+}
+
 // WebSocket
 const loc = window.location;
 const wsProtocol = loc.protocol === "https:" ? "wss" : "ws";
-const wsUrl = `${wsProtocol}://${loc.host}`;
-const ws = new WebSocket(wsUrl);
+const ws = new WebSocket(`${wsProtocol}://${loc.host}`);
 ws.onmessage=(msg)=>{
     const {liveStocks,historyStocks,newStocks=[]}=JSON.parse(msg.data);
-    liveData=liveStocks; historyData=historyStocks;
+    liveData=liveStocks; 
+    historyData=historyStocks;
     renderTable("live-tbody",liveData,false,newStocks.map(s=>s.stock));
     renderTable("history-tbody",historyData,true);
 };
@@ -275,15 +301,19 @@ function clearHistory(){ fetch("/clear-history",{method:"POST"}); }
 
 // Sort
 document.querySelectorAll("th[data-col]").forEach(th=>{
+    const indicator = th.querySelector(".sort-indicator");
     th.addEventListener("click",()=>{
         const col=th.dataset.col;
         const table=th.closest(".tab-content").id;
         let data=table==="live"?liveData:historyData;
-        const asc=!th.asc; th.asc=!th.asc;
+        const asc=!th.asc; th.asc=asc;
         data.sort((a,b)=>{
             if(col==="count"||col==="trigger_price") return asc?a[col]-b[col]:b[col]-a[col];
             return asc?String(a[col]).localeCompare(String(b[col])):String(b[col]).localeCompare(String(a[col]));
         });
+        // reset indicators
+        document.querySelectorAll(`#${table} th .sort-indicator`).forEach(s=>s.textContent='');
+        indicator.textContent = asc ? '↑' : '↓';
         renderTable(table+"-tbody",data,table==="history");
     });
 });
@@ -300,7 +330,6 @@ document.querySelectorAll('th').forEach(th=>{
         document.addEventListener('mouseup',onMouseUp);
     });
 });
-
 // Helper to format "YYYY-MM-DD HH:MM:SS" to "h:mm am/pm"
 function formatTimeToAMPM(datetimeStr) {
     if(!datetimeStr) return "";
@@ -311,8 +340,6 @@ function formatTimeToAMPM(datetimeStr) {
     hours = hours % 12 || 12;
     return `${hours}:${minutes} ${ampm}`;
 }
-
-
 </script>
 </body>
 </html>
