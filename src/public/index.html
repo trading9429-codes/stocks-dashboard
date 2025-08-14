@@ -99,7 +99,11 @@ header h1{ margin:0; font-size:1.8em; }
 
 .tab-content.active { display:block; }
 
-.table-wrapper { max-height:400px; overflow:auto; border-radius:5px; }
+.table-wrapper { 
+    max-height: 650px; /* was 400px */
+    overflow: auto; 
+    border-radius: 5px; 
+}
 
 table { width:100%; border-collapse:collapse; table-layout:fixed; background:var(--table-bg); border-radius:5px; }
 thead th { position: sticky; top:0; background:var(--table-header-bg); z-index:1; cursor:pointer; user-select:none; padding:12px; }
@@ -179,7 +183,7 @@ th { position:relative; }
         <table>
             <thead>
                 <tr>
-                    <th data-col="datetime">Time<span class="sort-indicator"></span><div class="resizer"></div></th>
+                    <th data-col="datetime">Time ↓<span class="sort-indicator"></span><div class="resizer"></div></th>
                     <th data-col="stock">Stock<span class="sort-indicator"></span><div class="resizer"></div></th>
                     <th data-col="count">Count<span class="sort-indicator"></span><div class="resizer"></div></th>
                     <th data-col="trigger_price">Price<span class="sort-indicator"></span><div class="resizer"></div></th>
@@ -202,7 +206,7 @@ th { position:relative; }
         <table>
             <thead>
                 <tr>
-                    <th data-col="datetime">Time<span class="sort-indicator"></span><div class="resizer"></div></th>
+                    <th data-col="datetime">Time ↓<span class="sort-indicator"></span><div class="resizer"></div></th>
                     <th data-col="stock">Stock<span class="sort-indicator"></span><div class="resizer"></div></th>
                     <th data-col="count">Count<span class="sort-indicator"></span><div class="resizer"></div></th>
                     <th data-col="trigger_price">Price<span class="sort-indicator"></span><div class="resizer"></div></th>
@@ -216,6 +220,11 @@ th { position:relative; }
 <div class="toast-container" id="toast-container"></div>
 
 <script>
+let lastLiveTimestamps = {};
+let sortConfig = {
+    live: { column: "datetime", direction: "desc" },
+    history: { column: "datetime", direction: "desc" }
+};
 // Tabs
 const tabs=document.querySelectorAll('.tab');
 const tabContents=document.querySelectorAll('.tab-content');
@@ -226,8 +235,37 @@ tabs.forEach(tab=>tab.addEventListener('click',()=>{
     document.getElementById(tab.dataset.tab).classList.add('active');
 }));
 
+function sortTableData(data, config) {
+    return [...data].sort((a, b) => {
+        let valA = a[config.column], valB = b[config.column];
+        if (config.column === "datetime") {
+            valA = new Date(valA);
+            valB = new Date(valB);
+        }
+        if (valA < valB) return config.direction === "asc" ? -1 : 1;
+        if (valA > valB) return config.direction === "asc" ? 1 : -1;
+        return 0;
+    });
+}
+
+function updateSortArrow(tableId, config) {
+    const ths = document.querySelectorAll(`#${tableId} th`);
+    ths.forEach(th => {
+        if (th.dataset.sort === config.column) {
+            th.textContent = `${capitalizeFirstLetter(th.dataset.sort === "datetime" ? "Time" : th.dataset.sort)} ${config.direction === "asc" ? "↑" : "↓"}`;
+        } else {
+            th.textContent = capitalizeFirstLetter(th.dataset.sort === "datetime" ? "Time" : th.dataset.sort);
+        }
+    });
+}
+
+function capitalizeFirstLetter(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1).replace("_", " ");
+}
+
 // Dark mode
 function toggleTheme(){ document.body.classList.toggle('dark'); }
+
 
 // Toast system
 function showToast(message){
@@ -245,25 +283,42 @@ function showToast(message){
 
 // Data rendering
 let liveData=[], historyData=[];
-function renderTable(tbodyId,data,isHistory=false,newStocks=[]){
-    const tbody=document.getElementById(tbodyId);
-    tbody.innerHTML="";
-    const searchInput=document.getElementById(isHistory?"history-search":"live-search").value.toLowerCase();
-    data.forEach(item=>{
-        if(searchInput && !Object.values(item).some(v=>String(v).toLowerCase().includes(searchInput))) return;
-        const tr=document.createElement("tr");        
-        const stockLink=`<a href="https://in.tradingview.com/chart/?symbol=NSE:${item.stock}" target="_blank">${item.stock}</a>`;
+function renderTable(tbodyId, data, isHistory = false) {
+    const tableType = isHistory ? "history" : "live";
+    const config = sortConfig[tableType];
+    const sortedData = sortTableData(data, config);
+
+    const tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = "";
+    const searchInput = document
+        .getElementById(isHistory ? "history-search" : "live-search")
+        .value.toLowerCase();
+
+    sortedData.forEach(item => {
+        if (searchInput && !Object.values(item).some(v => String(v).toLowerCase().includes(searchInput)))
+            return;
+
+        const tr = document.createElement("tr");
+        const stockLink = `<a href="https://in.tradingview.com/chart/?symbol=NSE:${item.stock}" target="_blank">${item.stock}</a>`;
         const displayTime = formatTimeToAMPM(item.datetime);
-        tr.innerHTML=`<td>${displayTime}</td><td>${stockLink}</td><td>${item.count}</td><td>${item.trigger_price}</td>`;
-        if(!isHistory && item.count===1){ 
-            tr.classList.add('highlight'); 
-            setTimeout(()=>tr.classList.remove('highlight'),5000); 
+        tr.innerHTML = `<td>${displayTime}</td><td>${stockLink}</td><td>${item.count}</td><td>${item.trigger_price}</td>`;
+
+        if (!isHistory) {
+            const prevTime = lastLiveTimestamps[item.stock];
+            if (!prevTime || prevTime !== item.datetime) {
+                tr.classList.add("highlight");
+                setTimeout(() => tr.classList.remove("highlight"), 5000);
+                showToast(`Stock Updated: ${item.stock}`);
+            }
+            lastLiveTimestamps[item.stock] = item.datetime;
         }
-        if(!isHistory && newStocks.includes(item.stock)) showToast(`New Stock Triggered: ${item.stock}`);
+
         tbody.appendChild(tr);
     });
-    if(!isHistory){ const wrapper=tbody.closest('.table-wrapper'); wrapper.scrollTop=wrapper.scrollHeight; }
+
+    updateSortArrow(isHistory ? "history-table" : "live-table", config);
 }
+
 
 // CSV download
 function downloadCSV(isHistory=false){
@@ -284,12 +339,14 @@ function downloadCSV(isHistory=false){
 const loc = window.location;
 const wsProtocol = loc.protocol === "https:" ? "wss" : "ws";
 const ws = new WebSocket(`${wsProtocol}://${loc.host}`);
-ws.onmessage=(msg)=>{
-    const {liveStocks,historyStocks,newStocks=[]}=JSON.parse(msg.data);
-    liveData=liveStocks; 
-    historyData=historyStocks;
-    renderTable("live-tbody",liveData,false,newStocks.map(s=>s.stock));
-    renderTable("history-tbody",historyData,true);
+ws.onmessage = (msg) => {
+    const { liveStocks, historyStocks } = JSON.parse(msg.data);
+
+    liveData = sortTableData(liveStocks, sortConfig.live);
+    historyData = sortTableData(historyStocks, sortConfig.history);
+
+    renderTable("live-tbody", liveData, false);
+    renderTable("history-tbody", historyData, true);
 };
 
 // Search
