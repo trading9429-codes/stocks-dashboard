@@ -1,6 +1,7 @@
 const express = require("express");
 const WebSocket = require("ws");
-const sqlite3 = require("sqlite3").verbose();
+const { Pool } = require("pg");
+
 const path = require("path");
 const bodyParser = require("body-parser");
 const http = require("http");
@@ -10,84 +11,84 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // --- Database setup ---
-const db = new sqlite3.Database("stocks.db");
-db.run(`CREATE TABLE IF NOT EXISTS stocks (
-    stock TEXT PRIMARY KEY,
-    trigger_price REAL,
-    datetime TEXT,
-    count INTEGER,
-    lastUpdated TEXT,
-    scan_name TEXT,
-    scan_url TEXT,
-    alert_name TEXT
-)`);
+
+    
+const db = new Pool({ connectionString: process.env.DATABASE_URL,
+   ssl: { rejectUnauthorized: false } // Render Postgres requires SSL });
+// Create table and indexes
+(async () => {
+    await db.query(`
+        CREATE TABLE IF NOT EXISTS stocks (
+            stock TEXT PRIMARY KEY,
+            trigger_price REAL,
+            datetime TIMESTAMP WITHOUT TIME ZONE,
+            count INTEGER,
+            lastUpdated TIMESTAMP WITHOUT TIME ZONE,
+            scan_name TEXT,
+            scan_url TEXT,
+            alert_name TEXT
+        )
+    `);
+
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_datetime ON stocks(datetime)`);
+})();
 
 // --- Helpers ---
+// --- Helpers ---
 function getCurrentDateTime() {
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth()+1).padStart(2,'0');
-    const dd = String(now.getDate()).padStart(2,'0');
-    const hh = String(now.getHours()).padStart(2,'0');
-    const min = String(now.getMinutes()).padStart(2,'0');
-    const sec = String(now.getSeconds()).padStart(2,'0');
-    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${sec}`;
+    return new Date(); // returns JS Date object for Postgres TIMESTAMP
 }
 
-// Convert "h:mm am/pm" to today’s local datetime string (IST)
 function convertToTodayLocal(timeStr) {
     const [time, ampm] = timeStr.split(" ");
     let [hours, minutes] = time.split(":").map(Number);
-    if(ampm.toLowerCase() === 'pm' && hours < 12) hours += 12;
-    if(ampm.toLowerCase() === 'am' && hours === 12) hours = 0;
+    if (ampm.toLowerCase() === 'pm' && hours < 12) hours += 12;
+    if (ampm.toLowerCase() === 'am' && hours === 12) hours = 0;
 
     const now = new Date();
     now.setHours(hours, minutes, 0, 0);
-
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2,'0');
-    const dd = String(now.getDate()).padStart(2,'0');
-    const hh = String(now.getHours()).padStart(2,'0');
-    const min = String(now.getMinutes()).padStart(2,'0');
-    const sec = String(now.getSeconds()).padStart(2,'0');
-
-    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${sec}`;
+    return now;
 }
+
 
 // --- HTTP + WebSocket server ---
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 // --- Broadcast function ---
-function broadcastStocks() {
-    const todayStr = new Date().toISOString().slice(0,10); // YYYY-MM-DD
-
+async function broadcastStocks() {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
     // Live stocks: today
-    db.all(
-        "SELECT * FROM stocks WHERE datetime LIKE ? ORDER BY datetime ASC",
-        [`${todayStr}%`],
-        (err, liveStocks) => {
-            if(err) return console.error(err);
+    try {
+        // Live stocks (today only)
+        const liveStocksRes = await db.query(
+            "SELECT * FROM stocks WHERE datetime >= $1 AND datetime < $2 ORDER BY datetime ASC",
+            [todayStart, tomorrowStart]
+        );
+        const liveStocks = liveStocksRes.rows;
 
-            // History stocks: last 5 days excluding today
-            const fiveDaysAgo = new Date(Date.now() - 5*24*60*60*1000).toISOString().slice(0,10);
-            db.all(
-                "SELECT * FROM stocks WHERE datetime BETWEEN ? AND ? AND datetime NOT LIKE ? ORDER BY datetime DESC",
-                [fiveDaysAgo, todayStr, `${todayStr}%`],
-                (err2, historyStocks) => {
-                    if(err2) return console.error(err2);
+        // History stocks (last 5 days excluding today)
+        const fiveDaysAgo = new Date(todayStart);
+        fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
 
-                    const payload = { liveStocks, historyStocks };
+        const historyStocksRes = await db.query(
+            "SELECT * FROM stocks WHERE datetime >= $1 AND datetime < $2 ORDER BY datetime DESC",
+            [fiveDaysAgo, todayStart]
+        );
+        const historyStocks = historyStocksRes.rows;
 
-                    wss.clients.forEach(client => {
-                        if(client.readyState === WebSocket.OPEN){
-                            client.send(JSON.stringify(payload));
-                        }
-                    });
-                }
-            );
-        }
-    );
+        const payload = { liveStocks, historyStocks };
+        wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify(payload));
+            }
+        });
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 // --- WebSocket connection ---
@@ -97,77 +98,79 @@ wss.on("connection", ws => {
 });
 
 // --- New stocks endpoint ---
-app.post("/new-stocks", (req,res) => {
+app.post("/new-stocks", async (req,res) => {
     const stocks = req.body[0]?.data || [];
     if(stocks.length === 0) return res.send({ status: "ok" });
 
     const lastUpdated = getCurrentDateTime();
     let completed = 0;
 
-    stocks.forEach(item => {
-        // Convert webhook time to ISO datetime
-        const datetime = item.triggered_at ? convertToTodayLocal(item.triggered_at) : lastUpdated;
+    try {
+        for (const item of stocks) {
+            const datetime = item.triggered_at
+                ? convertToTodayLocal(item.triggered_at)
+                : lastUpdated;
 
-        const sql = `
-            INSERT INTO stocks
-                (stock, trigger_price, datetime, count, lastUpdated, scan_name, scan_url, alert_name)
-            VALUES (?, ?, ?, 1, ?, ?, ?, ?)
-            ON CONFLICT(stock) DO UPDATE SET
-                trigger_price=excluded.trigger_price,
-                count = stocks.count + 1,
-                datetime=excluded.datetime,
-                lastUpdated=excluded.lastUpdated,
-                scan_name=excluded.scan_name,
-                scan_url=excluded.scan_url,
-                alert_name=excluded.alert_name
-        `;
-
-        db.run(sql, [
-            item.stock,
-            item.trigger_price,
-            datetime,
-            lastUpdated,
-            item.scan_name,
-            item.scan_url,
-            item.alert_name
-        ], (err) => {
-            if(err) console.error(err);
-            completed++;
-            if(completed === stocks.length) broadcastStocks();
-        });
-    });
-
+            await db.query(`
+                INSERT INTO stocks (stock, trigger_price, datetime, count, lastUpdated, scan_name, scan_url, alert_name)
+                VALUES ($1, $2, $3, 1, $4, $5, $6, $7)
+                ON CONFLICT (stock) DO UPDATE
+                SET trigger_price = EXCLUDED.trigger_price,
+                    count = stocks.count + 1,
+                    datetime = EXCLUDED.datetime,
+                    lastUpdated = EXCLUDED.lastUpdated,
+                    scan_name = EXCLUDED.scan_name,
+                    scan_url = EXCLUDED.scan_url,
+                    alert_name = EXCLUDED.alert_name
+            `, [
+                item.stock,
+                item.trigger_price,
+                datetime,
+                lastUpdated,
+                item.scan_name,
+                item.scan_url,
+                item.alert_name
+            ]);
+        }
+        broadcastStocks();
+    } catch (err) {
+        console.error(err);
+    }
     res.send({ status: "ok" });
 });
 
 // --- Clear live stocks ---
-app.post("/clear-live", (req, res) => {
-    const todayStr = new Date().toISOString().slice(0,10);
-    db.run("DELETE FROM stocks WHERE datetime LIKE ?", [`${todayStr}%`], (err) => {
-        if(err) console.error(err);
-        broadcastStocks();
-        res.send({ status: "ok" });
-    });
+app.post("/clear-live", async (req, res) => {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+    await db.query("DELETE FROM stocks WHERE datetime >= $1 AND datetime < $2", [todayStart, tomorrowStart]);
+    broadcastStocks();
+    res.send({ status: "ok" });
 });
 
 // --- Clear history stocks ---
-app.post("/clear-history", (req, res) => {
-    const todayStr = new Date().toISOString().slice(0,10);
-    db.run("DELETE FROM stocks WHERE datetime NOT LIKE ?", [`${todayStr}%`], (err) => {
-        if(err) console.error(err);
-        broadcastStocks();
-        res.send({ status: "ok" });
-    });
+app.post("/clear-history", async (req, res) => {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    await db.query("DELETE FROM stocks WHERE datetime < $1", [todayStart]);
+    broadcastStocks();
+    res.send({ status: "ok" });
 });
 
 // --- Cleanup older than 5 days ---
-setInterval(() => {
-    const fiveDaysAgo = new Date(Date.now() - 5*24*60*60*1000).toISOString().slice(0,10);
-    db.run("DELETE FROM stocks WHERE datetime < ?", [fiveDaysAgo], (err)=>{
-        if(err) console.error(err);
-        broadcastStocks();
-    });
-}, 1000*60*60); // every hour
+setInterval(async () => {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 5);
+
+    await db.query("DELETE FROM stocks WHERE datetime < $1", [cutoffDate]);
+    broadcastStocks();
+}, 1000 * 60 * 60); // every hour
+
 
 // --- Start server ---
 const PORT = process.env.PORT || 5000;
