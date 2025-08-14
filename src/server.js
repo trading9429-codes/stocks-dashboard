@@ -96,10 +96,34 @@ wss.on("connection", ws => {
     console.log("Client connected");
     broadcastStocks();
 });
+function transformRequest(res_data){    
+    const stocksArr = res_data.body.stocks.split(",");
+    const pricesArr = res_data.body.trigger_prices.split(",");
+    const triggeredAt =res_data.body.triggered_at;
+    const scanName =res_data.body.scan_name;
+    const scanUrl =res_data.body.scan_url;
+    const alertName =res_data.body.alert_name;
+
+    const output = [];
+
+    for(let i=0;i<stocksArr.length;i++){
+        output.push({
+            stock: stocksArr[i].trim(),
+            trigger_price: parseFloat(pricesArr[i].trim()),
+            triggered_at: triggeredAt,
+            scan_name: scanName,
+            scan_url: scanUrl,
+            alert_name: alertName
+        });
+    }   
+
+return { data: output };
+}
 
 // --- New stocks endpoint ---
 app.post("/new-stocks", async (req,res) => {
-    const stocks = req.body[0]?.data || [];
+    let op_data=transformRequest(req);    
+    const stocks = op_data?.data || [];
     if(stocks.length === 0) return res.send({ status: "ok" });
 
     const lastUpdated = getCurrentDateTime();
