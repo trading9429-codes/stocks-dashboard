@@ -94,6 +94,7 @@ header h1{ margin:0; font-size:1.8em; }
   box-shadow:0 2px 12px rgba(0,0,0,0.1); 
   overflow-x:auto; 
   margin-bottom:20px;
+  transition: all 0.3s;
 }
 
 .tab-content.active { display:block; }
@@ -102,8 +103,9 @@ header h1{ margin:0; font-size:1.8em; }
 
 table { width:100%; border-collapse:collapse; table-layout:fixed; background:var(--table-bg); border-radius:5px; }
 thead th { position: sticky; top:0; background:var(--table-header-bg); z-index:1; cursor:pointer; user-select:none; padding:12px; }
-th, td { padding:10px; border-bottom:1px solid #ddd; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-tr.highlight { background-color:var(--highlight-bg); transition: background 2s ease; }
+th, td { padding:10px; border-bottom:1px solid #ddd; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition: background 0.3s; }
+tr.highlight { background-color:var(--highlight-bg); animation:fadeHighlight 2s ease forwards; }
+@keyframes fadeHighlight { 0%{opacity:0.8;}100%{opacity:1;} }
 tr td a { color:var(--text-color); text-decoration:none; font-weight:500; }
 tr td a:hover { text-decoration:underline; }
 
@@ -151,7 +153,7 @@ th { position:relative; }
 }
 </style>
 </head>
-<body>
+<body class="dark">
 <header>
   <h1>Stock Dashboard</h1>
   <button onclick="toggleTheme()">Toggle Dark Mode</button>
@@ -171,7 +173,7 @@ th { position:relative; }
         <table>
             <thead>
                 <tr>
-                    <th data-col="time">Time<div class="resizer"></div></th>
+                    <th data-col="datetime">Time<div class="resizer"></div></th>
                     <th data-col="stock">Stock<div class="resizer"></div></th>
                     <th data-col="count">Count<div class="resizer"></div></th>
                     <th data-col="trigger_price">Price<div class="resizer"></div></th>
@@ -191,7 +193,7 @@ th { position:relative; }
         <table>
             <thead>
                 <tr>
-                    <th data-col="time">Time<div class="resizer"></div></th>
+                    <th data-col="datetime">Time<div class="resizer"></div></th>
                     <th data-col="stock">Stock<div class="resizer"></div></th>
                     <th data-col="count">Count<div class="resizer"></div></th>
                     <th data-col="trigger_price">Price<div class="resizer"></div></th>
@@ -233,6 +235,7 @@ function showToast(message){
 
 // Data rendering
 let liveData=[], historyData=[];
+// Update renderTable
 function renderTable(tbodyId,data,isHistory=false,newStocks=[]){
     const tbody=document.getElementById(tbodyId);
     tbody.innerHTML="";
@@ -241,7 +244,8 @@ function renderTable(tbodyId,data,isHistory=false,newStocks=[]){
         if(searchInput && !Object.values(item).some(v=>String(v).toLowerCase().includes(searchInput))) return;
         const tr=document.createElement("tr");        
         const stockLink=`<a href="https://in.tradingview.com/chart/?symbol=NSE:${item.stock}" target="_blank">${item.stock}</a>`;
-        tr.innerHTML=`<td>${item.time}</td><td>${stockLink}</td><td>${item.count}</td><td>${item.trigger_price}</td>`;
+        const displayTime = formatTimeToAMPM(item.datetime);
+        tr.innerHTML=`<td>${displayTime}</td><td>${stockLink}</td><td>${item.count}</td><td>${item.trigger_price}</td>`;
         if(!isHistory && item.count===1){ tr.classList.add('highlight'); setTimeout(()=>tr.classList.remove('highlight'),5000); }
         if(!isHistory && newStocks.includes(item.stock)) showToast(`New Stock Triggered: ${item.stock}`);
         tbody.appendChild(tr);
@@ -249,7 +253,7 @@ function renderTable(tbodyId,data,isHistory=false,newStocks=[]){
     if(!isHistory){ const wrapper=tbody.closest('.table-wrapper'); wrapper.scrollTop=wrapper.scrollHeight; }
 }
 
-// WebSocket auto-detect for Render
+// WebSocket
 const loc = window.location;
 const wsProtocol = loc.protocol === "https:" ? "wss" : "ws";
 const wsUrl = `${wsProtocol}://${loc.host}`;
@@ -257,7 +261,7 @@ const ws = new WebSocket(wsUrl);
 ws.onmessage=(msg)=>{
     const {liveStocks,historyStocks,newStocks=[]}=JSON.parse(msg.data);
     liveData=liveStocks; historyData=historyStocks;
-    renderTable("live-tbody",liveData,false,newStocks);
+    renderTable("live-tbody",liveData,false,newStocks.map(s=>s.stock));
     renderTable("history-tbody",historyData,true);
 };
 
@@ -277,7 +281,7 @@ document.querySelectorAll("th[data-col]").forEach(th=>{
         let data=table==="live"?liveData:historyData;
         const asc=!th.asc; th.asc=!th.asc;
         data.sort((a,b)=>{
-            if(typeof a[col]==="number") return asc?a[col]-b[col]:b[col]-a[col];
+            if(col==="count"||col==="trigger_price") return asc?a[col]-b[col]:b[col]-a[col];
             return asc?String(a[col]).localeCompare(String(b[col])):String(b[col]).localeCompare(String(a[col]));
         });
         renderTable(table+"-tbody",data,table==="history");
@@ -296,6 +300,19 @@ document.querySelectorAll('th').forEach(th=>{
         document.addEventListener('mouseup',onMouseUp);
     });
 });
+
+// Helper to format "YYYY-MM-DD HH:MM:SS" to "h:mm am/pm"
+function formatTimeToAMPM(datetimeStr) {
+    if(!datetimeStr) return "";
+    const date = new Date(datetimeStr);
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2,'0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    return `${hours}:${minutes} ${ampm}`;
+}
+
+
 </script>
 </body>
 </html>
