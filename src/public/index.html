@@ -300,7 +300,9 @@ function renderTable(tbodyId, data, isHistory = false) {
 
         const tr = document.createElement("tr");
         const stockLink = `<a href="https://in.tradingview.com/chart/?symbol=NSE:${item.stock}" target="_blank">${item.stock}</a>`;
-        const displayTime = formatTimeToAMPM(item.datetime);
+        const displayTime = isHistory
+            ? new Date(item.datetime).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+            : formatTimeToAMPM(item.datetime);
         tr.innerHTML = `<td>${displayTime}</td><td>${stockLink}</td><td>${item.count}</td><td>${item.trigger_price}</td>`;
 
         if (!isHistory) {
@@ -388,17 +390,13 @@ document.querySelectorAll('th').forEach(th=>{
         document.addEventListener('mouseup',onMouseUp);
     });
 });
-// Helper to format "YYYY-MM-DD HH:MM:SS" to "h:mm am/pm"
+// Helper to format IST datetime to "h:mm AM/PM"
 function formatTimeToAMPM(datetimeStr) {
-    if(!datetimeStr) return "";
-    const date = new Date(datetimeStr);
-    // Convert UTC → IST
-    const utc = date.getTime() + date.getTimezoneOffset() * 60000;
-    const istOffset = 5.5 * 60 * 60000;
-    const istDate = new Date(utc + istOffset);
+    if (!datetimeStr) return "";
+    const date = new Date(datetimeStr); // already IST from server
 
-    let hours = istDate.getHours();
-    const minutes = String(date.getMinutes()).padStart(2,'0');
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12 || 12;
     return `${hours}:${minutes} ${ampm}`;

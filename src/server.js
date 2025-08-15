@@ -5,6 +5,7 @@ const { Pool } = require("pg");
 const path = require("path");
 const bodyParser = require("body-parser");
 const http = require("http");
+const moment = require("moment-timezone");
 
 const app = express();
 app.use(bodyParser.json());
@@ -33,36 +34,21 @@ const db = new Pool({ connectionString: process.env.DATABASE_URL,
     await db.query(`CREATE INDEX IF NOT EXISTS idx_datetime ON stocks(datetime)`);
 })();
 
-// --- Helpers ---
-
+// --- IST Helpers ---
 function getISTDate() {
-    const date = new Date();
-    // Convert UTC to IST (UTC +5:30)
-    const utc = date.getTime() + date.getTimezoneOffset() * 60000;
-    const istOffset = 5.5 * 60 * 60000; // IST offset in milliseconds
-    return new Date(utc + istOffset);
+    return moment().tz("Asia/Kolkata").toDate();
 }
 
 function getISTDayBounds() {
-    const nowIST = getISTDate();
-    const startIST = new Date(nowIST);
-    startIST.setHours(0, 0, 0, 0);
-    const endIST = new Date(startIST);
-    endIST.setDate(endIST.getDate() + 1);
+    const startIST = moment().tz("Asia/Kolkata").startOf("day").toDate();
+    const endIST = moment().tz("Asia/Kolkata").endOf("day").toDate();
     return { startIST, endIST };
 }
 
 function convertToTodayLocal(timeStr) {
-    const [time, ampm] = timeStr.split(" ");
-    let [hours, minutes] = time.split(":").map(Number);
-    if (ampm.toLowerCase() === 'pm' && hours < 12) hours += 12;
-    if (ampm.toLowerCase() === 'am' && hours === 12) hours = 0;
-
-    const now = getISTDate();
-    now.setHours(hours, minutes, 0, 0);
-    return now;
+    // timeStr format example: "3:45 PM"
+    return moment.tz(timeStr, "h:mm A", "Asia/Kolkata").toDate();
 }
-
 
 // --- HTTP + WebSocket server ---
 const server = http.createServer(app);
@@ -81,9 +67,7 @@ async function broadcastStocks() {
         const liveStocks = liveStocksRes.rows;
 
         // History stocks (last 5 days excluding today)
-        const fiveDaysAgo = new Date(todayStart);
-        fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-
+        const fiveDaysAgo = moment(todayStart).subtract(5, "days").toDate();
         const historyStocksRes = await db.query(
             "SELECT * FROM stocks WHERE datetime >= $1 AND datetime < $2 ORDER BY datetime DESC",
             [fiveDaysAgo, todayStart]
@@ -106,17 +90,18 @@ wss.on("connection", ws => {
     console.log("Client connected");
     broadcastStocks();
 });
-function transformRequest(res_data){    
+
+// --- Transform request helper ---
+function transformRequest(res_data) {
     const stocksArr = res_data.body.stocks.split(",");
     const pricesArr = res_data.body.trigger_prices.split(",");
-    const triggeredAt =res_data.body.triggered_at;
-    const scanName =res_data.body.scan_name;
-    const scanUrl =res_data.body.scan_url;
-    const alertName =res_data.body.alert_name;
+    const triggeredAt = res_data.body.triggered_at;
+    const scanName = res_data.body.scan_name;
+    const scanUrl = res_data.body.scan_url;
+    const alertName = res_data.body.alert_name;
 
     const output = [];
-
-    for(let i=0;i<stocksArr.length;i++){
+    for (let i = 0; i < stocksArr.length; i++) {
         output.push({
             stock: stocksArr[i].trim(),
             trigger_price: parseFloat(pricesArr[i].trim()),
@@ -131,10 +116,10 @@ return { data: output };
 }
 
 // --- New stocks endpoint ---
-app.post("/new-stocks", async (req,res) => {
-    let op_data=transformRequest(req);    
+app.post("/new-stocks", async (req, res) => {
+    const op_data = transformRequest(req);
     const stocks = op_data?.data || [];
-    if(stocks.length === 0) return res.send({ status: "ok" });
+    if (stocks.length === 0) return res.send({ status: "ok" });
 
     const lastUpdated = getISTDate();
     let completed = 0;
@@ -175,12 +160,7 @@ app.post("/new-stocks", async (req,res) => {
 
 // --- Clear live stocks ---
 app.post("/clear-live", async (req, res) => {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
-    const tomorrowStart = new Date(todayStart);
-    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-
+    const { startIST: todayStart, endIST: tomorrowStart } = getISTDayBounds();
     await db.query("DELETE FROM stocks WHERE datetime >= $1 AND datetime < $2", [todayStart, tomorrowStart]);
     broadcastStocks();
     res.send({ status: "ok" });
@@ -188,9 +168,7 @@ app.post("/clear-live", async (req, res) => {
 
 // --- Clear history stocks ---
 app.post("/clear-history", async (req, res) => {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
+    const { startIST: todayStart } = getISTDayBounds();
     await db.query("DELETE FROM stocks WHERE datetime < $1", [todayStart]);
     broadcastStocks();
     res.send({ status: "ok" });
@@ -198,9 +176,7 @@ app.post("/clear-history", async (req, res) => {
 
 // --- Cleanup older than 5 days ---
 setInterval(async () => {
-    const cutoffDate = getISTDate();
-    cutoffDate.setDate(cutoffDate.getDate() - 5);
-
+    const cutoffDate = moment().tz("Asia/Kolkata").subtract(5, "days").toDate();
     await db.query("DELETE FROM stocks WHERE datetime < $1", [cutoffDate]);
     broadcastStocks();
 }, 1000 * 60 * 60); // every hour
