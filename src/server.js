@@ -34,9 +34,22 @@ const db = new Pool({ connectionString: process.env.DATABASE_URL,
 })();
 
 // --- Helpers ---
-// --- Helpers ---
-function getCurrentDateTime() {
-    return new Date(); // returns JS Date object for Postgres TIMESTAMP
+
+function getISTDate() {
+    const date = new Date();
+    // Convert UTC to IST (UTC +5:30)
+    const utc = date.getTime() + date.getTimezoneOffset() * 60000;
+    const istOffset = 5.5 * 60 * 60000; // IST offset in milliseconds
+    return new Date(utc + istOffset);
+}
+
+function getISTDayBounds() {
+    const nowIST = getISTDate();
+    const startIST = new Date(nowIST);
+    startIST.setHours(0, 0, 0, 0);
+    const endIST = new Date(startIST);
+    endIST.setDate(endIST.getDate() + 1);
+    return { startIST, endIST };
 }
 
 function convertToTodayLocal(timeStr) {
@@ -45,7 +58,7 @@ function convertToTodayLocal(timeStr) {
     if (ampm.toLowerCase() === 'pm' && hours < 12) hours += 12;
     if (ampm.toLowerCase() === 'am' && hours === 12) hours = 0;
 
-    const now = new Date();
+    const now = getISTDate();
     now.setHours(hours, minutes, 0, 0);
     return now;
 }
@@ -57,10 +70,7 @@ const wss = new WebSocket.Server({ server });
 
 // --- Broadcast function ---
 async function broadcastStocks() {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const tomorrowStart = new Date(todayStart);
-    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const { startIST: todayStart, endIST: tomorrowStart } = getISTDayBounds();
     // Live stocks: today
     try {
         // Live stocks (today only)
@@ -126,7 +136,7 @@ app.post("/new-stocks", async (req,res) => {
     const stocks = op_data?.data || [];
     if(stocks.length === 0) return res.send({ status: "ok" });
 
-    const lastUpdated = getCurrentDateTime();
+    const lastUpdated = getISTDate();
     let completed = 0;
 
     try {
@@ -188,7 +198,7 @@ app.post("/clear-history", async (req, res) => {
 
 // --- Cleanup older than 5 days ---
 setInterval(async () => {
-    const cutoffDate = new Date();
+    const cutoffDate = getISTDate();
     cutoffDate.setDate(cutoffDate.getDate() - 5);
 
     await db.query("DELETE FROM stocks WHERE datetime < $1", [cutoffDate]);

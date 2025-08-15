@@ -392,7 +392,12 @@ document.querySelectorAll('th').forEach(th=>{
 function formatTimeToAMPM(datetimeStr) {
     if(!datetimeStr) return "";
     const date = new Date(datetimeStr);
-    let hours = date.getHours();
+    // Convert UTC → IST
+    const utc = date.getTime() + date.getTimezoneOffset() * 60000;
+    const istOffset = 5.5 * 60 * 60000;
+    const istDate = new Date(utc + istOffset);
+
+    let hours = istDate.getHours();
     const minutes = String(date.getMinutes()).padStart(2,'0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12 || 12;
