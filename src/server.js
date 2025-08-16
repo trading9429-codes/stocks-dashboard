@@ -20,15 +20,9 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 // --- Database Setup ---
-// const db = new Pool({
-//   connectionString: process.env.DATABASE_URL,
-//   ssl: { rejectUnauthorized: false }
-// });
-
-
 const db = new Pool({
-    connectionString: "postgresql://hosted_postgress_db_user:NRxATsyG8KWI26XdrKX3CMJm2CEvFELg@dpg-d2fjh5ggjchc73fo8n50-a.oregon-postgres.render.com/hosted_postgress_db",
-    ssl: { rejectUnauthorized: false }
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
 async function initDB() {
