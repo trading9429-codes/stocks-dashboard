@@ -22,7 +22,7 @@ const wss = new WebSocket.Server({ server });
 // --- Database Setup ---
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: process.env.DATABASE_URL?.includes("localhost") ? false : { rejectUnauthorized: false },
 });
 
 async function initDB() {
@@ -39,40 +39,36 @@ async function initDB() {
     )
   `);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_datetime_stock ON stocks (datetime, stock)`);
-
-  // Pin the session TZ to UTC so any bare selects show UTC
   await db.query(`SET TIME ZONE 'UTC'`);
 }
-
 initDB().catch(console.error);
 
 // --- Time Utilities ---
 const timeUtils = {
-  // IST day bounds converted to UTC instant for DB filtering
   dayBoundsUTC: () => {
     const startIST = moment().tz(TZ).startOf("day");
     const endIST = moment().tz(TZ).endOf("day");
     return { startUTC: startIST.clone().utc().toDate(), endUTC: endIST.clone().utc().toDate() };
   },
-  nowUTC: () => new Date(), // NOW in UTC
-  // parse an "h:mm AM/PM" time as *today in IST*, then convert to UTC Date
-  parseISTTimeToUTC:  (timeStr) => {
-  const todayIST = moment().tz(TZ).format("YYYY-MM-DD");
-  return moment
-    .tz(`${todayIST} ${timeStr}`, "YYYY-MM-DD h:mm A", TZ)
-    .utc()                  // store as UTC
-    .toDate();
+  nowUTC: () => new Date(),
+  // parse incoming "h:mm AM/PM" as *today in IST*, then convert to UTC
+  parseISTTimeToUTC: (timeStr) => {
+    const todayIST = moment().tz(TZ).format("YYYY-MM-DD");
+    return moment.tz(`${todayIST} ${timeStr}`, "YYYY-MM-DD h:mm A", TZ).utc().toDate();
   },
 };
 
-// --- DB Utilities ---
+// --- Fields projected in IST for the client ---
 const SELECT_FIELDS_IST = `
   stock, trigger_price, count, scan_name, scan_url, alert_name,
   datetime AT TIME ZONE '${TZ}' AS datetime_ist,
- to_char(datetime AT TIME ZONE '${TZ}', 'YYYY-MM-DD') AS date_ist,
- to_char(datetime AT TIME ZONE '${TZ}', 'HH12:MI AM') AS time_ist
+  to_char(datetime AT TIME ZONE '${TZ}', 'YYYY-MM-DD') AS date_ist,
+  to_char(datetime AT TIME ZONE '${TZ}', 'HH12:MI AM') AS time_ist,
+  EXTRACT(EPOCH FROM (datetime AT TIME ZONE '${TZ}'))*1000 AS ts_ist,
+  lastUpdated AT TIME ZONE '${TZ}' AS lastUpdated_ist
 `;
 
+// --- DB Utilities ---
 const dbUtils = {
   getRangeIST: async (fromUTC, toUTC) => {
     const { rows } = await db.query(
@@ -84,7 +80,9 @@ const dbUtils = {
     );
     return rows;
   },
+
   upsertBatch: async (items) => {
+    if (!items.length) return;
     const values = [];
     const placeholders = [];
 
@@ -118,17 +116,16 @@ const dbUtils = {
     `;
     await db.query(sql, values);
   },
+
   clearLiveUTC: (fromUTC, toUTC) =>
     db.query(`DELETE FROM stocks WHERE datetime >= $1 AND datetime < $2`, [fromUTC, toUTC]),
+
   clearBeforeUTC: (beforeUTC) =>
     db.query(`DELETE FROM stocks WHERE datetime < $1`, [beforeUTC]),
 };
 
-// --- In-memory cache for quick init pushes ---
-let cache = {
-  live: [],
-  history: []
-};
+// --- In-memory cache ---
+let cache = { live: [], history: [] };
 
 async function refreshCacheAndBroadcast(full = false, deltaLive = []) {
   const { startUTC, endUTC } = timeUtils.dayBoundsUTC();
@@ -136,51 +133,49 @@ async function refreshCacheAndBroadcast(full = false, deltaLive = []) {
 
   const [live, history] = await Promise.all([
     dbUtils.getRangeIST(startUTC, endUTC),
-    dbUtils.getRangeIST(fiveDaysAgoUTC, startUTC)
+    dbUtils.getRangeIST(fiveDaysAgoUTC, startUTC),
   ]);
 
   cache.live = live;
   cache.history = history;
 
   if (full) {
-    // full snapshot to everyone
-    const data = JSON.stringify({ type: "init", liveStocks: live, historyStocks: history });    
-    wss.clients.forEach(c => c.readyState === WebSocket.OPEN && c.send(data));
-  } else if (deltaLive && deltaLive.length) {
-    // only changed/added rows
-    const data = JSON.stringify({ type: "delta", liveDelta: deltaLive });   
-    wss.clients.forEach(c => c.readyState === WebSocket.OPEN && c.send(data));
+    const payload = JSON.stringify({ type: "init", liveStocks: live, historyStocks: history });
+    wss.clients.forEach((c) => c.readyState === WebSocket.OPEN && c.send(payload));
+  } else if (deltaLive?.length) {
+    const payload = JSON.stringify({ type: "delta", liveDelta: deltaLive });
+    wss.clients.forEach((c) => c.readyState === WebSocket.OPEN && c.send(payload));
   }
 }
 
-// --- Request Parsing (compatible with your current sender) ---
+// --- Request transform (from your sender/n8n) ---
 function transformRequest(body) {
   const { stocks, trigger_prices, triggered_at, scan_name, scan_url, alert_name } = body;
   if (!stocks || !trigger_prices) return [];
 
-  const stockArr = String(stocks).split(",").map(s => s.trim()).filter(Boolean);
-  const priceArr = String(trigger_prices).split(",").map(p => parseFloat(String(p).trim()));
+  const stockArr = String(stocks).split(",").map((s) => s.trim()).filter(Boolean);
+  const priceArr = String(trigger_prices).split(",").map((p) => parseFloat(String(p).trim()));
   const nowUTC = timeUtils.nowUTC();
 
-  return stockArr.map((s, i) => ({
-    stock: s,
-    trigger_price: Number.isFinite(priceArr[i]) ? priceArr[i] : null,
-    datetimeUTC: triggered_at
-      ? timeUtils.parseISTTimeToUTC(triggered_at)  // ✅ Always parse as today's IST time
-      : nowUTC,
-    lastUpdatedUTC: nowUTC,
-    scan_name,
-    scan_url,
-    alert_name
-  })).filter(x => x.stock && x.trigger_price !== null);
+  return stockArr
+    .map((s, i) => ({
+      stock: s,
+      trigger_price: Number.isFinite(priceArr[i]) ? priceArr[i] : null,
+      datetimeUTC: triggered_at ? timeUtils.parseISTTimeToUTC(triggered_at) : nowUTC,
+      lastUpdatedUTC: nowUTC,
+      scan_name,
+      scan_url,
+      alert_name,
+    }))
+    .filter((x) => x.stock && x.trigger_price !== null);
 }
 
-// --- WebSocket Heartbeat ---
+// --- WebSocket connection ---
 wss.on("connection", (ws) => {
   ws.isAlive = true;
   ws.on("pong", () => (ws.isAlive = true));
 
-  // send current snapshot immediately
+  // push current snapshot immediately
   ws.send(JSON.stringify({ type: "init", liveStocks: cache.live, historyStocks: cache.history }));
 });
 
@@ -197,17 +192,17 @@ app.post("/new-stocks", async (req, res) => {
   try {
     const items = transformRequest(req.body);
     if (!items.length) return res.json({ status: "ok" });
+
     await dbUtils.upsertBatch(items);
 
-    // Query only the affected rows back (in IST) to push as delta
-    const stocks = items.map(i => i.stock);
+    // fetch only affected rows (formatted in IST for client)
+    const stocks = items.map((i) => i.stock);
     const placeholders = stocks.map((_, idx) => `$${idx + 1}`).join(",");
     const { rows: deltaRows } = await db.query(
       `SELECT ${SELECT_FIELDS_IST} FROM stocks WHERE stock IN (${placeholders})`,
       stocks
     );
 
-    // Update caches and broadcast delta
     await refreshCacheAndBroadcast(false, deltaRows);
 
     res.json({ status: "ok" });
@@ -221,7 +216,7 @@ app.post("/clear-live", async (req, res) => {
   try {
     const { startUTC, endUTC } = timeUtils.dayBoundsUTC();
     await dbUtils.clearLiveUTC(startUTC, endUTC);
-    await refreshCacheAndBroadcast(true); // full refresh after clear
+    await refreshCacheAndBroadcast(true);
     res.json({ status: "ok" });
   } catch (e) {
     console.error("POST /clear-live error:", e);
@@ -233,7 +228,7 @@ app.post("/clear-history", async (req, res) => {
   try {
     const { startUTC } = timeUtils.dayBoundsUTC();
     await dbUtils.clearBeforeUTC(startUTC);
-    await refreshCacheAndBroadcast(true); // full refresh after clear
+    await refreshCacheAndBroadcast(true);
     res.json({ status: "ok" });
   } catch (e) {
     console.error("POST /clear-history error:", e);
@@ -241,19 +236,18 @@ app.post("/clear-history", async (req, res) => {
   }
 });
 
-// --- Cleanup old records every hour ---
+// --- Cleanup old records hourly ---
 setInterval(async () => {
   try {
     const { startUTC } = timeUtils.dayBoundsUTC();
     const cutoffUTC = moment(startUTC).subtract(RETENTION_DAYS, "days").toDate();
     await dbUtils.clearBeforeUTC(cutoffUTC);
-    // no broadcast needed here; a full refresh will happen on next change
   } catch (e) {
     console.error("Cleanup error:", e);
   }
 }, 60 * 60 * 1000);
 
-// --- Prime the cache on boot ---
+// --- Prime cache on boot ---
 (async () => {
   try {
     await refreshCacheAndBroadcast(true);
