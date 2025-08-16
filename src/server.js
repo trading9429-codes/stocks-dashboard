@@ -68,6 +68,7 @@ const timeUtils = {
 // --- DB Utilities ---
 const SELECT_FIELDS_IST = `
   stock, trigger_price, count, scan_name, scan_url, alert_name,
+  datetime AT TIME ZONE '${TZ}' AS datetime_ist,
  to_char(datetime AT TIME ZONE '${TZ}', 'YYYY-MM-DD') AS date_ist,
  to_char(datetime AT TIME ZONE '${TZ}', 'HH12:MI AM') AS time_ist
 `;

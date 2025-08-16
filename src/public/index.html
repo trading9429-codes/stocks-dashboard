@@ -162,8 +162,10 @@ function tradingViewLink(sym){ return `https://in.tradingview.com/chart/?symbol=
 function sortTableData(data, config) {
   const sorted = [...data].sort((a, b) => {
     let A = a[config.column], B = b[config.column];
-    if (config.column === "datetime") { // compare by time string lexicographically "YYYY-MM-DDTHH:MM:SS"
-      return (config.direction === "asc" ? 1 : -1) * (A < B ? -1 : A > B ? 1 : 0);
+    if (config.column === "datetime") {
+      // Compare actual datetime values
+      return (config.direction === "asc" ? 1 : -1) *
+             (new Date(a.datetime_ist) - new Date(b.datetime_ist));
     }
     if (config.column === "count" || config.column === "trigger_price") {
       return (config.direction === "asc" ? 1 : -1) * ((A ?? 0) - (B ?? 0));
