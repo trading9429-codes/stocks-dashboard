@@ -36,7 +36,7 @@ async function initDB() {
     CREATE TABLE IF NOT EXISTS stocks (
       stock TEXT PRIMARY KEY,
       trigger_price REAL,
-      datetime TIMESTAMPTZ,          -- store as timestamptz (UTC internally)
+      datetime TIMESTAMPTZ,
       count INTEGER,
       lastUpdated TIMESTAMPTZ,
       scan_name TEXT,
@@ -45,7 +45,11 @@ async function initDB() {
     )
   `);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_datetime_stock ON stocks (datetime, stock)`);
+
+  // Pin the session TZ to UTC so any bare selects show UTC
+  await db.query(`SET TIME ZONE 'UTC'`);
 }
+
 initDB().catch(console.error);
 
 // --- Time Utilities ---
@@ -58,18 +62,20 @@ const timeUtils = {
   },
   nowUTC: () => new Date(), // NOW in UTC
   // parse an "h:mm AM/PM" time as *today in IST*, then convert to UTC Date
-  parseISTTimeToUTC: (timeStr) => {
-  // Combine today's date in IST with the given time string
+  parseISTTimeToUTC:  (timeStr) => {
   const todayIST = moment().tz(TZ).format("YYYY-MM-DD");
-  let a =moment.tz(`${todayIST} ${timeStr}`, "YYYY-MM-DD h:mm A", TZ).toDate();
-  return a;
-},
+  return moment
+    .tz(`${todayIST} ${timeStr}`, "YYYY-MM-DD h:mm A", TZ)
+    .utc()                  // store as UTC
+    .toDate();
+  },
 };
 
 // --- DB Utilities ---
 const SELECT_FIELDS_IST = `
   stock, trigger_price, count, scan_name, scan_url, alert_name,
-  to_char(datetime AT TIME ZONE '${TZ}', 'YYYY-MM-DD"T"HH24:MI:SS') AS datetime
+ to_char(datetime AT TIME ZONE '${TZ}', 'YYYY-MM-DD') AS date_ist,
+ to_char(datetime AT TIME ZONE '${TZ}', 'HH12:MI AM') AS time_ist
 `;
 
 const dbUtils = {
@@ -143,11 +149,11 @@ async function refreshCacheAndBroadcast(full = false, deltaLive = []) {
 
   if (full) {
     // full snapshot to everyone
-    const data = JSON.stringify({ type: "init", liveStocks: live, historyStocks: history });
+    const data = JSON.stringify({ type: "init", liveStocks: live, historyStocks: history });    
     wss.clients.forEach(c => c.readyState === WebSocket.OPEN && c.send(data));
   } else if (deltaLive && deltaLive.length) {
     // only changed/added rows
-    const data = JSON.stringify({ type: "delta", liveDelta: deltaLive });
+    const data = JSON.stringify({ type: "delta", liveDelta: deltaLive });   
     wss.clients.forEach(c => c.readyState === WebSocket.OPEN && c.send(data));
   }
 }
@@ -196,7 +202,6 @@ app.post("/new-stocks", async (req, res) => {
   try {
     const items = transformRequest(req.body);
     if (!items.length) return res.json({ status: "ok" });
-
     await dbUtils.upsertBatch(items);
 
     // Query only the affected rows back (in IST) to push as delta

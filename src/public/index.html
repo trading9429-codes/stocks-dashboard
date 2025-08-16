@@ -192,9 +192,9 @@ function renderTable(tbodyId, data, isHistory=false) {
 
   sorted.forEach(item => {
     const tr = document.createElement("tr");
-    const timeDisplay = formatISTDisplay(item.datetime); // server string already IST
+    //const timeDisplay = formatISTDisplay(item.datetime); // server string already IST
     const stockLink = `<a href="${tradingViewLink(item.stock)}" target="_blank">${item.stock}</a>`;
-    tr.innerHTML = `<td>${timeDisplay}</td><td>${stockLink}</td><td>${item.count}</td><td>${item.trigger_price}</td>`;
+    tr.innerHTML = `<td>${item.time_ist}</td><td>${stockLink}</td><td>${item.count}</td><td>${item.trigger_price}</td>`;
     if (!isHistory) {
       const prev = lastLiveTimestamps[item.stock];
       if (!prev || prev !== item.datetime) {
