@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>Stock Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <style>
 :root {
   --bg: #f9f9f9;
@@ -21,7 +21,6 @@
   --toast-bg: #4caf50;
   --toast-color: #fff;
 }
-
 body.dark {
   --bg: #1e1e2f;
   --header-bg: #0d1117;
@@ -37,74 +36,15 @@ body.dark {
   --text-color: #ddd;
   --toast-bg: #76c776;
 }
-
-body { 
-  font-family: "Segoe UI", Arial, sans-serif; 
-  margin:0; 
-  background:var(--bg); 
-  color:var(--text-color); 
-  transition: background 0.3s, color 0.3s;
-}
-
-header { 
-  background:var(--header-bg); 
-  color:var(--header-color); 
-  padding:15px 20px; 
-  display:flex; 
-  justify-content:space-between; 
-  align-items:center; 
-  box-shadow:0 2px 6px rgba(0,0,0,0.2);
-  border-bottom-left-radius:10px;
-  border-bottom-right-radius:10px;
-}
-
+body { font-family: "Segoe UI", Arial, sans-serif; margin:0; background:var(--bg); color:var(--text-color); transition: background 0.3s, color 0.3s; }
+header { background:var(--header-bg); color:var(--header-color); padding:15px 20px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 6px rgba(0,0,0,0.2); border-bottom-left-radius:10px; border-bottom-right-radius:10px;}
 header h1{ margin:0; font-size:1.8em; }
-
-.tabs { 
-  display:flex; 
-  justify-content:center; 
-  margin-top:20px; 
-  flex-wrap:wrap; 
-  gap:5px;
-}
-
-.tab { 
-  padding:10px 20px; 
-  cursor:pointer; 
-  background:var(--tab-bg); 
-  border-radius:5px 5px 0 0; 
-  text-align:center;
-  font-weight:500;
-  transition:all 0.3s;
-}
-
-.tab.active { 
-  background:var(--tab-active-bg); 
-  color:var(--tab-active-color); 
-  box-shadow:0 3px 8px rgba(0,0,0,0.2);
-}
-
-.tab-content { 
-  display:none; 
-  padding:15px; 
-  max-width:1000px; 
-  margin:auto; 
-  background:var(--table-bg); 
-  border-radius:0 5px 5px 5px; 
-  box-shadow:0 2px 12px rgba(0,0,0,0.1); 
-  overflow-x:auto; 
-  margin-bottom:20px;
-  transition: all 0.3s;
-}
-
+.tabs { display:flex; justify-content:center; margin-top:20px; flex-wrap:wrap; gap:5px;}
+.tab { padding:10px 20px; cursor:pointer; background:var(--tab-bg); border-radius:5px 5px 0 0; text-align:center; font-weight:500; transition:all 0.3s; }
+.tab.active { background:var(--tab-active-bg); color:var(--tab-active-color); box-shadow:0 3px 8px rgba(0,0,0,0.2); }
+.tab-content { display:none; padding:15px; max-width:1100px; margin:auto; background:var(--table-bg); border-radius:0 5px 5px 5px; box-shadow:0 2px 12px rgba(0,0,0,0.1); overflow-x:auto; margin-bottom:20px; transition: all 0.3s; }
 .tab-content.active { display:block; }
-
-.table-wrapper { 
-    max-height: 650px; /* was 400px */
-    overflow: auto; 
-    border-radius: 5px; 
-}
-
+.table-wrapper { max-height: 650px; overflow: auto; border-radius: 5px; }
 table { width:100%; border-collapse:collapse; table-layout:fixed; background:var(--table-bg); border-radius:5px; }
 thead th { position: sticky; top:0; background:var(--table-header-bg); z-index:1; cursor:pointer; user-select:none; padding:12px; }
 th, td { padding:10px; border-bottom:1px solid #ddd; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition: background 0.3s; }
@@ -112,44 +52,16 @@ tr.highlight { background-color:var(--highlight-bg); animation:fadeHighlight 2s 
 @keyframes fadeHighlight { 0%{opacity:0.8;}100%{opacity:1;} }
 tr td a { color:var(--text-color); text-decoration:none; font-weight:500; }
 tr td a:hover { text-decoration:underline; }
-
 .search-container { margin-top:10px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
 .search-container input { padding:8px 10px; font-size:1em; flex:1; min-width:150px; border-radius:5px; border:1px solid #ccc; }
 button { padding:6px 12px; cursor:pointer; background:var(--button-bg); color:white; border:none; border-radius:5px; transition:all 0.3s; }
 button:hover { background:var(--button-hover); }
-
-.toast-container { 
-  position: fixed; 
-  top: 20px; 
-  right: 20px; 
-  z-index: 9999; 
-  display: flex; 
-  flex-direction: column-reverse; 
-  gap: 10px; 
-  max-width: 300px;
-}
-
-.toast { 
-  background: var(--toast-bg); 
-  color: var(--toast-color); 
-  padding: 12px 18px; 
-  border-radius: 8px; 
-  opacity: 0; 
-  transform: translateX(120%) translateY(20px); 
-  transition: transform 0.5s cubic-bezier(0.25,1,0.5,1), opacity 0.5s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  cursor: pointer;
-}
-.toast.show { 
-  opacity: 1; 
-  transform: translateX(0) translateY(0); 
-}
-
+.toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column-reverse; gap: 10px; max-width: 300px; }
+.toast { background: var(--toast-bg); color: var(--toast-color); padding: 12px 18px; border-radius: 8px; opacity: 0; transform: translateX(120%) translateY(20px); transition: transform 0.5s cubic-bezier(0.25,1,0.5,1), opacity 0.5s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer; }
+.toast.show { opacity: 1; transform: translateX(0) translateY(0); }
 th .resizer { display:inline-block; width:5px; height:100%; position:absolute; right:0; top:0; cursor:col-resize; user-select:none; }
 th { position:relative; }
-
 .sort-indicator { margin-left:5px; font-size:0.8em; }
-
 @media(max-width:600px){
   th, td { font-size:0.85em; padding:6px; }
   header h1{ font-size:1.2em; }
@@ -166,252 +78,280 @@ th { position:relative; }
 </header>
 
 <div class="tabs">
-    <div class="tab active" data-tab="live">Live Stocks</div>
-    <div class="tab" data-tab="history">History</div>
+  <div class="tab active" data-tab="live">Live Stocks</div>
+  <div class="tab" data-tab="history">History</div>
 </div>
 
-<div id="live" class="tab-content">
-    <div class="search-container">
-        <input id="live-search" placeholder="Search Live Stocks...">
-        <div>
-            <button onclick="clearLive()">Clear Live</button>
-            <button onclick="downloadCSV()">Download CSV</button>
-            <button onclick="copyToTV()">Copy to TV</button>
-        </div>
+<div id="live" class="tab-content active">
+  <div class="search-container">
+    <input id="live-search" placeholder="Search Live Stocks..." />
+    <div>
+      <button onclick="clearLive()">Clear Live</button>
+      <button onclick="downloadCSV(false)">Download CSV</button>
+      <button onclick="copyToTV()">Copy to TV</button>
     </div>
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th data-col="datetime">Time ↓<span class="sort-indicator"></span><div class="resizer"></div></th>
-                    <th data-col="stock">Stock<span class="sort-indicator"></span><div class="resizer"></div></th>
-                    <th data-col="count">Count<span class="sort-indicator"></span><div class="resizer"></div></th>
-                    <th data-col="trigger_price">Price<span class="sort-indicator"></span><div class="resizer"></div></th>
-                </tr>
-            </thead>
-            <tbody id="live-tbody"></tbody>
-        </table>
-    </div>
+  </div>
+  <div class="table-wrapper">
+    <table id="live-table">
+      <thead>
+        <tr>
+          <th data-col="datetime">Time <span class="sort-indicator">↓</span><div class="resizer"></div></th>
+          <th data-col="stock">Stock<span class="sort-indicator"></span><div class="resizer"></div></th>
+          <th data-col="count">Count<span class="sort-indicator"></span><div class="resizer"></div></th>
+          <th data-col="trigger_price">Price<span class="sort-indicator"></span><div class="resizer"></div></th>
+        </tr>
+      </thead>
+      <tbody id="live-tbody"></tbody>
+    </table>
+  </div>
 </div>
 
 <div id="history" class="tab-content">
-    <div class="search-container">
-        <input id="history-search" placeholder="Search History...">
-        <div>
-            <button onclick="clearHistory()">Clear History</button>
-            <button onclick="downloadCSV(true)">Download CSV</button>
-        </div>
+  <div class="search-container">
+    <input id="history-search" placeholder="Search History..." />
+    <div>
+      <button onclick="clearHistory()">Clear History</button>
+      <button onclick="downloadCSV(true)">Download CSV</button>
     </div>
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th data-col="datetime">Time ↓<span class="sort-indicator"></span><div class="resizer"></div></th>
-                    <th data-col="stock">Stock<span class="sort-indicator"></span><div class="resizer"></div></th>
-                    <th data-col="count">Count<span class="sort-indicator"></span><div class="resizer"></div></th>
-                    <th data-col="trigger_price">Price<span class="sort-indicator"></span><div class="resizer"></div></th>
-                </tr>
-            </thead>
-            <tbody id="history-tbody"></tbody>
-        </table>
-    </div>
+  </div>
+  <div class="table-wrapper">
+    <table id="history-table">
+      <thead>
+        <tr>
+          <th data-col="datetime">Time <span class="sort-indicator">↓</span><div class="resizer"></div></th>
+          <th data-col="stock">Stock<span class="sort-indicator"></span><div class="resizer"></div></th>
+          <th data-col="count">Count<span class="sort-indicator"></span><div class="resizer"></div></th>
+          <th data-col="trigger_price">Price<span class="sort-indicator"></span><div class="resizer"></div></th>
+        </tr>
+      </thead>
+      <tbody id="history-tbody"></tbody>
+    </table>
+  </div>
 </div>
 
 <div class="toast-container" id="toast-container"></div>
 
 <script>
-let lastLiveTimestamps = {};
-let sortConfig = {
-    live: { column: "datetime", direction: "desc" },
-    history: { column: "datetime", direction: "desc" }
+/* ---------- State ---------- */
+let liveData = [];    // [{stock, trigger_price, count, scan_name, ..., datetime (IST string)}]
+let historyData = [];
+let lastLiveTimestamps = {}; // stock -> last datetime (IST string)
+const sortConfig = {
+  live: { column: "datetime", direction: "desc" },
+  history: { column: "datetime", direction: "desc" }
 };
-// Tabs
-const tabs=document.querySelectorAll('.tab');
-const tabContents=document.querySelectorAll('.tab-content');
-tabs.forEach(tab=>tab.addEventListener('click',()=>{
-    tabs.forEach(t=>t.classList.remove('active'));
-    tab.classList.add('active');
-    tabContents.forEach(tc=>tc.classList.remove('active'));
-    document.getElementById(tab.dataset.tab).classList.add('active');
-}));
+
+/* ---------- Helpers ---------- */
+function toggleTheme(){ document.body.classList.toggle('dark'); }
+function showToast(message){
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  container.appendChild(toast);
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  const removeToast = () => { toast.classList.remove('show'); setTimeout(()=>toast.remove(),500); };
+  setTimeout(removeToast,4000);
+  toast.addEventListener('click', removeToast);
+}
+
+
+function tradingViewLink(sym){ return `https://in.tradingview.com/chart/?symbol=NSE:${sym}`; }
 
 function sortTableData(data, config) {
-    return [...data].sort((a, b) => {
-        let valA = a[config.column], valB = b[config.column];
-        if (config.column === "datetime") {
-            valA = new Date(valA);
-            valB = new Date(valB);
-        }
-        if (valA < valB) return config.direction === "asc" ? -1 : 1;
-        if (valA > valB) return config.direction === "asc" ? 1 : -1;
-        return 0;
-    });
+  const sorted = [...data].sort((a, b) => {
+    let A = a[config.column], B = b[config.column];
+    if (config.column === "datetime") { // compare by time string lexicographically "YYYY-MM-DDTHH:MM:SS"
+      return (config.direction === "asc" ? 1 : -1) * (A < B ? -1 : A > B ? 1 : 0);
+    }
+    if (config.column === "count" || config.column === "trigger_price") {
+      return (config.direction === "asc" ? 1 : -1) * ((A ?? 0) - (B ?? 0));
+    }
+    A = String(A ?? ""); B = String(B ?? "");
+    return (config.direction === "asc" ? 1 : -1) * A.localeCompare(B);
+  });
+  return sorted;
 }
 
-function updateSortArrow(tableId, config) {
-    const ths = document.querySelectorAll(`#${tableId} th`);
-    ths.forEach(th => {
-        if (th.dataset.sort === config.column) {
-            th.textContent = `${capitalizeFirstLetter(th.dataset.sort === "datetime" ? "Time" : th.dataset.sort)} ${config.direction === "asc" ? "↑" : "↓"}`;
-        } else {
-            th.textContent = capitalizeFirstLetter(th.dataset.sort === "datetime" ? "Time" : th.dataset.sort);
-        }
-    });
+/* ---------- Rendering ---------- */
+function renderTable(tbodyId, data, isHistory=false) {
+  const tableType = isHistory ? "history" : "live";
+  const config = sortConfig[tableType];
+  const tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = "";
+
+  const search = document.getElementById(isHistory ? "history-search" : "live-search")
+                  .value.trim().toLowerCase();
+
+  const filtered = search
+    ? data.filter(row => Object.values(row).some(v => String(v).toLowerCase().includes(search)))
+    : data;
+
+  const sorted = sortTableData(filtered, config);
+
+  sorted.forEach(item => {
+    const tr = document.createElement("tr");
+    const timeDisplay = formatISTDisplay(item.datetime); // server string already IST
+    const stockLink = `<a href="${tradingViewLink(item.stock)}" target="_blank">${item.stock}</a>`;
+    tr.innerHTML = `<td>${timeDisplay}</td><td>${stockLink}</td><td>${item.count}</td><td>${item.trigger_price}</td>`;
+    if (!isHistory) {
+      const prev = lastLiveTimestamps[item.stock];
+      if (!prev || prev !== item.datetime) {
+        tr.classList.add("highlight");
+        setTimeout(() => tr.classList.remove("highlight"), 3000);
+      }
+      lastLiveTimestamps[item.stock] = item.datetime;
+    }
+    tbody.appendChild(tr);
+  });
 }
 
-function capitalizeFirstLetter(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1).replace("_", " ");
+function formatISTDisplay(datetimeStrIST) {
+  // datetimeStrIST: "YYYY-MM-DDTHH:MM:SS" representing local IST wall-time
+  // Just show as "h:mm AM/PM"
+  const [datePart, timePart] = datetimeStrIST.split("T");
+  let [h, m, s] = timePart.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return `${h}:${String(m).padStart(2,"0")} ${ampm}`;
 }
 
-// Dark mode
-function toggleTheme(){ document.body.classList.toggle('dark'); }
-
-
-// Toast system
-function showToast(message){
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-    container.appendChild(toast);
-    void toast.offsetWidth;
-    toast.classList.add('show');
-    const removeToast = () => { toast.classList.remove('show'); setTimeout(()=>toast.remove(),500); };
-    setTimeout(removeToast,4000);
-    toast.addEventListener('click', removeToast);
+function formatIST(dateStr, mode = "time") {
+  const date = new Date(dateStr + " IST"); // ensure it's parsed as IST
+  if (mode === "time") {
+    return new Intl.DateTimeFormat("en-IN", {
+      hour: "numeric", minute: "numeric", hour12: true, timeZone: "Asia/Kolkata"
+    }).format(date);
+  } else {
+    return new Intl.DateTimeFormat("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "numeric", minute: "numeric", hour12: true,
+      timeZone: "Asia/Kolkata"
+    }).format(date);
+  }
 }
 
-// Data rendering
-let liveData=[], historyData=[];
-function renderTable(tbodyId, data, isHistory = false) {
-    const tableType = isHistory ? "history" : "live";
-    const config = sortConfig[tableType];
-    const sortedData = sortTableData(data, config);
-
-    const tbody = document.getElementById(tbodyId);
-    tbody.innerHTML = "";
-    const searchInput = document
-        .getElementById(isHistory ? "history-search" : "live-search")
-        .value.toLowerCase();
-
-    sortedData.forEach(item => {
-        if (searchInput && !Object.values(item).some(v => String(v).toLowerCase().includes(searchInput)))
-            return;
-
-        const tr = document.createElement("tr");
-        const stockLink = `<a href="https://in.tradingview.com/chart/?symbol=NSE:${item.stock}" target="_blank">${item.stock}</a>`;
-        const displayTime = isHistory
-            ? new Date(item.datetime).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
-            : formatTimeToAMPM(item.datetime);
-        tr.innerHTML = `<td>${displayTime}</td><td>${stockLink}</td><td>${item.count}</td><td>${item.trigger_price}</td>`;
-
-        if (!isHistory) {
-            const prevTime = lastLiveTimestamps[item.stock];
-            if (!prevTime || prevTime !== item.datetime) {
-                tr.classList.add("highlight");
-                setTimeout(() => tr.classList.remove("highlight"), 5000);
-                showToast(`Stock Updated: ${item.stock}`);
-            }
-            lastLiveTimestamps[item.stock] = item.datetime;
-        }
-
-        tbody.appendChild(tr);
-    });
-
-    updateSortArrow(isHistory ? "history-table" : "live-table", config);
+/* ---------- Incremental updates ---------- */
+function upsertLiveDelta(delta) {
+  const byStock = new Map(liveData.map(x => [x.stock, x]));
+  delta.forEach(row => {
+    const existing = byStock.get(row.stock);
+    if (existing) Object.assign(existing, row);
+    else liveData.push(row);
+  });
 }
 
-
-// CSV download
+/* ---------- CSV & Copy ---------- */
 function downloadCSV(isHistory=false){
-    const data = (isHistory ? historyData : liveData).slice();
-    if(!data.length) return showToast("No data to download!");
-    const headers = ["Time","Stock","Count","Price"];
-    const rows = data.map(d=>[d.datetime, d.stock, d.count, d.trigger_price]);
-    let csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r=>r.join(","))].join("\n");
-    const link = document.createElement("a");
-    link.setAttribute("href", encodeURI(csvContent));
-    link.setAttribute("download", isHistory ? "history_stocks.csv" : "live_stocks.csv");
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+  const data = isHistory ? historyData : liveData;
+  if (!data.length) return showToast("No data to download!");
+  const headers = ["Time(IST)", "Stock", "Count", "Price"];
+  const rows = data.map(d => [d.datetime, d.stock, d.count, d.trigger_price]);
+  const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+  const blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = isHistory ? "history_stocks.csv" : "live_stocks.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
-// WebSocket
-const loc = window.location;
-const wsProtocol = loc.protocol === "https:" ? "wss" : "ws";
-const ws = new WebSocket(`${wsProtocol}://${loc.host}`);
-ws.onmessage = (msg) => {
-    const { liveStocks, historyStocks } = JSON.parse(msg.data);
-
-    liveData = sortTableData(liveStocks, sortConfig.live);
-    historyData = sortTableData(historyStocks, sortConfig.history);
-
-    renderTable("live-tbody", liveData, false);
-    renderTable("history-tbody", historyData, true);
-};
-
-// Search
-document.getElementById("live-search").addEventListener("input",()=>renderTable("live-tbody",liveData));
-document.getElementById("history-search").addEventListener("input",()=>renderTable("history-tbody",historyData,true));
-
-// Clear
-function clearLive(){ fetch("/clear-live",{method:"POST"}); }
-function clearHistory(){ fetch("/clear-history",{method:"POST"}); }
-
-// Sort
-document.querySelectorAll("th[data-col]").forEach(th=>{
-    const indicator = th.querySelector(".sort-indicator");
-    th.addEventListener("click",()=>{
-        const col=th.dataset.col;
-        const table=th.closest(".tab-content").id;
-        let data=table==="live"?liveData:historyData;
-        const asc=!th.asc; th.asc=asc;
-        data.sort((a,b)=>{
-            if(col==="count"||col==="trigger_price") return asc?a[col]-b[col]:b[col]-a[col];
-            return asc?String(a[col]).localeCompare(String(b[col])):String(b[col]).localeCompare(String(a[col]));
-        });
-        // reset indicators
-        document.querySelectorAll(`#${table} th .sort-indicator`).forEach(s=>s.textContent='');
-        indicator.textContent = asc ? '↑' : '↓';
-        renderTable(table+"-tbody",data,table==="history");
-    });
-});
-
-// Column resize
-document.querySelectorAll('th').forEach(th=>{
-    const resizer=th.querySelector('.resizer');
-    let startX,startWidth;
-    resizer.addEventListener('mousedown',e=>{
-        startX=e.pageX; startWidth=th.offsetWidth;
-        const onMouseMove=em=>{ th.style.width=startWidth+(em.pageX-startX)+'px'; };
-        const onMouseUp=()=>{ document.removeEventListener('mousemove',onMouseMove); document.removeEventListener('mouseup',onMouseUp); };
-        document.addEventListener('mousemove',onMouseMove);
-        document.addEventListener('mouseup',onMouseUp);
-    });
-});
-// Helper to format IST datetime to "h:mm AM/PM"
-function formatTimeToAMPM(datetimeStr) {
-    if (!datetimeStr) return "";
-    const date = new Date(datetimeStr); // already IST from server
-
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    return `${hours}:${minutes} ${ampm}`;
-}
-// Copy live stocks to clipboard as comma-separated list
 function copyToTV(){
-    if(!liveData.length) return showToast("No live stocks to copy!");
-    const stockList = liveData.map(item => item.stock).join(",");
-    navigator.clipboard.writeText(stockList).then(()=>{
-        showToast("Copied to clipboard!");
-    }).catch(err=>{
-        showToast("Failed to copy!");
-        console.error(err);
-    });
+  if(!liveData.length) return showToast("No live stocks to copy!");
+  const stockList = liveData.map(x => x.stock).join(",");
+  navigator.clipboard.writeText(stockList)
+    .then(() => showToast("Copied to clipboard!"))
+    .catch(() => showToast("Failed to copy!"));
 }
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(tc => tc.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById(tab.dataset.tab).classList.add("active");
+    // re-render when switching to respect search box of that tab
+    if (tab.dataset.tab === "live") renderTable("live-tbody", liveData, false);
+    else renderTable("history-tbody", historyData, true);
+  });
+});
+
+/* ---------- Sort ---------- */
+document.querySelectorAll("th[data-col]").forEach(th => {
+  const tableId = th.closest("table").id;                // live-table / history-table
+  const tableKey = tableId.startsWith("live") ? "live" : "history";
+  th.addEventListener("click", () => {
+    const col = th.dataset.col;
+    const cfg = sortConfig[tableKey];
+    if (cfg.column === col) {
+      cfg.direction = (cfg.direction === "asc" ? "desc" : "asc");
+    } else {
+      cfg.column = col;
+      cfg.direction = "asc";
+    }
+    document.querySelectorAll(`#${tableId} th .sort-indicator`).forEach(si => si.textContent = "");
+    th.querySelector(".sort-indicator").textContent = (cfg.direction === "asc" ? "↑" : "↓");
+    if (tableKey === "live") renderTable("live-tbody", liveData, false);
+    else renderTable("history-tbody", historyData, true);
+  });
+});
+
+/* ---------- Resize ---------- */
+document.querySelectorAll('th').forEach(th=>{
+  const resizer=th.querySelector('.resizer');
+  if(!resizer) return;
+  let startX,startWidth;
+  resizer.addEventListener('mousedown',e=>{
+    startX=e.pageX; startWidth=th.offsetWidth;
+    const onMouseMove=em=>{ th.style.width=startWidth+(em.pageX-startX)+'px'; };
+    const onMouseUp=()=>{ document.removeEventListener('mousemove',onMouseMove); document.removeEventListener('mouseup',onMouseUp); };
+    document.addEventListener('mousemove',onMouseMove);
+    document.addEventListener('mouseup',onMouseUp);
+  });
+});
+
+/* ---------- Search ---------- */
+document.getElementById("live-search").addEventListener("input", () => renderTable("live-tbody", liveData, false));
+document.getElementById("history-search").addEventListener("input", () => renderTable("history-tbody", historyData, true));
+
+/* ---------- Clear ---------- */
+function clearLive(){ fetch("/clear-live", { method: "POST" }); }
+function clearHistory(){ fetch("/clear-history", { method: "POST" }); }
+
+/* ---------- WebSocket ---------- */
+(function initWS(){
+  const loc = window.location;
+  const wsProtocol = loc.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${wsProtocol}://${loc.host}`);
+
+  ws.onopen = () => showToast("Connected");
+  ws.onclose = () => showToast("Disconnected");
+  ws.onerror = () => showToast("WebSocket error");
+
+  ws.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if (msg.type === "init") {
+      liveData = Array.isArray(msg.liveStocks) ? msg.liveStocks : [];
+      historyData = Array.isArray(msg.historyStocks) ? msg.historyStocks : [];
+      renderTable("live-tbody", liveData, false);
+      renderTable("history-tbody", historyData, true);
+    } else if (msg.type === "delta" && Array.isArray(msg.liveDelta)) {
+      // update/insert changed rows only
+      upsertLiveDelta(msg.liveDelta);
+      // highlight updated stocks
+      msg.liveDelta.forEach(it => {
+        showToast(`Stock Updated: ${it.stock}`);
+      });
+      renderTable("live-tbody", liveData, false);
+    }
+  };
+})();
+
 </script>
 </body>
 </html>
