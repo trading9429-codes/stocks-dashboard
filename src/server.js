@@ -89,12 +89,13 @@ const dbUtils = {
     items.forEach((it, i) => {
       const base = i * 8;
       placeholders.push(
-        `($${base + 1}, $${base + 2}, $${base + 3}, 1, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7})`
+      `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8})`
       );
       values.push(
         it.stock,
         it.trigger_price,
         it.datetimeUTC,
+      1,                   // count
         it.lastUpdatedUTC,
         it.scan_name || null,
         it.scan_url || null,
