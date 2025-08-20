@@ -51,10 +51,10 @@ table { width:100%; border-collapse:collapse; table-layout:fixed; background:var
 thead th { position: sticky; top:0; background:var(--table-header-bg); z-index:1; cursor:pointer; user-select:none; padding:10px; }
 th, td { padding:8px; border-bottom:1px solid #ddd; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition: background 0.3s; }
 tr.highlight-new {
-  animation: fadeHighlightNew 7s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  animation: fadeHighlightNew 60s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 tr.highlight-update {
-  animation: fadeHighlightUpdate 7s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  animation: fadeHighlightUpdate 60s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
 @keyframes fadeHighlightNew {
@@ -92,7 +92,7 @@ button:hover { background:var(--button-hover); }
   color: #fff;  /* force text white */
 }
 .toast.show {
-  animation: toastPop 7s forwards; /* match row highlight duration */
+  animation: toastPop 60s forwards; /* match row highlight duration */
 }
 /* Toast types with fade colors matching highlights */
 .toast.new {
@@ -147,6 +147,12 @@ button:hover { background:var(--button-hover); }
   .search-container input{ font-size:0.85em; padding:6px;}
   button{ padding:5px 8px; font-size:0.85em;}
 }
+.table-meta {
+  font-size: 0.9em;
+  color: var(--text-color);
+  margin: 5px 0;
+  text-align: right;
+}
 </style>
 </head>
 <body class="dark">
@@ -170,6 +176,7 @@ button:hover { background:var(--button-hover); }
     </div>
   </div>
   <div class="table-wrapper">
+    <div class="table-meta">Records: <span id="live-count">0</span></div>
     <table id="live-table">
       <thead>
         <tr>
@@ -193,6 +200,7 @@ button:hover { background:var(--button-hover); }
     </div>
   </div>
   <div class="table-wrapper">
+    <div class="table-meta">Records: <span id="history-count">0</span></div>
     <table id="history-table">
       <thead>
         <tr>
@@ -228,7 +236,7 @@ function showToast(message, type="default", icon="") {
   void toast.offsetWidth; // reflow
   toast.classList.add('show');
   const remove = () => { toast.classList.remove('show'); setTimeout(()=>toast.remove(), 500); };
-  setTimeout(remove, 7000);
+  setTimeout(remove, 60000);// 1 minute
   toast.addEventListener('click', remove);
 }
 function tradingViewLink(sym){ return `https://in.tradingview.com/chart/?symbol=NSE:${sym}`; }
@@ -277,6 +285,7 @@ function renderTable(tbodyId, data, isHistory=false, highlightMap=new Map()) {
     }
     tbody.appendChild(tr);
   });
+  document.getElementById(isHistory ? "history-count" : "live-count").textContent = filtered.length;
 }
 
 /* ---------- Incremental updates ---------- */
