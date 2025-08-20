@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Stock Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* ===== Theme (Dark-first) ===== */
+    :root{
+      --bg:#0d1117;
+      --card:#161b22;
+      --card-2:#1b222c;
+      --border:#30363d;
+      --text:#ffffff;          /* brighter base text */
+      --text-dim:#b9c2cc;      /* a bit brighter than before */
+      --accent:#58a6ff;
+      --accent-2:#7aa7ff;
+      --accent-hover:#1f6feb;
+      --success:#2ea043;
+      --warn:#d29922;
+      --danger:#f85149;
+      --new-glow:rgba(56,139,253,.28);
+      --upd-glow:rgba(202,163,64,.28);
+      --toast:#0b1220e6; /* dark glass */
+      --radius:14px;
+      --shadow:0 8px 24px rgba(0,0,0,.45);
+    }
+    * { box-sizing:border-box }
+    html,body{ height:100% }
+    body{
+      margin:0;
+      background:linear-gradient(180deg,var(--bg),#0b131b 60%);
+      color:var(--text);
+      font-family:Inter, ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size:15px; /* increased global font size */
+    }
+
+    /* ===== Header ===== */
+    header{
+      position:sticky; top:0; z-index:50;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 20px;
+      background:rgba(13,17,23,.7);
+      backdrop-filter:saturate(150%) blur(10px);
+      border-bottom:1px solid var(--border);
+    }
+    header h1{ margin:0; font-size:18px; letter-spacing:.3px; color:var(--accent) }
+    .header-right{ display:flex; gap:14px; align-items:center; }
+    .chip{ font-size:12px; padding:6px 10px; border:1px solid var(--border); border-radius:999px; color:var(--text-dim); background:var(--card) }
+    .chip.ok{ color:var(--success); border-color:#2a6037 }
+    .chip.bad{ color:var(--danger); border-color:#5c2a2a }
+    .chip.time{ color:var(--text-dim) }
+
+    /* ===== Tabs ===== */
+    .tabs{
+      display:flex; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border);
+      background:transparent;
+    }
+    .tab-btn{
+      border:1px solid var(--border); color:var(--text); background:var(--card);
+      padding:8px 14px; border-radius:999px; cursor:pointer; font-size:13px;
+      transition:all .25s ease;
+    }
+    .tab-btn:hover{ background:var(--accent-hover); border-color:var(--accent-hover); color:#fff }
+    .tab-btn.active{ background:var(--accent); border-color:var(--accent); color:#fff }
+
+    /* ===== Content / Cards ===== */
+    .container{ max-width:1200px; margin:18px auto; padding:0 16px; }
+    .panel{
+      background:linear-gradient(180deg,var(--card),var(--card-2));
+      border:1px solid var(--border); border-radius:var(--radius);
+      box-shadow:var(--shadow); overflow:hidden; margin-bottom:18px;
+    }
+    .panel-head{
+      display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; justify-content:space-between;
+      padding:12px 14px; border-bottom:1px solid var(--border); background:rgba(22,27,34,.5);
+    }
+    .title{ display:flex; gap:10px; align-items:center }
+    .title h2{ margin:0; font-size:15px; color:var(--accent-2) }
+    .meta{ color:var(--text-dim); font-size:12px }
+    .actions{ display:flex; gap:8px; flex-wrap:wrap }
+    .input{
+      background:#0f1722; border:1px solid var(--border); color:var(--text);
+      padding:8px 10px; border-radius:10px; font-size:13px; min-width:220px;
+      outline:none; transition:border-color .2s ease;
+    }
+    .input:focus{ border-color:var(--accent) }
+    .btn{
+      background:#0f1722; color:var(--text); border:1px solid var(--border);
+      padding:8px 12px; border-radius:10px; font-size:13px; cursor:pointer;
+      transition:all .25s ease;
+    }
+    .btn:hover{ background:#152033; border-color:var(--accent) }
+    .btn.primary{ background:var(--accent); border-color:var(--accent); color:#fff }
+    .btn.primary:hover{ background:var(--accent-hover); border-color:var(--accent-hover) }
+
+    /* ===== Table ===== */
+    .table-wrap{ max-height:66vh; overflow:auto }
+    table{ width:100%; border-collapse:separate; border-spacing:0 }
+    thead th{
+      position:sticky; top:0; z-index:1;
+      background:#121822; color:var(--text-dim);
+      font-weight:600; font-size:12px; letter-spacing:.2px;
+      padding:10px 12px; border-bottom:1px solid var(--border);
+      user-select:none; cursor:pointer;
+      text-align:left; /* ensure left align */
+    }
+    tbody td{
+      padding:10px 12px; border-bottom:1px solid var(--border); font-size:13px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      text-align:left; /* ensure left align */
+    }
+    tbody tr{ transition:background .2s ease, box-shadow .2s ease }
+    tbody tr:hover{ background:#161d28 }
+    .count-badge{ font-size:12px; color:var(--text-dim) }
+
+    /* ===== Row highlight (60s) ===== */
+    .highlight-new{ animation:rowGlowNew 60s ease forwards }
+    .highlight-update{ animation:rowGlowUpd 60s ease forwards }
+    @keyframes rowGlowNew{
+      0%,90%{ background:var(--new-glow) }
+      100%{ background:transparent }
+    }
+    @keyframes rowGlowUpd{
+      0%,90%{ background:var(--upd-glow) }
+      100%{ background:transparent }
+    }
+
+    /* ===== Toasts (60s, dismissable) ===== */
+    .toast-box{
+      position:fixed; top:16px; right:16px; display:flex; flex-direction:column;
+      gap:10px; z-index:100;
+    }
+    .toast{
+      background:var(--toast); color:#fff;
+      border:1px solid rgba(88,166,255,.25);
+      border-left:5px solid var(--accent);
+      padding:10px 12px; border-radius:12px; box-shadow:var(--shadow);
+      min-width:240px; max-width:340px; font-size:13px; line-height:1.35;
+      transform:translateY(-6px); opacity:0;
+      animation:toastIn .25s ease forwards;
+      display:flex; align-items:flex-start; gap:8px;
+      cursor:pointer;
+    }
+    .toast.new{ border-left-color:var(--success); background:rgba(46,160,67,0.12) }
+    .toast.update{ border-left-color:var(--warn);   background:rgba(210,153,34,0.12) }
+    .toast:hover{ filter:brightness(1.06) }
+    .toast .icon{ font-size:16px; margin-top:1px }
+    @keyframes toastIn{ to{ transform:translateY(0); opacity:1 } }
+
+    /* ===== Tabs visibility ===== */
+    .tab-panel{ display:none }
+    .tab-panel.active{ display:block }
+
+    /* ===== Pagination (added) ===== */
+    .pagination{
+      display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--border);
+      background:rgba(22,27,34,.5); justify-content:flex-end; align-items:center;
+    }
+    .page-btn{
+      background:#0f1722; color:var(--text); border:1px solid var(--border);
+      padding:6px 10px; border-radius:8px; font-size:12px; cursor:pointer;
+      transition:all .2s ease;
+    }
+    .page-btn:hover{ background:var(--accent-hover); color:#fff; border-color:var(--accent-hover) }
+    .page-btn.active{ background:var(--accent); color:#fff; border-color:var(--accent) }
+    .page-info{ color:var(--text-dim); font-size:12px; margin-right:6px }
+
+    @media (max-width:700px){
+      .actions{ width:100% }
+      .input{ min-width:unset; flex:1 }
+      .table-wrap{ max-height:58vh }
+      .pagination{ justify-content:center }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <h1>📊 Stock Dashboard</h1>
+    <div class="header-right">
+      <span id="conn-chip" class="chip">● Connecting…</span>
+      <span id="last-update" class="chip time">Last update: --</span>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="live">Live</button>
+    <button class="tab-btn" data-tab="history">History</button>
+  </div>
+
+  <div class="container">
+    <!-- Live Panel -->
+    <section id="tab-live" class="panel tab-panel active">
+      <div class="panel-head">
+        <div class="title">
+          <h2>Live Stocks</h2>
+          <span class="count-badge">Records: <span id="live-count">0</span></span>
+        </div>
+        <div class="actions">
+          <input id="live-search" class="input" placeholder="Search Live…" />
+          <button id="btn-copy-tv" class="btn">Copy to TV</button>
+          <button id="btn-dl-live" class="btn">Download CSV</button>
+          <button id="btn-clear-live" class="btn">Clear Live</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="live-table">
+          <thead>
+            <tr>
+              <th data-col="ts_ist">Time <span class="si">↓</span></th>
+              <th data-col="stock">Stock</th>
+              <th data-col="count">Count</th>
+              <th data-col="trigger_price">Price</th>
+            </tr>
+          </thead>
+          <tbody id="live-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="live-pagination">
+        <span class="page-info" id="live-page-info"></span>
+        <button class="page-btn" id="live-prev">Prev</button>
+        <span id="live-pages"></span>
+        <button class="page-btn" id="live-next">Next</button>
+      </div>
+    </section>
+
+    <!-- History Panel -->
+    <section id="tab-history" class="panel tab-panel">
+      <div class="panel-head">
+        <div class="title">
+          <h2>History</h2>
+          <span class="count-badge">Records: <span id="history-count">0</span></span>
+        </div>
+        <div class="actions">
+          <input id="history-search" class="input" placeholder="Search History…" />
+          <button id="btn-dl-history" class="btn">Download CSV</button>
+          <button id="btn-clear-history" class="btn">Clear History</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th data-col="ts_ist">Time <span class="si">↓</span></th>
+              <th data-col="stock">Stock</th>
+              <th data-col="count">Count</th>
+              <th data-col="trigger_price">Price</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="history-pagination">
+        <span class="page-info" id="history-page-info"></span>
+        <button class="page-btn" id="history-prev">Prev</button>
+        <span id="history-pages"></span>
+        <button class="page-btn" id="history-next">Next</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Toasts -->
+  <div id="toasts" class="toast-box"></div>
+
+  <script>
+    /* ===== State ===== */
+    let liveData = [];     // [{stock, trigger_price, count, time_ist, ts_ist}]
+    let historyData = [];
+    const sortConfig = {
+      live: { column: "ts_ist", direction: "desc" },
+      history: { column: "ts_ist", direction: "desc" }
+    };
+
+    /* Pagination */
+    const pageSize = 10;
+    let livePage = 1, historyPage = 1;
+
+    /* ===== Utilities ===== */
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => document.querySelectorAll(sel);
+    const tvLink = s => `https://in.tradingview.com/chart/?symbol=NSE:${s}`;
+
+    function fmtTime(ts){ try{ return new Date(ts).toLocaleTimeString() }catch{ return "--" } }
+
+    function showToast(msg, type="new", icon= type==="update" ? "🔄" : "🆕"){
+      const box = $("#toasts");
+      const t = document.createElement("div");
+      t.classList.add("toast", type); // add 'new' or 'update' for styling
+      t.innerHTML = `<span class="icon">${icon}</span><span>${msg}</span>`;
+      box.appendChild(t);
+
+      const remove = ()=> { t.style.opacity="0"; t.style.transform="translateY(-6px)"; setTimeout(()=>t.remove(), 200); };
+      t.addEventListener("click", remove);
+      setTimeout(remove, 60000); // auto-remove after 60s
+    }
+
+    function sortData(data, cfg){
+      const dir = cfg.direction === "asc" ? 1 : -1;
+      return [...data].sort((a,b)=>{
+        const col = cfg.column;
+        if(col==="ts_ist" || col==="count" || col==="trigger_price"){
+          const A = (a[col] ?? 0), B = (b[col] ?? 0);
+          return dir * (A - B);
+        }
+        const A = String(a[col] ?? ""), B = String(b[col] ?? "");
+        return dir * A.localeCompare(B);
+      });
+    }
+
+    function updateCount(isHistory, n){
+      (isHistory ? $("#history-count") : $("#live-count")).textContent = n;
+    }
+
+    function makePageButtons(wrapperEl, totalPages, current, setPage){
+      wrapperEl.innerHTML = "";
+      const span = document.createDocumentFragment();
+      for(let i=1;i<=totalPages;i++){
+        const b = document.createElement("button");
+        b.className = "page-btn" + (i===current ? " active" : "");
+        b.textContent = i;
+        b.addEventListener("click", ()=> setPage(i));
+        span.appendChild(b);
+      }
+      return span;
+    }
+
+    function renderPagination(which, filteredLen){
+      const totalPages = Math.max(1, Math.ceil(filteredLen / pageSize));
+      const page = which==="history" ? historyPage : livePage;
+      const pagesEl = which==="history" ? $("#history-pages") : $("#live-pages");
+      const prevEl  = which==="history" ? $("#history-prev") : $("#live-prev");
+      const nextEl  = which==="history" ? $("#history-next") : $("#live-next");
+      const infoEl  = which==="history" ? $("#history-page-info") : $("#live-page-info");
+
+      const setPage = (p)=>{
+        if(which==="history"){ historyPage=Math.min(Math.max(1,p), totalPages); renderTable("history-tbody", historyData, true); }
+        else{ livePage=Math.min(Math.max(1,p), totalPages); renderTable("live-tbody", liveData, false); }
+      };
+
+      pagesEl.innerHTML = "";
+      pagesEl.appendChild(makePageButtons(pagesEl, totalPages, page, setPage));
+      prevEl.onclick = ()=> setPage(page-1);
+      nextEl.onclick = ()=> setPage(page+1);
+      infoEl.textContent = `Page ${page} of ${totalPages}`;
+    }
+
+    function renderTable(tbodyId, data, isHistory=false, highlightMap=new Map()){
+      const tableKey = isHistory ? "history" : "live";
+      const cfg = sortConfig[tableKey];
+      const tbody = document.getElementById(tbodyId);
+      tbody.innerHTML = "";
+
+      const search = (isHistory ? $("#history-search") : $("#live-search")).value.trim().toLowerCase();
+      const filtered = search
+        ? data.filter(row => Object.values(row).some(v => String(v).toLowerCase().includes(search)))
+        : data;
+
+      const sorted = sortData(filtered, cfg);
+      const page = isHistory ? historyPage : livePage;
+      const start = (page-1)*pageSize;
+      const paged = sorted.slice(start, start + pageSize);
+
+      paged.forEach(item=>{
+        const tr = document.createElement("tr");
+        const stockCell = `<a href="${tvLink(item.stock)}" target="_blank" style="color:inherit;text-decoration:none">${item.stock}</a>`;
+        tr.innerHTML = `
+          <td>${item.time_ist ?? ""}</td>
+          <td>${stockCell}</td>
+          <td>${item.count ?? ""}</td>
+          <td>${item.trigger_price ?? ""}</td>
+        `;
+        if(!isHistory && highlightMap.has(item.stock)){
+          const t = highlightMap.get(item.stock);
+          tr.classList.add(t==="new" ? "highlight-new" : "highlight-update");
+          setTimeout(()=> tr.classList.remove("highlight-new","highlight-update"), 60000);
+        }
+        tbody.appendChild(tr);
+      });
+
+      // update pagination + counts
+      renderPagination(tableKey, filtered.length);
+      updateCount(isHistory, filtered.length);
+    }
+
+    function upsertLiveDelta(delta){
+      const byStock = new Map(liveData.map(x=>[x.stock, x]));
+      delta.forEach(row=>{
+        if(byStock.has(row.stock)){
+          Object.assign(byStock.get(row.stock), row);
+        }else{
+          liveData.push(row);
+        }
+      });
+    }
+
+    /* ===== CSV / Copy / Clear ===== */
+    function downloadCSV(isHistory=false){
+      const data = isHistory ? historyData : liveData;
+      if(!data.length){ showToast("No data to download","update","ℹ️"); return; }
+      const headers = ["Time(IST)","Stock","Count","Price"];
+      const rows = data.map(d=>[d.time_ist,d.stock,d.count,d.trigger_price]);
+      const csv = [headers.join(","), ...rows.map(r=>r.join(","))].join("\n");
+      const blob = new Blob([csv],{type:"text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href=url; a.download = isHistory ? "history_stocks.csv" : "live_stocks.csv";
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function copyToTV(){
+      if(!liveData.length){ showToast("No live stocks to copy","update","ℹ️"); return; }
+      const list = liveData.map(x=>x.stock).join(",");
+      navigator.clipboard.writeText(list).then(()=> showToast("Copied to clipboard","new","✅"));
+    }
+
+    function clearLive(){
+      fetch("/clear-live",{method:"POST"}).finally(()=>{
+        liveData = [];
+        livePage = 1;
+        renderTable("live-tbody", liveData, false);
+        showToast("Cleared Live records","update","🗑️");
+      });
+    }
+    function clearHistory(){
+      fetch("/clear-history",{method:"POST"}).finally(()=>{
+        historyData = [];
+        historyPage = 1;
+        renderTable("history-tbody", historyData, true);
+        showToast("Cleared History records","update","🗑️");
+      });
+    }
+
+    /* ===== Tabs ===== */
+    $$(".tab-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        $$(".tab-btn").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        const tab = btn.dataset.tab;
+        $$(".tab-panel").forEach(p=>p.classList.remove("active"));
+        document.getElementById("tab-"+tab).classList.add("active");
+        if(tab==="live") renderTable("live-tbody", liveData, false);
+        else renderTable("history-tbody", historyData, true);
+      });
+    });
+
+    /* ===== Sort headers ===== */
+    $$("#live-table thead th, #history-table thead th").forEach(th=>{
+      th.addEventListener("click", ()=>{
+        const tableId = th.closest("table").id;
+        const key = tableId.startsWith("live") ? "live" : "history";
+        const col = th.dataset.col;
+        const cfg = sortConfig[key];
+        if(cfg.column === col) cfg.direction = (cfg.direction==="asc"?"desc":"asc");
+        else { cfg.column = col; cfg.direction = "asc"; }
+        if(key==="live") renderTable("live-tbody", liveData, false);
+        else renderTable("history-tbody", historyData, true);
+      });
+    });
+
+    /* ===== Search ===== */
+    $("#live-search").addEventListener("input", ()=>{
+      livePage = 1;
+      renderTable("live-tbody", liveData, false);
+    });
+    $("#history-search").addEventListener("input", ()=>{
+      historyPage = 1;
+      renderTable("history-tbody", historyData, true);
+    });
+
+    /* ===== Action buttons ===== */
+    $("#btn-dl-live").addEventListener("click", ()=> downloadCSV(false));
+    $("#btn-dl-history").addEventListener("click", ()=> downloadCSV(true));
+    $("#btn-copy-tv").addEventListener("click", copyToTV);
+    $("#btn-clear-live").addEventListener("click", clearLive);
+    $("#btn-clear-history").addEventListener("click", clearHistory);
+
+    /* ===== WebSocket ===== */
+    (function initWS(){
+      const loc = window.location;
+      const proto = loc.protocol === "https:" ? "wss" : "ws";
+      const ws = new WebSocket(`${proto}://${loc.host}`);
+
+      const chip = document.getElementById("conn-chip");
+      const lastUpdateEl = document.getElementById("last-update");
+
+      function setConn(status){
+        chip.textContent = status.text;
+        chip.classList.remove("ok","bad");
+        if(status.state==="ok") chip.classList.add("ok");
+        if(status.state==="bad") chip.classList.add("bad");
+      }
+
+      ws.onopen = ()=>{ setConn({text:"● Connected", state:"ok"}); showToast("Connected","new","✅"); };
+      ws.onclose = ()=>{ setConn({text:"● Disconnected", state:"bad"}); showToast("Disconnected","update","🔌"); };
+      ws.onerror = ()=>{ setConn({text:"● Error", state:"bad"}); showToast("WebSocket error","update","⚠️"); };
+
+      ws.onmessage = (evt)=>{
+        const msg = JSON.parse(evt.data);
+        if(msg.type === "init"){
+          liveData = Array.isArray(msg.liveStocks) ? msg.liveStocks : [];
+          historyData = Array.isArray(msg.historyStocks) ? msg.historyStocks : [];
+          livePage = historyPage = 1;
+          renderTable("live-tbody", liveData, false);
+          renderTable("history-tbody", historyData, true);
+        } else if (msg.type === "delta" && Array.isArray(msg.liveDelta)){
+          const highlight = new Map();
+          msg.liveDelta.forEach(it=>{
+            const existed = liveData.some(d=> d.stock === it.stock);
+            const type = existed ? "update" : "new";
+            highlight.set(it.stock, type);
+            showToast(`${existed ? "Updated" : "New"}: ${it.stock} @ ${it.trigger_price} • ${it.time_ist}`, type, existed ? "🔄" : "🆕");
+          });
+          upsertLiveDelta(msg.liveDelta);
+          renderTable("live-tbody", liveData, false, highlight);
+          lastUpdateEl.textContent = "Last update: " + new Date().toLocaleTimeString();
+        }
+      };
+    })();
+  </script>
+</body>
+</html>
