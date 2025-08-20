@@ -235,9 +235,9 @@
           <thead>
             <tr>
               <th data-col="ts_ist">Time <span class="si">↓</span></th>
-              <th data-col="stock">Stock</th>
-              <th data-col="count">Count</th>
-              <th data-col="trigger_price">Price</th>
+              <th data-col="stock">Stock <span class="si">↕</span></th>
+              <th data-col="count">Count <span class="si">↕</span></th>
+              <th data-col="trigger_price">Price <span class="si">↕</span></th>
             </tr>
           </thead>
           <tbody id="live-tbody"></tbody>
@@ -422,7 +422,20 @@
         }
       });
     }
+function updateSortIcons(tableId, cfg) {
+  document.querySelectorAll(`#${tableId} thead th`).forEach(th => {
+    const span = th.querySelector(".si");
+    if (!span) return;
 
+    if (th.dataset.col === cfg.column) {
+      span.textContent = cfg.direction === "asc" ? "↑" : "↓";
+      span.style.color = "var(--accent)";
+    } else {
+      span.textContent = "↕"; // neutral
+      span.style.color = "var(--text-dim)";
+    }
+  });
+}
     /* ===== CSV / Copy / Clear ===== */
     function downloadCSV(isHistory=false){
       const data = isHistory ? historyData : liveData;
@@ -483,10 +496,17 @@
         const cfg = sortConfig[key];
         if(cfg.column === col) cfg.direction = (cfg.direction==="asc"?"desc":"asc");
         else { cfg.column = col; cfg.direction = "asc"; }
-        if(key==="live") renderTable("live-tbody", liveData, false);
-        else renderTable("history-tbody", historyData, true);
+         if(key==="live") {
+            renderTable("live-tbody", liveData, false);
+            updateSortIcons("live-table", cfg);
+        } 
+        else {
+            renderTable("history-tbody", historyData, true);
+            updateSortIcons("history-table", cfg);
+        }
       });
     });
+    
 
     /* ===== Search ===== */
     $("#live-search").addEventListener("input", ()=>{
@@ -547,6 +567,8 @@
         }
       };
     })();
+    updateSortIcons("live-table", sortConfig.live);
+    updateSortIcons("history-table", sortConfig.history);
   </script>
 </body>
 </html>
