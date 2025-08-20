@@ -44,9 +44,9 @@
       backdrop-filter:saturate(150%) blur(10px);
       border-bottom:1px solid var(--border);
     }
-    header h1{ margin:0; font-size:18px; letter-spacing:.3px; color:var(--accent) }
+    header h1{ margin:0; font-size:25px; letter-spacing:.3px; color:var(--accent) }
     .header-right{ display:flex; gap:14px; align-items:center; }
-    .chip{ font-size:12px; padding:6px 10px; border:1px solid var(--border); border-radius:999px; color:var(--text-dim); background:var(--card) }
+    .chip{ font-size:15px; padding:6px 10px; border:1px solid var(--border); border-radius:999px; color:var(--text-dim); background:var(--card) }
     .chip.ok{ color:var(--success); border-color:#2a6037 }
     .chip.bad{ color:var(--danger); border-color:#5c2a2a }
     .chip.time{ color:var(--text-dim) }
@@ -100,18 +100,18 @@
     thead th{
       position:sticky; top:0; z-index:1;
       background:#121822; color:var(--text-dim);
-      font-weight:600; font-size:12px; letter-spacing:.2px;
+      font-weight:600; font-size:15px; letter-spacing:.2px;
       padding:10px 12px; border-bottom:1px solid var(--border);
       user-select:none; cursor:pointer;
       text-align:left; /* ensure left align */
     }
     tbody td{
-      padding:10px 12px; border-bottom:1px solid var(--border); font-size:13px;
+      padding:10px 15px; border-bottom:1px solid var(--border); font-size:13px;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
       text-align:left; /* ensure left align */
     }
     tbody tr{ transition:background .2s ease, box-shadow .2s ease }
-    tbody tr:hover{ background:#161d28 }
+    tbody tr:hover{ background:#212a3a }
     .count-badge{ font-size:12px; color:var(--text-dim) }
 
     /* ===== Row highlight (60s) ===== */
@@ -164,7 +164,7 @@
     }
     .page-btn:hover{ background:var(--accent-hover); color:#fff; border-color:var(--accent-hover) }
     .page-btn.active{ background:var(--accent); color:#fff; border-color:var(--accent) }
-    .page-info{ color:var(--text-dim); font-size:12px; margin-right:6px }
+    .page-info{ color:var(--text-dim); font-size:15px; margin-right:6px }
 
     @media (max-width:700px){
       .actions{ width:100% }
@@ -274,7 +274,7 @@
     };
 
     /* Pagination */
-    const pageSize = 10;
+    const pageSize = 14;
     let livePage = 1, historyPage = 1;
 
     /* ===== Utilities ===== */
