@@ -418,6 +418,59 @@
           justify-content: center;
         }
       }
+      /* ===== Highlight Grid ===== */
+      .highlight-grid {
+        background: var(--card-2);
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        padding: 16px;
+        text-align: center;
+      }
+
+      .highlight-grid h3 {
+        margin-top: 0;
+        color: var(--accent-2);
+        font-size: 18px;
+        margin-bottom: 12px;
+      }
+
+      .highlight-items {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+      }
+
+      .highlight-item {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 10px;
+        box-shadow: var(--shadow);
+        transition: all 0.2s ease;
+      }
+
+      .highlight-item:hover {
+        transform: translateY(-3px);
+        border-color: var(--accent);
+      }
+
+      .highlight-item a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+        display: block;
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+
+      .highlight-item a:hover {
+        text-decoration: underline;
+      }
+
+      .highlight-item .count {
+        color: var(--text-dim);
+        font-size: 14px;
+      }
     </style>
   </head>
   <body>
@@ -452,6 +505,12 @@
             <button id="btn-dl-live" class="btn">Download CSV</button>
             <button id="btn-clear-live" class="btn">Clear Live</button>
           </div>
+        </div>
+
+        <!-- 🔹 Highlight Grid (Top 5 Stocks) -->
+        <div id="highlight-grid" class="highlight-grid">
+          <h3>🔥 Top 5 Stocks by Count</h3>
+          <div id="highlight-items" class="highlight-items"></div>
         </div>
         <div class="table-wrap">
           <table id="live-table">
@@ -633,6 +692,7 @@
           } else {
             livePage = Math.min(Math.max(1, p), totalPages);
             renderTable("live-tbody", liveData, false);
+            renderHighlightGrid();
           }
         };
 
@@ -773,6 +833,7 @@
           liveData = [];
           livePage = 1;
           renderTable("live-tbody", liveData, false);
+          renderHighlightGrid();
           showToast("Cleared Live records", "update", "🗑️");
         });
       }
@@ -793,8 +854,10 @@
           const tab = btn.dataset.tab;
           $$(".tab-panel").forEach((p) => p.classList.remove("active"));
           document.getElementById("tab-" + tab).classList.add("active");
-          if (tab === "live") renderTable("live-tbody", liveData, false);
-          else renderTable("history-tbody", historyData, true);
+          if (tab === "live") {
+            renderTable("live-tbody", liveData, false);
+            renderHighlightGrid();
+          } else renderTable("history-tbody", historyData, true);
         });
       });
 
@@ -813,6 +876,7 @@
           }
           if (key === "live") {
             renderTable("live-tbody", liveData, false);
+            renderHighlightGrid();
             updateSortIcons("live-table", cfg);
           } else {
             renderTable("history-tbody", historyData, true);
@@ -825,10 +889,12 @@
       $("#live-search").addEventListener("input", () => {
         livePage = 1;
         renderTable("live-tbody", liveData, false);
+        renderHighlightGrid();
       });
       $("#history-search").addEventListener("input", () => {
         historyPage = 1;
         renderTable("history-tbody", historyData, true);
+        renderHighlightGrid();
       });
 
       /* ===== Action buttons ===== */
@@ -877,6 +943,7 @@
             livePage = historyPage = 1;
             renderTable("live-tbody", liveData, false);
             renderTable("history-tbody", historyData, true);
+            renderHighlightGrid();
           } else if (msg.type === "delta" && Array.isArray(msg.liveDelta)) {
             const highlight = new Map();
             msg.liveDelta.forEach((it) => {
@@ -893,6 +960,7 @@
             });
             upsertLiveDelta(msg.liveDelta);
             renderTable("live-tbody", liveData, false, highlight);
+            renderHighlightGrid();
             lastUpdateEl.textContent =
               "Last update: " + new Date().toLocaleTimeString();
           }
@@ -904,6 +972,30 @@
         if (Notification.permission === "default") {
           Notification.requestPermission();
         }
+      }
+      function renderHighlightGrid() {
+        const grid = document.getElementById("highlight-items");
+        if (!grid || !liveData.length) {
+          grid.innerHTML = "<p style='color:var(--text-dim)'>No data</p>";
+          return;
+        }
+
+        // Sort by count desc and pick top 5
+        const top5 = [...liveData]
+          .sort((a, b) => (b.count || 0) - (a.count || 0))
+          .slice(0, 5);
+
+        grid.innerHTML = top5
+          .map(
+            (s) => `
+      <div class="highlight-item">
+        <a href="https://in.tradingview.com/chart/?symbol=NSE:${
+          s.stock
+        }" target="_blank">${s.stock}</a>
+        <div class="count">Count: ${s.count ?? 0}</div>
+      </div>`
+          )
+          .join("");
       }
     </script>
     <audio
