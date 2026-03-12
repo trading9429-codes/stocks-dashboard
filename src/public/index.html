@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>Stock Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <style>
 :root {
   --bg: #f9f9f9;
@@ -14,14 +14,14 @@
   --tab-active-color: #fff;
   --table-bg: #fff;
   --table-header-bg: #f4f4f4;
-  --highlight-bg: #d4fcd4;
+  --highlight-new: #add8e6;   /* light blue */
+  --highlight-update: #fff3b0;
   --button-bg: #3498db;
   --button-hover: #2980b9;
   --text-color: #333;
   --toast-bg: #4caf50;
   --toast-color: #fff;
 }
-
 body.dark {
   --bg: #1e1e2f;
   --header-bg: #0d1117;
@@ -31,120 +31,114 @@ body.dark {
   --tab-active-color: #fff;
   --table-bg: #2a2a3c;
   --table-header-bg: #3a3a50;
-  --highlight-bg: #3a5f3a;
+  --highlight-new: #2a4d6f;   /* darker light blue for dark mode */
+  --highlight-update: #5a5430; /* yellowish-brown */
   --button-bg: #4c8cff;
   --button-hover: #3670d6;
   --text-color: #ddd;
   --toast-bg: #76c776;
 }
-
-body { 
-  font-family: "Segoe UI", Arial, sans-serif; 
-  margin:0; 
-  background:var(--bg); 
-  color:var(--text-color); 
-  transition: background 0.3s, color 0.3s;
-}
-
-header { 
-  background:var(--header-bg); 
-  color:var(--header-color); 
-  padding:15px 20px; 
-  display:flex; 
-  justify-content:space-between; 
-  align-items:center; 
-  box-shadow:0 2px 6px rgba(0,0,0,0.2);
-  border-bottom-left-radius:10px;
-  border-bottom-right-radius:10px;
-}
-
-header h1{ margin:0; font-size:1.8em; }
-
-.tabs { 
-  display:flex; 
-  justify-content:center; 
-  margin-top:20px; 
-  flex-wrap:wrap; 
-  gap:5px;
-}
-
-.tab { 
-  padding:10px 20px; 
-  cursor:pointer; 
-  background:var(--tab-bg); 
-  border-radius:5px 5px 0 0; 
-  text-align:center;
-  font-weight:500;
-  transition:all 0.3s;
-}
-
-.tab.active { 
-  background:var(--tab-active-bg); 
-  color:var(--tab-active-color); 
-  box-shadow:0 3px 8px rgba(0,0,0,0.2);
-}
-
-.tab-content { 
-  display:none; 
-  padding:15px; 
-  max-width:1000px; 
-  margin:auto; 
-  background:var(--table-bg); 
-  border-radius:0 5px 5px 5px; 
-  box-shadow:0 2px 12px rgba(0,0,0,0.1); 
-  overflow-x:auto; 
-  margin-bottom:20px;
-  transition: all 0.3s;
-}
-
+body { font-family: "Segoe UI", Arial, sans-serif; margin:0; background:var(--bg); color:var(--text-color); transition: background 0.3s, color 0.3s; }
+header { background:var(--header-bg); color:var(--header-color); padding:15px 20px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 6px rgba(0,0,0,0.2); border-bottom-left-radius:10px; border-bottom-right-radius:10px;}
+header h1{ margin:0; font-size:1.6em; }
+.tabs { display:flex; justify-content:center; margin-top:20px; flex-wrap:wrap; gap:5px;}
+.tab { padding:10px 20px; cursor:pointer; background:var(--tab-bg); border-radius:5px 5px 0 0; text-align:center; font-weight:500; transition:all 0.3s; }
+.tab.active { background:var(--tab-active-bg); color:var(--tab-active-color); box-shadow:0 3px 8px rgba(0,0,0,0.2); }
+.tab-content { display:none; padding:15px; max-width:1100px; margin:auto; background:var(--table-bg); border-radius:0 5px 5px 5px; box-shadow:0 2px 12px rgba(0,0,0,0.1); overflow-x:auto; margin-bottom:20px; transition: all 0.3s; }
 .tab-content.active { display:block; }
-
-.table-wrapper { max-height:400px; overflow:auto; border-radius:5px; }
-
+.table-wrapper { max-height: 650px; overflow: auto; border-radius: 5px; }
 table { width:100%; border-collapse:collapse; table-layout:fixed; background:var(--table-bg); border-radius:5px; }
-thead th { position: sticky; top:0; background:var(--table-header-bg); z-index:1; cursor:pointer; user-select:none; padding:12px; }
-th, td { padding:10px; border-bottom:1px solid #ddd; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition: background 0.3s; }
-tr.highlight { background-color:var(--highlight-bg); animation:fadeHighlight 2s ease forwards; }
-@keyframes fadeHighlight { 0%{opacity:0.8;}100%{opacity:1;} }
+thead th { position: sticky; top:0; background:var(--table-header-bg); z-index:1; cursor:pointer; user-select:none; padding:10px; }
+th, td { padding:8px; border-bottom:1px solid #ddd; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition: background 0.3s; }
+tr.highlight-new {
+  animation: fadeHighlightNew 7s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+tr.highlight-update {
+  animation: fadeHighlightUpdate 7s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+@keyframes fadeHighlightNew {
+  0%   { background-color: var(--highlight-new); }
+  80%  { background-color: var(--highlight-new); } /* stay strong most of the time */
+  100% { background-color: var(--table-bg); }      /* smooth fade at the end */
+}
+
+@keyframes fadeHighlightUpdate {
+  0%   { background-color: var(--highlight-update); }
+  80%  { background-color: var(--highlight-update); }
+  100% { background-color: var(--table-bg); }
+}
+
 tr td a { color:var(--text-color); text-decoration:none; font-weight:500; }
 tr td a:hover { text-decoration:underline; }
-
 .search-container { margin-top:10px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
 .search-container input { padding:8px 10px; font-size:1em; flex:1; min-width:150px; border-radius:5px; border:1px solid #ccc; }
 button { padding:6px 12px; cursor:pointer; background:var(--button-bg); color:white; border:none; border-radius:5px; transition:all 0.3s; }
 button:hover { background:var(--button-hover); }
 
-.toast-container { 
-  position: fixed; 
-  top: 20px; 
-  right: 20px; 
-  z-index: 9999; 
-  display: flex; 
-  flex-direction: column-reverse; 
-  gap: 10px; 
-  max-width: 300px;
-}
-
-.toast { 
-  background: var(--toast-bg); 
-  color: var(--toast-color); 
-  padding: 12px 18px; 
-  border-radius: 8px; 
-  opacity: 0; 
-  transform: translateX(120%) translateY(20px); 
-  transition: transform 0.5s cubic-bezier(0.25,1,0.5,1), opacity 0.5s ease;
+.toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column-reverse; gap: 10px; max-width: 320px; }
+.toast {
+  background: var(--toast-bg);
+  color: var(--toast-color);
+  padding: 12px 14px;
+  border-radius: 8px;
+  opacity: 0;
+  transform: translateX(120%) translateY(20px) scale(0.9); /* start slightly smaller */
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   cursor: pointer;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color: #fff;  /* force text white */
 }
-.toast.show { 
-  opacity: 1; 
-  transform: translateX(0) translateY(0); 
+.toast.show {
+  animation: toastPop 7s forwards; /* match row highlight duration */
+}
+/* Toast types with fade colors matching highlights */
+.toast.new {
+  background-color: var(--highlight-new);
+  color: #fff;  /* white text */
+  animation-name: toastPop;
 }
 
-th .resizer { display:inline-block; width:5px; height:100%; position:absolute; right:0; top:0; cursor:col-resize; user-select:none; }
-th { position:relative; }
+.toast.update {
+  background-color: var(--highlight-update);
+  color: #fff;  /* white text */
+  animation-name: toastPop;
+}
+.toast.default { background: #333; color:#fff; }
+@keyframes toastFade {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }       /* fade in quickly */
+  85%  { opacity: 1; }       /* stay visible */
+  100% { opacity: 0; }       /* fade out smoothly */
+}
 
-.sort-indicator { margin-left:5px; font-size:0.8em; }
+@keyframes toastFadeNew {
+  0%   { opacity: 0; background-color: var(--highlight-new); }
+  10%  { opacity: 1; background-color: var(--highlight-new); }
+  85%  { opacity: 1; background-color: var(--highlight-new); }
+  100% { opacity: 0; background-color: var(--table-bg); }
+}
+
+@keyframes toastFadeUpdate {
+  0%   { opacity: 0; background-color: var(--highlight-update); }
+  10%  { opacity: 1; background-color: var(--highlight-update); }
+  85%  { opacity: 1; background-color: var(--highlight-update); }
+  100% { opacity: 0; background-color: var(--table-bg); }
+}
+
+/* Pop + fade animation */
+@keyframes toastPop {
+  0%   { opacity: 0; transform: translateX(120%) translateY(20px) scale(0.9); }
+  10%  { opacity: 1; transform: translateX(0) translateY(0) scale(1.05); } /* slightly bigger */
+  15%  { transform: translateX(0) translateY(0) scale(1); }               /* settle at normal size */
+  85%  { opacity: 1; transform: translateX(0) translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateX(0) translateY(0) scale(1); }
+}
+
+
+.sort-indicator { margin-left:4px; font-size:0.8em; }
 
 @media(max-width:600px){
   th, td { font-size:0.85em; padding:6px; }
@@ -153,205 +147,255 @@ th { position:relative; }
   .search-container input{ font-size:0.85em; padding:6px;}
   button{ padding:5px 8px; font-size:0.85em;}
 }
+.table-meta {
+  font-size: 0.9em;
+  color: var(--text-color);
+  margin: 5px 0;
+  text-align: right;
+}
 </style>
 </head>
 <body class="dark">
 <header>
   <h1>Stock Dashboard</h1>
-  <button onclick="toggleTheme()">Toggle Dark Mode</button>
+  <button onclick="document.body.classList.toggle('dark')">Toggle Dark Mode</button>
 </header>
 
 <div class="tabs">
-    <div class="tab active" data-tab="live">Live Stocks</div>
-    <div class="tab" data-tab="history">History</div>
+  <div class="tab active" data-tab="live">Live Stocks</div>
+  <div class="tab" data-tab="history">History</div>
 </div>
 
-<div id="live" class="tab-content">
-    <div class="search-container">
-        <input id="live-search" placeholder="Search Live Stocks...">
-        <div>
-            <button onclick="clearLive()">Clear Live</button>
-            <button onclick="downloadCSV()">Download CSV</button>
-            <button onclick="copyToTV()">Copy to TV</button>
-        </div>
+<div id="live" class="tab-content active">
+  <div class="search-container">
+    <input id="live-search" placeholder="Search Live Stocks..." />
+    <div>
+      <button onclick="clearLive()">Clear Live</button>
+      <button onclick="downloadCSV(false)">Download CSV</button>
+      <button onclick="copyToTV()">Copy to TV</button>
     </div>
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th data-col="datetime">Time<span class="sort-indicator"></span><div class="resizer"></div></th>
-                    <th data-col="stock">Stock<span class="sort-indicator"></span><div class="resizer"></div></th>
-                    <th data-col="count">Count<span class="sort-indicator"></span><div class="resizer"></div></th>
-                    <th data-col="trigger_price">Price<span class="sort-indicator"></span><div class="resizer"></div></th>
-                </tr>
-            </thead>
-            <tbody id="live-tbody"></tbody>
-        </table>
-    </div>
+  </div>
+  <div class="table-wrapper">
+    <div class="table-meta">Records: <span id="live-count">0</span></div>
+    <table id="live-table">
+      <thead>
+        <tr>
+          <th data-col="ts_ist">Time <span class="sort-indicator">↓</span></th>
+          <th data-col="stock">Stock<span class="sort-indicator"></span></th>
+          <th data-col="count">Count<span class="sort-indicator"></span></th>
+          <th data-col="trigger_price">Price<span class="sort-indicator"></span></th>
+        </tr>
+      </thead>
+      <tbody id="live-tbody"></tbody>
+    </table>
+  </div>
 </div>
 
 <div id="history" class="tab-content">
-    <div class="search-container">
-        <input id="history-search" placeholder="Search History...">
-        <div>
-            <button onclick="clearHistory()">Clear History</button>
-            <button onclick="downloadCSV(true)">Download CSV</button>
-        </div>
+  <div class="search-container">
+    <input id="history-search" placeholder="Search History..." />
+    <div>
+      <button onclick="clearHistory()">Clear History</button>
+      <button onclick="downloadCSV(true)">Download CSV</button>
     </div>
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th data-col="datetime">Time<span class="sort-indicator"></span><div class="resizer"></div></th>
-                    <th data-col="stock">Stock<span class="sort-indicator"></span><div class="resizer"></div></th>
-                    <th data-col="count">Count<span class="sort-indicator"></span><div class="resizer"></div></th>
-                    <th data-col="trigger_price">Price<span class="sort-indicator"></span><div class="resizer"></div></th>
-                </tr>
-            </thead>
-            <tbody id="history-tbody"></tbody>
-        </table>
-    </div>
+  </div>
+  <div class="table-wrapper">
+    <div class="table-meta">Records: <span id="history-count">0</span></div>
+    <table id="history-table">
+      <thead>
+        <tr>
+          <th data-col="ts_ist">Time <span class="sort-indicator">↓</span></th>
+          <th data-col="stock">Stock<span class="sort-indicator"></span></th>
+          <th data-col="count">Count<span class="sort-indicator"></span></th>
+          <th data-col="trigger_price">Price<span class="sort-indicator"></span></th>
+        </tr>
+      </thead>
+      <tbody id="history-tbody"></tbody>
+    </table>
+  </div>
 </div>
 
 <div class="toast-container" id="toast-container"></div>
 
 <script>
-// Tabs
-const tabs=document.querySelectorAll('.tab');
-const tabContents=document.querySelectorAll('.tab-content');
-tabs.forEach(tab=>tab.addEventListener('click',()=>{
-    tabs.forEach(t=>t.classList.remove('active'));
-    tab.classList.add('active');
-    tabContents.forEach(tc=>tc.classList.remove('active'));
-    document.getElementById(tab.dataset.tab).classList.add('active');
-}));
-
-// Dark mode
-function toggleTheme(){ document.body.classList.toggle('dark'); }
-
-// Toast system
-function showToast(message){
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-    container.appendChild(toast);
-    void toast.offsetWidth;
-    toast.classList.add('show');
-    const removeToast = () => { toast.classList.remove('show'); setTimeout(()=>toast.remove(),500); };
-    setTimeout(removeToast,4000);
-    toast.addEventListener('click', removeToast);
-}
-
-// Data rendering
-let liveData=[], historyData=[];
-function renderTable(tbodyId,data,isHistory=false,newStocks=[]){
-    const tbody=document.getElementById(tbodyId);
-    tbody.innerHTML="";
-    const searchInput=document.getElementById(isHistory?"history-search":"live-search").value.toLowerCase();
-    data.forEach(item=>{
-        if(searchInput && !Object.values(item).some(v=>String(v).toLowerCase().includes(searchInput))) return;
-        const tr=document.createElement("tr");        
-        const stockLink=`<a href="https://in.tradingview.com/chart/?symbol=NSE:${item.stock}" target="_blank">${item.stock}</a>`;
-        const displayTime = formatTimeToAMPM(item.datetime);
-        tr.innerHTML=`<td>${displayTime}</td><td>${stockLink}</td><td>${item.count}</td><td>${item.trigger_price}</td>`;
-        if(!isHistory && item.count===1){ 
-            tr.classList.add('highlight'); 
-            setTimeout(()=>tr.classList.remove('highlight'),5000); 
-        }
-        if(!isHistory && newStocks.includes(item.stock)) showToast(`New Stock Triggered: ${item.stock}`);
-        tbody.appendChild(tr);
-    });
-    if(!isHistory){ const wrapper=tbody.closest('.table-wrapper'); wrapper.scrollTop=wrapper.scrollHeight; }
-}
-
-// CSV download
-function downloadCSV(isHistory=false){
-    const data = (isHistory ? historyData : liveData).slice();
-    if(!data.length) return showToast("No data to download!");
-    const headers = ["Time","Stock","Count","Price"];
-    const rows = data.map(d=>[d.datetime, d.stock, d.count, d.trigger_price]);
-    let csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r=>r.join(","))].join("\n");
-    const link = document.createElement("a");
-    link.setAttribute("href", encodeURI(csvContent));
-    link.setAttribute("download", isHistory ? "history_stocks.csv" : "live_stocks.csv");
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-}
-
-// WebSocket
-const loc = window.location;
-const wsProtocol = loc.protocol === "https:" ? "wss" : "ws";
-const ws = new WebSocket(`${wsProtocol}://${loc.host}`);
-ws.onmessage=(msg)=>{
-    const {liveStocks,historyStocks,newStocks=[]}=JSON.parse(msg.data);
-    liveData=liveStocks; 
-    historyData=historyStocks;
-    renderTable("live-tbody",liveData,false,newStocks.map(s=>s.stock));
-    renderTable("history-tbody",historyData,true);
+/* ---------- State ---------- */
+let liveData = [];        // rows with { stock, trigger_price, count, time_ist, ts_ist, ... }
+let historyData = [];
+const sortConfig = {
+  live: { column: "ts_ist", direction: "desc" },
+  history: { column: "ts_ist", direction: "desc" }
 };
 
-// Search
-document.getElementById("live-search").addEventListener("input",()=>renderTable("live-tbody",liveData));
-document.getElementById("history-search").addEventListener("input",()=>renderTable("history-tbody",historyData,true));
-
-// Clear
-function clearLive(){ fetch("/clear-live",{method:"POST"}); }
-function clearHistory(){ fetch("/clear-history",{method:"POST"}); }
-
-// Sort
-document.querySelectorAll("th[data-col]").forEach(th=>{
-    const indicator = th.querySelector(".sort-indicator");
-    th.addEventListener("click",()=>{
-        const col=th.dataset.col;
-        const table=th.closest(".tab-content").id;
-        let data=table==="live"?liveData:historyData;
-        const asc=!th.asc; th.asc=asc;
-        data.sort((a,b)=>{
-            if(col==="count"||col==="trigger_price") return asc?a[col]-b[col]:b[col]-a[col];
-            return asc?String(a[col]).localeCompare(String(b[col])):String(b[col]).localeCompare(String(a[col]));
-        });
-        // reset indicators
-        document.querySelectorAll(`#${table} th .sort-indicator`).forEach(s=>s.textContent='');
-        indicator.textContent = asc ? '↑' : '↓';
-        renderTable(table+"-tbody",data,table==="history");
-    });
-});
-
-// Column resize
-document.querySelectorAll('th').forEach(th=>{
-    const resizer=th.querySelector('.resizer');
-    let startX,startWidth;
-    resizer.addEventListener('mousedown',e=>{
-        startX=e.pageX; startWidth=th.offsetWidth;
-        const onMouseMove=em=>{ th.style.width=startWidth+(em.pageX-startX)+'px'; };
-        const onMouseUp=()=>{ document.removeEventListener('mousemove',onMouseMove); document.removeEventListener('mouseup',onMouseUp); };
-        document.addEventListener('mousemove',onMouseMove);
-        document.addEventListener('mouseup',onMouseUp);
-    });
-});
-// Helper to format "YYYY-MM-DD HH:MM:SS" to "h:mm am/pm"
-function formatTimeToAMPM(datetimeStr) {
-    if(!datetimeStr) return "";
-    const date = new Date(datetimeStr);
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2,'0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    return `${hours}:${minutes} ${ampm}`;
+/* ---------- Helpers ---------- */
+function showToast(message, type="default", icon="") {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+  container.appendChild(toast);
+  void toast.offsetWidth; // reflow
+  toast.classList.add('show');
+  const remove = () => { toast.classList.remove('show'); setTimeout(()=>toast.remove(), 500); };
+  setTimeout(remove, 60000);// 1 minute
+  toast.addEventListener('click', remove);
 }
-// Copy live stocks to clipboard as comma-separated list
+function tradingViewLink(sym){ return `https://in.tradingview.com/chart/?symbol=NSE:${sym}`; }
+
+function sortTableData(data, config) {
+  const sorted = [...data].sort((a, b) => {
+    let A = a[config.column], B = b[config.column];
+    if (config.column === "ts_ist") {
+      return (config.direction === "asc" ? 1 : -1) * ((A ?? 0) - (B ?? 0));
+    }
+    if (config.column === "count" || config.column === "trigger_price") {
+      return (config.direction === "asc" ? 1 : -1) * ((A ?? 0) - (B ?? 0));
+    }
+    A = String(A ?? ""); B = String(B ?? "");
+    return (config.direction === "asc" ? 1 : -1) * A.localeCompare(B);
+  });
+  return sorted;
+}
+
+/* ---------- Rendering ---------- */
+function renderTable(tbodyId, data, isHistory=false, highlightMap=new Map()) {
+  const tableType = isHistory ? "history" : "live";
+  const config = sortConfig[tableType];
+  const tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = "";
+
+  const search = document.getElementById(isHistory ? "history-search" : "live-search")
+                  .value.trim().toLowerCase();
+
+  const filtered = search
+    ? data.filter(row => Object.values(row).some(v => String(v).toLowerCase().includes(search)))
+    : data;
+
+  const sorted = sortTableData(filtered, config);
+
+  sorted.forEach(item => {
+    const tr = document.createElement("tr");
+    const stockLink = `<a href="${tradingViewLink(item.stock)}" target="_blank">${item.stock}</a>`;
+    tr.innerHTML = `<td>${item.time_ist}</td><td>${stockLink}</td><td>${item.count}</td><td>${item.trigger_price}</td>`;
+
+    if (!isHistory && highlightMap.has(item.stock)) {
+      const type = highlightMap.get(item.stock);
+      const cls = (type === "new") ? "highlight-new" : "highlight-update";
+      tr.classList.add(cls);
+      setTimeout(() => tr.classList.remove(cls), 3000);
+    }
+    tbody.appendChild(tr);
+  });
+  document.getElementById(isHistory ? "history-count" : "live-count").textContent = filtered.length;
+}
+
+/* ---------- Incremental updates ---------- */
+function upsertLiveDelta(delta) {
+  const byStock = new Map(liveData.map(x => [x.stock, x]));
+  delta.forEach(row => {
+    if (byStock.has(row.stock)) {
+      Object.assign(byStock.get(row.stock), row);
+    } else {
+      liveData.push(row);
+    }
+  });
+}
+
+/* ---------- CSV & Copy ---------- */
+function downloadCSV(isHistory=false){
+  const data = isHistory ? historyData : liveData;
+  if (!data.length) return showToast("No data to download!", "default", "ℹ️");
+  const headers = ["Time(IST)", "Stock", "Count", "Price"];
+  const rows = data.map(d => [d.time_ist, d.stock, d.count, d.trigger_price]);
+  const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+  const blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = isHistory ? "history_stocks.csv" : "live_stocks.csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
 function copyToTV(){
-    if(!liveData.length) return showToast("No live stocks to copy!");
-    const stockList = liveData.map(item => item.stock).join(",");
-    navigator.clipboard.writeText(stockList).then(()=>{
-        showToast("Copied to clipboard!");
-    }).catch(err=>{
-        showToast("Failed to copy!");
-        console.error(err);
-    });
+  if(!liveData.length) return showToast("No live stocks to copy!", "default", "ℹ️");
+  const stockList = liveData.map(x => x.stock).join(",");
+  navigator.clipboard.writeText(stockList)
+    .then(() => showToast("Copied to clipboard!", "new", "✅"))
+    .catch(() => showToast("Failed to copy!", "default", "⚠️"));
 }
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(tc => tc.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById(tab.dataset.tab).classList.add("active");
+    if (tab.dataset.tab === "live") renderTable("live-tbody", liveData, false);
+    else renderTable("history-tbody", historyData, true);
+  });
+});
+
+/* ---------- Sort (click headers) ---------- */
+document.querySelectorAll("th[data-col]").forEach(th => {
+  const tableId = th.closest("table").id; // live-table / history-table
+  const tableKey = tableId.startsWith("live") ? "live" : "history";
+  th.addEventListener("click", () => {
+    const col = th.dataset.col;
+    const cfg = sortConfig[tableKey];
+    if (cfg.column === col) {
+      cfg.direction = (cfg.direction === "asc" ? "desc" : "asc");
+    } else {
+      cfg.column = col;
+      cfg.direction = "asc";
+    }
+    document.querySelectorAll(`#${tableId} th .sort-indicator`).forEach(si => si.textContent = "");
+    th.querySelector(".sort-indicator").textContent = (cfg.direction === "asc" ? "↑" : "↓");
+    if (tableKey === "live") renderTable("live-tbody", liveData, false);
+    else renderTable("history-tbody", historyData, true);
+  });
+});
+
+/* ---------- Search ---------- */
+document.getElementById("live-search").addEventListener("input", () => renderTable("live-tbody", liveData, false));
+document.getElementById("history-search").addEventListener("input", () => renderTable("history-tbody", historyData, true));
+
+/* ---------- Clear ---------- */
+function clearLive(){ fetch("/clear-live", { method: "POST" }); }
+function clearHistory(){ fetch("/clear-history", { method: "POST" }); }
+
+/* ---------- WebSocket ---------- */
+(function initWS(){
+  const loc = window.location;
+  const wsProtocol = loc.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${wsProtocol}://${loc.host}`);
+
+  ws.onopen = () => showToast("Connected", "new", "✅");
+  ws.onclose = () => showToast("Disconnected", "default", "🔌");
+  ws.onerror = () => showToast("WebSocket error", "default", "⚠️");
+
+  ws.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if (msg.type === "init") {
+      liveData = Array.isArray(msg.liveStocks) ? msg.liveStocks : [];
+      historyData = Array.isArray(msg.historyStocks) ? msg.historyStocks : [];
+      renderTable("live-tbody", liveData, false);
+      renderTable("history-tbody", historyData, true);
+    } else if (msg.type === "delta" && Array.isArray(msg.liveDelta)) {
+      // Build highlight map (new vs update) based on current liveData before upsert
+      const highlightMap = new Map();
+      msg.liveDelta.forEach(it => {
+        const existed = liveData.some(d => d.stock === it.stock);
+        const type = existed ? "update" : "new";
+        const icon = existed ? "🔄" : "🆕";
+        highlightMap.set(it.stock, type);
+        showToast(`${existed ? "Stock Updated" : "New Stock"}: ${it.stock} @ ${it.time_ist}`, type, icon);
+      });
+
+      upsertLiveDelta(msg.liveDelta);
+      renderTable("live-tbody", liveData, false, highlightMap);
+    }
+  };
+})();
 </script>
 </body>
 </html>
