@@ -23,18 +23,19 @@
       --text-dim:    #64748b;
       --text-muted:  #94a3b8;
 
-      --accent:      #00e5a0;   /* teal  — new stock  */
-      --accent-dark: #00b37d;
-      --blue:        #3b82f6;   /* blue  — update     */
+      --accent:      #10b981;   /* emerald — new stock  */
+      --accent-dark: #059669;
+      --blue:        #3b82f6;   /* blue                 */
       --blue-dark:   #2563eb;
       --danger:      #ef4444;
       --danger-dark: #b91c1c;
-      --warn:        #f59e0b;
+      --warn:        #f59e0b;   /* amber — update stock */
+      --warn-dark:   #d97706;
 
-      --new-bg:      rgba(0, 229, 160, 0.14);
-      --new-border:  rgba(0, 229, 160, 0.35);
-      --upd-bg:      rgba(59, 130, 246, 0.14);
-      --upd-border:  rgba(59, 130, 246, 0.35);
+      --new-bg:      rgba(16, 185, 129, 0.35);
+      --new-border:  rgba(16, 185, 129, 0.85);
+      --upd-bg:      rgba(245, 158, 11, 0.35);
+      --upd-border:  rgba(245, 158, 11, 0.85);
 
       --radius:      12px;
       --radius-sm:   8px;
@@ -140,8 +141,32 @@
     .chip.conn-ok .dot  { animation: pulse-green 2s infinite; }
     .chip.market-open .dot { animation: pulse-green 1.5s infinite; }
     @keyframes pulse-green {
-      0%,100% { box-shadow: 0 0 0 0 rgba(0,229,160,0.6); }
-      50%      { box-shadow: 0 0 0 4px rgba(0,229,160,0); }
+      0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.6); }
+      50%      { box-shadow: 0 0 0 4px rgba(16,185,129,0); }
+    }
+
+    .chip.btn-sound {
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+      background: var(--surface-2);
+      color: var(--accent);
+      border-color: rgba(16,185,129,0.35);
+    }
+    .chip.btn-sound:hover {
+      background: var(--surface-3);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(16,185,129,0.25);
+    }
+    .chip.btn-sound.sound-off {
+      color: var(--text-dim);
+      border-color: var(--border);
+    }
+    .chip.btn-sound.sound-off:hover {
+      color: var(--text);
+      border-color: var(--border-2);
+      box-shadow: none;
     }
 
     .clock {
@@ -516,22 +541,64 @@
        HIGHLIGHT ANIMATIONS (new / update rows)
     ═══════════════════════════════════════════════════ */
     @keyframes rowSlideIn {
-      from { opacity: 0; transform: translateX(-6px); }
+      from { opacity: 0; transform: translateX(-8px); }
       to   { opacity: 1; transform: translateX(0); }
     }
     @keyframes rowGlowNew {
-      0%   { background: var(--new-bg); box-shadow: inset 3px 0 0 var(--accent); }
-      75%  { background: var(--new-bg); box-shadow: inset 3px 0 0 var(--accent); }
-      100% { background: transparent;  box-shadow: none; }
+      0%   { background-color: rgba(16, 185, 129, 0.42); }
+      60%  { background-color: rgba(16, 185, 129, 0.22); }
+      100% { background-color: transparent; }
     }
     @keyframes rowGlowUpd {
-      0%   { background: var(--upd-bg); box-shadow: inset 3px 0 0 var(--blue); }
-      75%  { background: var(--upd-bg); box-shadow: inset 3px 0 0 var(--blue); }
-      100% { background: transparent;  box-shadow: none; }
+      0%   { background-color: rgba(245, 158, 11, 0.42); }
+      60%  { background-color: rgba(245, 158, 11, 0.22); }
+      100% { background-color: transparent; }
     }
 
-    tbody tr.hl-new  { animation: rowGlowNew 10s ease forwards, rowSlideIn 0.3s ease; }
-    tbody tr.hl-upd  { animation: rowGlowUpd 10s ease forwards; }
+    tbody tr.hl-new { animation: rowSlideIn 0.3s ease; }
+    tbody tr.hl-new td {
+      animation: rowGlowNew 5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    tbody tr.hl-new td:first-child {
+      border-left: 4px solid #10b981 !important;
+    }
+
+    tbody tr.hl-upd td {
+      animation: rowGlowUpd 5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    tbody tr.hl-upd td:first-child {
+      border-left: 4px solid #f59e0b !important;
+    }
+
+    .badge-tag {
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.5px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+      animation: badgeFadeOut 5s ease forwards;
+    }
+    .badge-tag.new-tag {
+      background: #10b981;
+      color: #041f14;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.55);
+    }
+    .badge-tag.upd-tag {
+      background: #f59e0b;
+      color: #261601;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.55);
+    }
+    @keyframes badgeFadeOut {
+      0%   { opacity: 1; transform: scale(1.08); }
+      15%  { opacity: 1; transform: scale(1); }
+      75%  { opacity: 1; }
+      100% { opacity: 0; }
+    }
 
     /* ═══════════════════════════════════════════════════
        PAGINATION
@@ -624,10 +691,10 @@
     .toast.removing {
       animation: toastOut 0.3s ease forwards !important;
     }
-    .toast.new    { background: rgba(0,  229,160,0.12); border-color: var(--new-border); }
-    .toast.update { background: rgba(59, 130,246,0.12); border-color: var(--upd-border); }
-    .toast.error  { background: rgba(239,68, 68, 0.12); border-color: rgba(239,68,68,0.35); }
-    .toast.info   { background: rgba(13, 20, 32, 0.9);  border-color: var(--border-2); }
+    .toast.new    { background: rgba(16, 185, 129, 0.16); border-color: rgba(16, 185, 129, 0.5); }
+    .toast.update { background: rgba(245, 158,  11, 0.16); border-color: rgba(245, 158, 11, 0.5); }
+    .toast.error  { background: rgba(239,  68,  68, 0.16); border-color: rgba(239,  68, 68, 0.5); }
+    .toast.info   { background: rgba(13,   20,  32, 0.92); border-color: var(--border-2); }
 
     .toast-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
     .toast-body { flex: 1; }
@@ -638,8 +705,8 @@
       letter-spacing: 0.5px;
       margin-bottom: 2px;
     }
-    .toast.new    .toast-title { color: var(--accent); }
-    .toast.update .toast-title { color: #93c5fd; }
+    .toast.new    .toast-title { color: #10b981; }
+    .toast.update .toast-title { color: #f59e0b; }
     .toast.error  .toast-title { color: var(--danger); }
     .toast.info   .toast-title { color: var(--text-muted); }
 
@@ -660,8 +727,8 @@
       height: 2px;
       border-radius: 0 0 var(--radius) var(--radius);
     }
-    .toast.new    .toast-bar { background: var(--accent); }
-    .toast.update .toast-bar { background: var(--blue); }
+    .toast.new    .toast-bar { background: #10b981; }
+    .toast.update .toast-bar { background: #f59e0b; }
     .toast.error  .toast-bar { background: var(--danger); }
     .toast.info   .toast-bar { background: var(--border-2); }
 
@@ -751,6 +818,10 @@
   </div>
 
   <div class="header-meta">
+    <button id="sound-btn" class="chip btn-sound" title="Click to test alert sound or toggle mute">
+      <span id="sound-icon">🔊</span>
+      <span id="sound-label">Sound: ON</span>
+    </button>
     <span id="market-chip" class="chip market-closed">
       <span class="dot"></span>
       <span id="market-label">Checking…</span>
@@ -906,49 +977,154 @@ function fmtPrice(p) {
    SOUND  (Web Audio API — ascending chime for new, ping for update)
 ═══════════════════════════════════════════════════════════════ */
 let audioCtx = null;
+let soundEnabled = true;
+
+try {
+  const saved = localStorage.getItem('stocks_sound_enabled');
+  if (saved !== null) soundEnabled = (saved === 'true');
+} catch (_) {}
 
 function getAudioCtx() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (!audioCtx) {
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtor) {
+      audioCtx = new AudioCtor();
+    }
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
+  }
   return audioCtx;
 }
 
-function playBeep(freqs, vol = 0.35, dur = 0.22) {
+// User interaction audio unlocker — browsers require a gesture before playing audio
+function unlockAudio() {
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
+  }
+  const el = document.getElementById('alert-sound');
+  if (el && !el._unlocked) {
+    el.play().then(() => {
+      el.pause();
+      el.currentTime = 0;
+      el._unlocked = true;
+    }).catch(() => {});
+  }
+}
+
+['click', 'touchstart', 'keydown', 'pointerdown'].forEach(evt => {
+  document.addEventListener(evt, unlockAudio, { passive: true });
+});
+
+// Synthesized 3-note melodic chime for NEW stock alerts
+function playSynthChime() {
   try {
     const ctx = getAudioCtx();
-    freqs.forEach((freq, i) => {
-      const osc  = ctx.createOscillator();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
       const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+
+      const start = ctx.currentTime + i * 0.12;
+      const dur = 0.28;
+      gain.gain.setValueAtTime(0.001, start);
+      gain.gain.linearRampToValueAtTime(0.35, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+
       osc.connect(gain);
       gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      const t = ctx.currentTime + i * 0.14;
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(vol, t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-      osc.start(t);
-      osc.stop(t + dur + 0.05);
+      osc.start(start);
+      osc.stop(start + dur + 0.05);
     });
-  } catch (_) {
-    // Fallback: play mp3
-    const el = document.getElementById('alert-sound');
-    if (el) { el.currentTime = 0; el.play().catch(() => {}); }
+  } catch (err) {
+    console.warn('[sound] synth chime failed:', err);
+  }
+}
+
+// Synthesized 2-note energetic ping for UPDATED stock alerts
+function playSynthUpdate() {
+  try {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+    const notes = [440, 554.37]; // A4, C#5
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.09);
+
+      const start = ctx.currentTime + i * 0.09;
+      const dur = 0.16;
+      gain.gain.setValueAtTime(0.001, start);
+      gain.gain.linearRampToValueAtTime(0.25, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + dur + 0.05);
+    });
+  } catch (err) {
+    console.warn('[sound] synth update failed:', err);
   }
 }
 
 function playAlert(type) {
+  if (!soundEnabled) return;
+  unlockAudio();
+
   if (type === 'new') {
-    // Try mp3 first (richer sound), then beep fallback
     const el = document.getElementById('alert-sound');
-    if (el && el.readyState >= 2) {
+    let mp3Played = false;
+    if (el) {
       el.currentTime = 0;
-      el.play().catch(() => playBeep([523, 659, 784]));
-    } else {
-      playBeep([523, 659, 784]);           // C5 → E5 → G5 ascending chime
+      const p = el.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => {
+          mp3Played = true;
+        }).catch(() => {
+          // Autoplay was blocked or file decode error -> fallback to synth chime
+          playSynthChime();
+        });
+      } else {
+        mp3Played = true;
+      }
+    }
+    if (!mp3Played && (!el || !el.src)) {
+      playSynthChime();
     }
   } else {
-    playBeep([440], 0.2, 0.18);            // single A4 ping for updates
+    // For updates, use the distinct synth update ping
+    playSynthUpdate();
   }
+}
+
+/* ═══════════════════════════════════════════════════
+   HIGHLIGHT TRACKER (5 seconds active highlight)
+═══════════════════════════════════════════════════ */
+const activeHighlights = new Map(); // stock -> { type: 'new' | 'update', expiry: number }
+
+function registerHighlight(stock, type) {
+  activeHighlights.set(stock, { type, expiry: Date.now() + 5000 });
+}
+
+function getHighlightType(stock) {
+  const h = activeHighlights.get(stock);
+  if (!h) return null;
+  if (Date.now() > h.expiry) {
+    activeHighlights.delete(stock);
+    return null;
+  }
+  return h.type;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1088,6 +1264,41 @@ function updateHeaderMeta() {
 setInterval(updateHeaderMeta, 1000);
 updateHeaderMeta();
 
+// Sound button setup
+const soundBtn   = document.getElementById('sound-btn');
+const soundIcon  = document.getElementById('sound-icon');
+const soundLabel = document.getElementById('sound-label');
+
+function updateSoundUI() {
+  if (!soundBtn) return;
+  if (soundEnabled) {
+    soundBtn.classList.remove('sound-off');
+    if (soundIcon)  soundIcon.textContent  = '🔊';
+    if (soundLabel) soundLabel.textContent = 'Sound: ON';
+  } else {
+    soundBtn.classList.add('sound-off');
+    if (soundIcon)  soundIcon.textContent  = '🔇';
+    if (soundLabel) soundLabel.textContent = 'Sound: OFF';
+  }
+}
+
+if (soundBtn) {
+  soundBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    unlockAudio();
+    soundEnabled = !soundEnabled;
+    try { localStorage.setItem('stocks_sound_enabled', String(soundEnabled)); } catch (_) {}
+    updateSoundUI();
+    if (soundEnabled) {
+      playSynthChime();
+      showToast('Audio alert tested & verified', 'new', 'Sound Enabled');
+    } else {
+      showToast('Audio alerts muted', 'info', 'Sound Muted');
+    }
+  });
+  updateSoundUI();
+}
+
 /* ═══════════════════════════════════════════════════════════════
    SORTING
 ═══════════════════════════════════════════════════════════════ */
@@ -1222,6 +1433,19 @@ function buildRow(item, isHistory, hlClass) {
   a.appendChild(ext);
   tdStock.appendChild(a);
 
+  // High-contrast BADGE to differentiate new vs existing
+  if (hlClass === 'hl-new') {
+    const badge = document.createElement('span');
+    badge.className = 'badge-tag new-tag';
+    badge.textContent = 'NEW';
+    tdStock.appendChild(badge);
+  } else if (hlClass === 'hl-upd') {
+    const badge = document.createElement('span');
+    badge.className = 'badge-tag upd-tag';
+    badge.textContent = 'UPDATED';
+    tdStock.appendChild(badge);
+  }
+
   // Count cell
   const tdCount = document.createElement('td');
   const badge = document.createElement('span');
@@ -1299,8 +1523,9 @@ function renderTable(tbodyId, data, isHistory, hlMap = new Map()) {
     tbody.appendChild(tr);
   } else {
     paged.forEach(item => {
-      const hlClass = !isHistory && hlMap.has(item.stock)
-        ? (hlMap.get(item.stock) === 'new' ? 'hl-new' : 'hl-upd')
+      const activeType = !isHistory ? (getHighlightType(item.stock) || (hlMap && hlMap.get(item.stock))) : null;
+      const hlClass = activeType
+        ? (activeType === 'new' ? 'hl-new' : 'hl-upd')
         : null;
       tbody.appendChild(buildRow(item, isHistory, hlClass));
     });
@@ -1560,15 +1785,21 @@ document.getElementById('btn-clear-history').addEventListener('click', async () 
 
       } else if (msg.type === 'delta' && Array.isArray(msg.liveDelta)) {
         const hlMap = new Map();
+        let hasNew = false;
+        let hasUpdate = false;
         msg.liveDelta.forEach(it => {
           const isNew = !liveData.some(d => d.stock === it.stock);
-          hlMap.set(it.stock, isNew ? 'new' : 'update');
-          playAlert(isNew ? 'new' : 'update');
+          const type = isNew ? 'new' : 'update';
+          if (isNew) hasNew = true; else hasUpdate = true;
+          hlMap.set(it.stock, type);
+          registerHighlight(it.stock, type);
           showToast(
             `${it.stock}  ${fmtPrice(it.trigger_price)}  ·  ${it.time_ist ?? ''}`,
-            isNew ? 'new' : 'update'
+            type,
+            isNew ? 'New Stock Alert' : 'Stock Updated'
           );
         });
+        playAlert(hasNew ? 'new' : 'update');
         upsertLiveDelta(msg.liveDelta);
         renderLive(hlMap);
       }
