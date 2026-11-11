@@ -204,6 +204,24 @@
       border-color: rgba(239,68,68,0.35);
     }
 
+    .chip.btn-voice {
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+      background: var(--surface-2);
+      color: #93c5fd;
+      border-color: rgba(59, 130, 246, 0.35);
+    }
+    .chip.btn-voice:hover {
+      background: var(--surface-3);
+      border-color: #3b82f6;
+      transform: translateY(-1px);
+    }
+    .chip.btn-voice.voice-off {
+      color: var(--text-dim);
+      border-color: var(--border);
+    }
+
     .clock {
       font-family: 'JetBrains Mono', monospace;
       font-size: 12px;
@@ -813,6 +831,300 @@
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
     /* ═══════════════════════════════════════════════════
+       EXECUTION SHORTCUT BUTTONS & SIZER MODAL
+    ═══════════════════════════════════════════════════ */
+    .exec-btns {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-mini {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 27px;
+      height: 27px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      line-height: 1;
+    }
+    .btn-mini:hover {
+      background: var(--surface-3);
+      color: var(--text);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .btn-mini.btn-sizer {
+      color: #fbbf24;
+      border-color: rgba(245, 158, 11, 0.35);
+      background: rgba(245, 158, 11, 0.08);
+      font-weight: 700;
+    }
+    .btn-mini.btn-sizer:hover {
+      background: rgba(245, 158, 11, 0.22);
+      border-color: #fbbf24;
+      color: #fff;
+    }
+
+    .sizer-card {
+      width: min(480px, calc(100vw - 32px));
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+    }
+    .sizer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+    .sizer-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: #fbbf24;
+      margin-bottom: 2px;
+    }
+    #sizer-stock {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.5px;
+      margin: 0;
+    }
+    .modal-close-x {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    .modal-close-x:hover { color: var(--text); }
+    .dir-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .dir-btn {
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-dim);
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .dir-btn.active#dir-long {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: #10b981;
+      color: #10b981;
+    }
+    .dir-btn.active#dir-short {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+    .sizer-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .sizer-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .sizer-input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .sizer-input:focus {
+      border-color: var(--accent);
+    }
+    .quick-sl-chips, .risk-presets {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .quick-sl-chips span {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-right: 2px;
+    }
+    .sl-chip, .risk-chip {
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .sl-chip:hover, .risk-chip:hover {
+      border-color: var(--border-2);
+      color: var(--text);
+    }
+    .sl-chip.active, .risk-chip.active {
+      background: var(--surface-3);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .sizer-results {
+      margin-top: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+    .res-primary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .res-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: var(--text-dim);
+      display: block;
+    }
+    .res-qty-val {
+      font-size: 26px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: #10b981;
+      line-height: 1.1;
+      margin-top: 2px;
+    }
+    .res-unit {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+    .res-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .res-item .lbl {
+      display: block;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+    .res-item .val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text);
+      font-weight: 600;
+    }
+    .res-targets {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .target-card {
+      background: var(--surface-2);
+      border-radius: 6px;
+      padding: 8px 10px;
+      border-left: 3px solid #10b981;
+    }
+    .target-card.t2 {
+      border-left-color: #3b82f6;
+    }
+    .t-lbl {
+      font-size: 10px;
+      color: var(--text-dim);
+      display: block;
+    }
+    .t-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      display: block;
+    }
+    .t-profit {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #10b981;
+      font-weight: 600;
+    }
+    .sizer-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    /* Hotkey pill list */
+    .hotkey-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .hotkey-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 10px;
+      background: var(--surface);
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    .hotkey-key {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--surface-3);
+      border: 1px solid var(--border-2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .hotkey-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ═══════════════════════════════════════════════════
        RESPONSIVE
     ═══════════════════════════════════════════════════ */
     @media (max-width: 700px) {
@@ -844,6 +1156,142 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════
+     POSITION SIZER & RISK CALCULATOR MODAL
+═══════════════════════════════════════════════════ -->
+<div id="sizer-modal" class="modal-overlay hidden">
+  <div class="modal sizer-card">
+    <div class="sizer-header">
+      <div>
+        <span class="sizer-badge">⚡ RISK & POSITION SIZER</span>
+        <h3 id="sizer-stock">STOCK</h3>
+      </div>
+      <button id="sizer-close" class="modal-close-x" title="Close (Esc)">×</button>
+    </div>
+
+    <!-- Direction -->
+    <div class="dir-toggle">
+      <button id="dir-long" class="dir-btn active" type="button">🟢 LONG / BUY</button>
+      <button id="dir-short" class="dir-btn" type="button">🔴 SHORT / SELL</button>
+    </div>
+
+    <!-- Entry & SL -->
+    <div class="sizer-grid-2">
+      <div class="sizer-field">
+        <label>Entry Price (₹)</label>
+        <input type="number" id="sizer-entry" step="0.05" class="sizer-input" />
+      </div>
+      <div class="sizer-field">
+        <label>Stop Loss (₹)</label>
+        <input type="number" id="sizer-sl" step="0.05" class="sizer-input" />
+      </div>
+    </div>
+
+    <!-- Quick SL chips -->
+    <div class="quick-sl-chips">
+      <span>Quick SL:</span>
+      <button class="sl-chip" data-pct="0.5" type="button">0.5%</button>
+      <button class="sl-chip active" data-pct="1.0" type="button">1.0%</button>
+      <button class="sl-chip" data-pct="1.5" type="button">1.5%</button>
+      <button class="sl-chip" data-pct="2.0" type="button">2.0%</button>
+    </div>
+
+    <!-- Max Risk -->
+    <div class="sizer-field" style="margin-top: 10px;">
+      <label>Max Risk Amount (₹)</label>
+      <div class="risk-wrap">
+        <input type="number" id="sizer-risk" step="100" value="1000" class="sizer-input" />
+        <div class="risk-presets">
+          <button class="risk-chip" data-val="500" type="button">₹500</button>
+          <button class="risk-chip active" data-val="1000" type="button">₹1,000</button>
+          <button class="risk-chip" data-val="2000" type="button">₹2,000</button>
+          <button class="risk-chip" data-val="5000" type="button">₹5,000</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calculated Output -->
+    <div class="sizer-results">
+      <div class="res-primary">
+        <div>
+          <span class="res-label">RECOMMENDED QUANTITY</span>
+          <div class="res-qty-val" id="res-qty">0 <span class="res-unit">shares</span></div>
+        </div>
+        <button id="btn-copy-qty" class="btn primary" type="button">📋 Copy Qty</button>
+      </div>
+
+      <div class="res-metrics">
+        <div class="res-item">
+          <span class="lbl">Risk/Share</span>
+          <span class="val" id="res-rps">₹0.00</span>
+        </div>
+        <div class="res-item">
+          <span class="lbl">MIS (~5x Margin)</span>
+          <span class="val" id="res-mis">₹0.00</span>
+        </div>
+        <div class="res-item">
+          <span class="lbl">CNC Capital</span>
+          <span class="val" id="res-cnc">₹0.00</span>
+        </div>
+      </div>
+
+      <div class="res-targets">
+        <div class="target-card t1">
+          <span class="t-lbl">Target 1 (1:1.5)</span>
+          <span class="t-val" id="res-t1">₹0.00</span>
+          <span class="t-profit" id="res-t1-p">+₹1,500</span>
+        </div>
+        <div class="target-card t2">
+          <span class="t-lbl">Target 2 (1:2.0)</span>
+          <span class="t-val" id="res-t2">₹0.00</span>
+          <span class="t-profit" id="res-t2-p">+₹2,000</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sizer-actions">
+      <button id="btn-copy-plan" class="btn" type="button" style="flex: 1;">📋 Copy Plan</button>
+      <a id="sizer-tv-link" class="btn" target="_blank" rel="noopener noreferrer">📈 Chart</a>
+      <a id="sizer-kite-link" class="btn" target="_blank" rel="noopener noreferrer">🪁 Kite</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     KEYBOARD HOTKEYS MODAL
+═══════════════════════════════════════════════════ -->
+<div id="hotkeys-modal" class="modal-overlay hidden">
+  <div class="modal" style="width: min(420px, calc(100vw - 32px));">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <h3 style="margin: 0; font-size: 16px;">⌨️ Execution Hotkeys</h3>
+      <button id="hotkeys-close" class="modal-close-x">×</button>
+    </div>
+    <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 12px;">Press these keys anywhere on the dashboard for instant execution:</p>
+    <div class="hotkey-list">
+      <div class="hotkey-row">
+        <span class="hotkey-key">Space</span>
+        <span class="hotkey-desc">Open Chart of latest alert in TradingView</span>
+      </div>
+      <div class="hotkey-row">
+        <span class="hotkey-key">S</span>
+        <span class="hotkey-desc">Open Position Sizer & Risk Calculator for latest alert</span>
+      </div>
+      <div class="hotkey-row">
+        <span class="hotkey-key">C</span>
+        <span class="hotkey-desc">Copy Ticker of latest alert to clipboard</span>
+      </div>
+      <div class="hotkey-row">
+        <span class="hotkey-key">1 / 2</span>
+        <span class="hotkey-desc">Switch between Live and History tabs</span>
+      </div>
+      <div class="hotkey-row">
+        <span class="hotkey-key">Esc</span>
+        <span class="hotkey-desc">Close any open modal or calculator</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
      HEADER
 ═══════════════════════════════════════════════════ -->
 <header>
@@ -860,6 +1308,13 @@
     <button id="notif-btn" class="chip btn-notif" title="Enable / Toggle Desktop & Mobile Alerts">
       <span id="notif-icon">🔔</span>
       <span id="notif-label">Alerts: OFF</span>
+    </button>
+    <button id="voice-btn" class="chip btn-voice" title="Toggle Voice Announcer (speaks stock name out loud)">
+      <span id="voice-icon">🗣️</span>
+      <span id="voice-label">Voice: OFF</span>
+    </button>
+    <button id="hotkeys-btn" class="chip" title="View execution keyboard shortcuts" style="cursor:pointer;">
+      <span>⌨️ Hotkeys</span>
     </button>
     <span id="market-chip" class="chip market-closed">
       <span class="dot"></span>
@@ -926,6 +1381,7 @@
               <th data-col="count">Count <span class="si">↕</span></th>
               <th data-col="trigger_price">Price <span class="si">↕</span></th>
               <th data-col="scan_name">Scan <span class="si">↕</span></th>
+              <th style="text-align: right; width: 130px;">Action</th>
             </tr>
           </thead>
           <tbody id="live-tbody"></tbody>
@@ -962,6 +1418,7 @@
               <th data-col="count">Count <span class="si">↕</span></th>
               <th data-col="trigger_price">Price <span class="si">↕</span></th>
               <th data-col="scan_name">Scan <span class="si">↕</span></th>
+              <th style="text-align: right; width: 130px;">Action</th>
             </tr>
           </thead>
           <tbody id="history-tbody"></tbody>
@@ -1518,6 +1975,291 @@ function updateSortIcons(tableId, cfg) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   EXECUTION SUITE: POSITION SIZER & RISK CALCULATOR
+═══════════════════════════════════════════════════════════════ */
+let sizerStock = '';
+let sizerDirection = 'long'; // 'long' or 'short'
+let sizerRiskAmount = 1000;
+let sizerSlPct = 1.0;
+
+try {
+  const savedRisk = localStorage.getItem('stocks_sizer_risk');
+  if (savedRisk) sizerRiskAmount = Number(savedRisk) || 1000;
+  const savedSl = localStorage.getItem('stocks_sizer_sl_pct');
+  if (savedSl) sizerSlPct = Number(savedSl) || 1.0;
+} catch (_) {}
+
+function openPositionSizer(stock, price) {
+  sizerStock = stock || (liveData[0] ? liveData[0].stock : 'NIFTY');
+  const entry = Number(price || (liveData[0] ? liveData[0].trigger_price : 100)) || 100;
+
+  document.getElementById('sizer-stock').textContent = sizerStock;
+  document.getElementById('sizer-entry').value = entry.toFixed(2);
+  document.getElementById('sizer-risk').value = sizerRiskAmount;
+
+  applySlPercentage(sizerSlPct, entry);
+
+  // Update chart & broker links
+  document.getElementById('sizer-tv-link').href = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(sizerStock)}`;
+  document.getElementById('sizer-kite-link').href = `https://kite.zerodha.com/chart/ext/ciq/NSE/${encodeURIComponent(sizerStock)}`;
+
+  calculatePosition();
+  document.getElementById('sizer-modal').classList.remove('hidden');
+}
+
+function closePositionSizer() {
+  const m = document.getElementById('sizer-modal');
+  if (m) m.classList.add('hidden');
+}
+
+function applySlPercentage(pct, entryPrice) {
+  const entry = entryPrice || parseFloat(document.getElementById('sizer-entry').value) || 0;
+  if (!entry) return;
+  const diff = entry * (pct / 100);
+  const sl = sizerDirection === 'long' ? (entry - diff) : (entry + diff);
+  document.getElementById('sizer-sl').value = sl.toFixed(2);
+  calculatePosition();
+}
+
+function calculatePosition() {
+  const entry = parseFloat(document.getElementById('sizer-entry').value) || 0;
+  const sl = parseFloat(document.getElementById('sizer-sl').value) || 0;
+  const risk = parseFloat(document.getElementById('sizer-risk').value) || 0;
+
+  const rps = Math.abs(entry - sl);
+  const qty = rps > 0 ? Math.floor(risk / rps) : 0;
+  const totalCapital = qty * entry;
+  const misMargin = totalCapital * 0.20; // 5x intraday leverage in NSE
+
+  // Targets
+  const t1 = sizerDirection === 'long' ? (entry + rps * 1.5) : (entry - rps * 1.5);
+  const t2 = sizerDirection === 'long' ? (entry + rps * 2.0) : (entry - rps * 2.0);
+
+  document.getElementById('res-qty').innerHTML = `${qty} <span class="res-unit">shares</span>`;
+  document.getElementById('res-rps').textContent = `₹${rps.toFixed(2)}`;
+  document.getElementById('res-mis').textContent = `₹${fmtINR.format(Math.round(misMargin))}`;
+  document.getElementById('res-cnc').textContent = `₹${fmtINR.format(Math.round(totalCapital))}`;
+
+  document.getElementById('res-t1').textContent = `₹${t1.toFixed(2)}`;
+  document.getElementById('res-t1-p').textContent = `+₹${fmtINR.format(Math.round(risk * 1.5))}`;
+
+  document.getElementById('res-t2').textContent = `₹${t2.toFixed(2)}`;
+  document.getElementById('res-t2-p').textContent = `+₹${fmtINR.format(Math.round(risk * 2.0))}`;
+}
+
+// Direction toggle
+document.getElementById('dir-long')?.addEventListener('click', () => {
+  sizerDirection = 'long';
+  document.getElementById('dir-long').classList.add('active');
+  document.getElementById('dir-short').classList.remove('active');
+  applySlPercentage(sizerSlPct);
+});
+
+document.getElementById('dir-short')?.addEventListener('click', () => {
+  sizerDirection = 'short';
+  document.getElementById('dir-short').classList.add('active');
+  document.getElementById('dir-long').classList.remove('active');
+  applySlPercentage(sizerSlPct);
+});
+
+// Dynamic input recalculation
+document.getElementById('sizer-entry')?.addEventListener('input', calculatePosition);
+document.getElementById('sizer-sl')?.addEventListener('input', calculatePosition);
+document.getElementById('sizer-risk')?.addEventListener('input', () => {
+  sizerRiskAmount = parseFloat(document.getElementById('sizer-risk').value) || 1000;
+  try { localStorage.setItem('stocks_sizer_risk', String(sizerRiskAmount)); } catch (_) {}
+  calculatePosition();
+});
+
+// SL preset chips
+document.querySelectorAll('.sl-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sl-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    sizerSlPct = parseFloat(btn.dataset.pct) || 1.0;
+    try { localStorage.setItem('stocks_sizer_sl_pct', String(sizerSlPct)); } catch (_) {}
+    applySlPercentage(sizerSlPct);
+  });
+});
+
+// Risk preset chips
+document.querySelectorAll('.risk-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.risk-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    sizerRiskAmount = parseFloat(btn.dataset.val) || 1000;
+    document.getElementById('sizer-risk').value = sizerRiskAmount;
+    try { localStorage.setItem('stocks_sizer_risk', String(sizerRiskAmount)); } catch (_) {}
+    calculatePosition();
+  });
+});
+
+// Copy Quantity button
+document.getElementById('btn-copy-qty')?.addEventListener('click', () => {
+  const entry = parseFloat(document.getElementById('sizer-entry').value) || 0;
+  const sl = parseFloat(document.getElementById('sizer-sl').value) || 0;
+  const risk = parseFloat(document.getElementById('sizer-risk').value) || 0;
+  const rps = Math.abs(entry - sl);
+  const qty = rps > 0 ? Math.floor(risk / rps) : 0;
+  navigator.clipboard.writeText(String(qty)).then(() => {
+    showToast(`Copied Qty: ${qty}`, 'new', 'Position Sizer');
+  });
+});
+
+// Copy Full Plan button
+document.getElementById('btn-copy-plan')?.addEventListener('click', () => {
+  const entry = parseFloat(document.getElementById('sizer-entry').value) || 0;
+  const sl = parseFloat(document.getElementById('sizer-sl').value) || 0;
+  const risk = parseFloat(document.getElementById('sizer-risk').value) || 0;
+  const rps = Math.abs(entry - sl);
+  const qty = rps > 0 ? Math.floor(risk / rps) : 0;
+  const t1 = sizerDirection === 'long' ? (entry + rps * 1.5) : (entry - rps * 1.5);
+  const t2 = sizerDirection === 'long' ? (entry + rps * 2.0) : (entry - rps * 2.0);
+
+  const plan = `${sizerStock} [${sizerDirection.toUpperCase()}] • Qty: ${qty} • Entry: ₹${entry.toFixed(2)} • SL: ₹${sl.toFixed(2)} • T1: ₹${t1.toFixed(2)} • T2: ₹${t2.toFixed(2)}`;
+  navigator.clipboard.writeText(plan).then(() => {
+    showToast(`Trade plan copied!`, 'new', 'Position Sizer');
+  });
+});
+
+document.getElementById('sizer-close')?.addEventListener('click', closePositionSizer);
+document.getElementById('sizer-modal')?.addEventListener('click', (e) => {
+  if (e.target === document.getElementById('sizer-modal')) closePositionSizer();
+});
+
+/* ═══════════════════════════════════════════════════
+   EXECUTION SUITE: VOICE ANNOUNCER
+═══════════════════════════════════════════════════ */
+let voiceEnabled = false;
+try {
+  const savedV = localStorage.getItem('stocks_voice_enabled');
+  if (savedV !== null) voiceEnabled = savedV === 'true';
+} catch (_) {}
+
+function announceStock(stock, isNew) {
+  if (!voiceEnabled || !('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const clean = String(stock || '').replace(/[-_]/g, ' ');
+    const text = isNew ? `New alert, ${clean}` : `Update, ${clean}`;
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 1.15;
+    u.pitch = 1.0;
+    u.lang = 'en-IN';
+    window.speechSynthesis.speak(u);
+  } catch (_) {}
+}
+
+const voiceBtn   = document.getElementById('voice-btn');
+const voiceIcon  = document.getElementById('voice-icon');
+const voiceLabel = document.getElementById('voice-label');
+
+function updateVoiceUI() {
+  if (!voiceBtn) return;
+  if (voiceEnabled) {
+    voiceBtn.classList.remove('voice-off');
+    if (voiceIcon)  voiceIcon.textContent  = '🗣️';
+    if (voiceLabel) voiceLabel.textContent = 'Voice: ON';
+  } else {
+    voiceBtn.classList.add('voice-off');
+    if (voiceIcon)  voiceIcon.textContent  = '🔇';
+    if (voiceLabel) voiceLabel.textContent = 'Voice: OFF';
+  }
+}
+
+if (voiceBtn) {
+  voiceBtn.addEventListener('click', () => {
+    voiceEnabled = !voiceEnabled;
+    try { localStorage.setItem('stocks_voice_enabled', String(voiceEnabled)); } catch (_) {}
+    updateVoiceUI();
+    if (voiceEnabled) {
+      announceStock('Voice active', true);
+      showToast('Voice announcer active', 'new', 'Voice ON');
+    } else {
+      showToast('Voice announcer muted', 'info', 'Voice OFF');
+    }
+  });
+  updateVoiceUI();
+}
+
+/* ═══════════════════════════════════════════════════
+   EXECUTION SUITE: KEYBOARD SHORTCUTS
+═══════════════════════════════════════════════════ */
+function openHotkeys() {
+  document.getElementById('hotkeys-modal')?.classList.remove('hidden');
+}
+function closeHotkeys() {
+  document.getElementById('hotkeys-modal')?.classList.add('hidden');
+}
+
+document.getElementById('hotkeys-btn')?.addEventListener('click', openHotkeys);
+document.getElementById('hotkeys-close')?.addEventListener('click', closeHotkeys);
+document.getElementById('hotkeys-modal')?.addEventListener('click', (e) => {
+  if (e.target === document.getElementById('hotkeys-modal')) closeHotkeys();
+});
+
+window.addEventListener('keydown', (e) => {
+  const activeEl = document.activeElement;
+  const tag = activeEl ? activeEl.tagName.toLowerCase() : '';
+  if (tag === 'input' || tag === 'textarea') {
+    if (e.key === 'Escape') {
+      activeEl.blur();
+      closePositionSizer();
+      closeHotkeys();
+    }
+    return;
+  }
+
+  if (e.key === 'Escape') {
+    closePositionSizer();
+    closeHotkeys();
+    document.getElementById('confirm-modal')?.classList.add('hidden');
+    return;
+  }
+
+  const latest = liveData[0];
+
+  // Space -> Open latest stock chart in TradingView
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (latest) {
+      const url = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(latest.stock)}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+      showToast(`Opened ${latest.stock} chart`, 'new', 'TradingView');
+    }
+  }
+
+  // C -> Copy latest stock symbol
+  if (e.key === 'c' || e.key === 'C') {
+    e.preventDefault();
+    if (latest) {
+      navigator.clipboard.writeText(latest.stock).then(() => {
+        showToast(`Copied ${latest.stock}`, 'new', 'Clipboard');
+      });
+    }
+  }
+
+  // S -> Open Position Sizer on latest stock
+  if (e.key === 's' || e.key === 'S') {
+    e.preventDefault();
+    if (latest) {
+      openPositionSizer(latest.stock, latest.trigger_price);
+    } else {
+      openPositionSizer('NIFTY', 24500);
+    }
+  }
+
+  // 1 or 2 -> Switch tabs
+  if (e.key === '1') {
+    const liveBtn = document.querySelector('.tab-btn[data-tab="live"]');
+    if (liveBtn) liveBtn.click();
+  } else if (e.key === '2') {
+    const histBtn = document.querySelector('.tab-btn[data-tab="history"]');
+    if (histBtn) histBtn.click();
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════
    PAGINATION  (ellipsis style)
 ═══════════════════════════════════════════════════════════════ */
 function getPageRange(cur, total, delta = 2) {
@@ -1674,11 +2416,66 @@ function buildRow(item, isHistory, hlClass) {
     tdScan.style.color = 'var(--text-dim)';
   }
 
+  // Action / Execution cell
+  const tdExec = document.createElement('td');
+  tdExec.className = 'exec-cell';
+  tdExec.style.textAlign = 'right';
+
+  const btnWrap = document.createElement('div');
+  btnWrap.className = 'exec-btns';
+
+  // 1. Position Sizer
+  const btnSizer = document.createElement('button');
+  btnSizer.className = 'btn-mini btn-sizer';
+  btnSizer.title = 'Open Risk & Position Sizer (Hot-key: S)';
+  btnSizer.textContent = '⚡';
+  btnSizer.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openPositionSizer(item.stock, item.trigger_price);
+  });
+
+  // 2. Copy Symbol
+  const btnCopy = document.createElement('button');
+  btnCopy.className = 'btn-mini';
+  btnCopy.title = 'Copy Symbol to Clipboard (Hot-key: C)';
+  btnCopy.textContent = '📋';
+  btnCopy.addEventListener('click', (e) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(item.stock).then(() => {
+      showToast(`Copied ${item.stock}`, 'new', 'Clipboard');
+    });
+  });
+
+  // 3. TradingView Chart
+  const btnTv = document.createElement('a');
+  btnTv.className = 'btn-mini';
+  btnTv.title = 'Open Chart in TradingView (Hot-key: Space)';
+  btnTv.href = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(item.stock)}`;
+  btnTv.target = '_blank';
+  btnTv.rel = 'noopener noreferrer';
+  btnTv.textContent = '📈';
+
+  // 4. Zerodha Kite
+  const btnKite = document.createElement('a');
+  btnKite.className = 'btn-mini';
+  btnKite.title = 'Open in Zerodha Kite';
+  btnKite.href = `https://kite.zerodha.com/chart/ext/ciq/NSE/${encodeURIComponent(item.stock)}`;
+  btnKite.target = '_blank';
+  btnKite.rel = 'noopener noreferrer';
+  btnKite.textContent = '🪁';
+
+  btnWrap.appendChild(btnSizer);
+  btnWrap.appendChild(btnCopy);
+  btnWrap.appendChild(btnTv);
+  btnWrap.appendChild(btnKite);
+  tdExec.appendChild(btnWrap);
+
   tr.appendChild(tdTime);
   tr.appendChild(tdStock);
   tr.appendChild(tdCount);
   tr.appendChild(tdPrice);
   tr.appendChild(tdScan);
+  tr.appendChild(tdExec);
 
   return tr;
 }
@@ -1707,7 +2504,7 @@ function renderTable(tbodyId, data, isHistory, hlMap = new Map()) {
     const tr = document.createElement('tr');
     tr.className = 'empty-row';
     const td = document.createElement('td');
-    td.colSpan = 5;
+    td.colSpan = 6;
     td.innerHTML = `<span class="empty-icon">${isHistory ? '📂' : '📡'}</span>${isHistory ? 'No history records' : 'Waiting for alerts…'}`;
     tr.appendChild(td);
     tbody.appendChild(tr);
@@ -1763,8 +2560,22 @@ function renderMovers() {
     price.className = 'mover-price';
     price.textContent = fmtPrice(s.trigger_price);
 
+    const sizerBtn = document.createElement('button');
+    sizerBtn.className = 'btn-mini btn-sizer';
+    sizerBtn.style.width = '22px';
+    sizerBtn.style.height = '22px';
+    sizerBtn.style.fontSize = '11px';
+    sizerBtn.style.marginLeft = 'auto';
+    sizerBtn.title = 'Open Sizer';
+    sizerBtn.textContent = '⚡';
+    sizerBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openPositionSizer(s.stock, s.trigger_price);
+    });
+
     meta.appendChild(cnt);
     meta.appendChild(price);
+    meta.appendChild(sizerBtn);
     card.appendChild(link);
     card.appendChild(meta);
 
@@ -1984,6 +2795,7 @@ document.getElementById('btn-clear-history').addEventListener('click', async () 
           hlMap.set(it.stock, type);
           registerHighlight(it.stock, type);
           sendSystemNotification(it, isNew);
+          announceStock(it.stock, isNew);
           showToast(
             `${it.stock}  ${fmtPrice(it.trigger_price)}  ·  ${it.time_ist ?? ''}`,
             type,
