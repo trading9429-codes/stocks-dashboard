@@ -1,401 +1,1587 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Stock Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<style>
-:root {
-  --bg: #f9f9f9;
-  --header-bg: #2c3e50;
-  --header-color: #fff;
-  --tab-bg: #ecf0f1;
-  --tab-active-bg: #3498db;
-  --tab-active-color: #fff;
-  --table-bg: #fff;
-  --table-header-bg: #f4f4f4;
-  --highlight-new: #add8e6;   /* light blue */
-  --highlight-update: #fff3b0;
-  --button-bg: #3498db;
-  --button-hover: #2980b9;
-  --text-color: #333;
-  --toast-bg: #4caf50;
-  --toast-color: #fff;
-}
-body.dark {
-  --bg: #1e1e2f;
-  --header-bg: #0d1117;
-  --header-color: #fff;
-  --tab-bg: #2c2c3e;
-  --tab-active-bg: #4c8cff;
-  --tab-active-color: #fff;
-  --table-bg: #2a2a3c;
-  --table-header-bg: #3a3a50;
-  --highlight-new: #2a4d6f;   /* darker light blue for dark mode */
-  --highlight-update: #5a5430; /* yellowish-brown */
-  --button-bg: #4c8cff;
-  --button-hover: #3670d6;
-  --text-color: #ddd;
-  --toast-bg: #76c776;
-}
-body { font-family: "Segoe UI", Arial, sans-serif; margin:0; background:var(--bg); color:var(--text-color); transition: background 0.3s, color 0.3s; }
-header { background:var(--header-bg); color:var(--header-color); padding:15px 20px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 6px rgba(0,0,0,0.2); border-bottom-left-radius:10px; border-bottom-right-radius:10px;}
-header h1{ margin:0; font-size:1.6em; }
-.tabs { display:flex; justify-content:center; margin-top:20px; flex-wrap:wrap; gap:5px;}
-.tab { padding:10px 20px; cursor:pointer; background:var(--tab-bg); border-radius:5px 5px 0 0; text-align:center; font-weight:500; transition:all 0.3s; }
-.tab.active { background:var(--tab-active-bg); color:var(--tab-active-color); box-shadow:0 3px 8px rgba(0,0,0,0.2); }
-.tab-content { display:none; padding:15px; max-width:1100px; margin:auto; background:var(--table-bg); border-radius:0 5px 5px 5px; box-shadow:0 2px 12px rgba(0,0,0,0.1); overflow-x:auto; margin-bottom:20px; transition: all 0.3s; }
-.tab-content.active { display:block; }
-.table-wrapper { max-height: 650px; overflow: auto; border-radius: 5px; }
-table { width:100%; border-collapse:collapse; table-layout:fixed; background:var(--table-bg); border-radius:5px; }
-thead th { position: sticky; top:0; background:var(--table-header-bg); z-index:1; cursor:pointer; user-select:none; padding:10px; }
-th, td { padding:8px; border-bottom:1px solid #ddd; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition: background 0.3s; }
-tr.highlight-new {
-  animation: fadeHighlightNew 7s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
-}
-tr.highlight-update {
-  animation: fadeHighlightUpdate 7s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
-}
+  <meta charset="UTF-8" />
+  <title>Stock Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ═══════════════════════════════════════════════════
+       DESIGN TOKENS
+    ═══════════════════════════════════════════════════ */
+    :root {
+      --bg:          #060b14;
+      --surface:     #0d1420;
+      --surface-2:   #111b2d;
+      --surface-3:   #162236;
+      --border:      rgba(255,255,255,0.07);
+      --border-2:    rgba(255,255,255,0.12);
 
-@keyframes fadeHighlightNew {
-  0%   { background-color: var(--highlight-new); }
-  80%  { background-color: var(--highlight-new); } /* stay strong most of the time */
-  100% { background-color: var(--table-bg); }      /* smooth fade at the end */
-}
+      --text:        #e2e8f0;
+      --text-dim:    #64748b;
+      --text-muted:  #94a3b8;
 
-@keyframes fadeHighlightUpdate {
-  0%   { background-color: var(--highlight-update); }
-  80%  { background-color: var(--highlight-update); }
-  100% { background-color: var(--table-bg); }
-}
+      --accent:      #00e5a0;   /* teal  — new stock  */
+      --accent-dark: #00b37d;
+      --blue:        #3b82f6;   /* blue  — update     */
+      --blue-dark:   #2563eb;
+      --danger:      #ef4444;
+      --danger-dark: #b91c1c;
+      --warn:        #f59e0b;
 
-tr td a { color:var(--text-color); text-decoration:none; font-weight:500; }
-tr td a:hover { text-decoration:underline; }
-.search-container { margin-top:10px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
-.search-container input { padding:8px 10px; font-size:1em; flex:1; min-width:150px; border-radius:5px; border:1px solid #ccc; }
-button { padding:6px 12px; cursor:pointer; background:var(--button-bg); color:white; border:none; border-radius:5px; transition:all 0.3s; }
-button:hover { background:var(--button-hover); }
+      --new-bg:      rgba(0, 229, 160, 0.14);
+      --new-border:  rgba(0, 229, 160, 0.35);
+      --upd-bg:      rgba(59, 130, 246, 0.14);
+      --upd-border:  rgba(59, 130, 246, 0.35);
 
-.toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column-reverse; gap: 10px; max-width: 320px; }
-.toast {
-  background: var(--toast-bg);
-  color: var(--toast-color);
-  padding: 12px 14px;
-  border-radius: 8px;
-  opacity: 0;
-  transform: translateX(120%) translateY(20px) scale(0.9); /* start slightly smaller */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  cursor: pointer;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  color: #fff;  /* force text white */
-}
-.toast.show {
-  animation: toastPop 7s forwards; /* match row highlight duration */
-}
-/* Toast types with fade colors matching highlights */
-.toast.new {
-  background-color: var(--highlight-new);
-  color: #fff;  /* white text */
-  animation-name: toastPop;
-}
+      --radius:      12px;
+      --radius-sm:   8px;
+      --shadow:      0 4px 24px rgba(0,0,0,0.5);
+      --shadow-sm:   0 2px 8px  rgba(0,0,0,0.3);
+    }
 
-.toast.update {
-  background-color: var(--highlight-update);
-  color: #fff;  /* white text */
-  animation-name: toastPop;
-}
-.toast.default { background: #333; color:#fff; }
-@keyframes toastFade {
-  0%   { opacity: 0; }
-  10%  { opacity: 1; }       /* fade in quickly */
-  85%  { opacity: 1; }       /* stay visible */
-  100% { opacity: 0; }       /* fade out smoothly */
-}
+    /* ═══════════════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-@keyframes toastFadeNew {
-  0%   { opacity: 0; background-color: var(--highlight-new); }
-  10%  { opacity: 1; background-color: var(--highlight-new); }
-  85%  { opacity: 1; background-color: var(--highlight-new); }
-  100% { opacity: 0; background-color: var(--table-bg); }
-}
+    html, body { height: 100%; }
 
-@keyframes toastFadeUpdate {
-  0%   { opacity: 0; background-color: var(--highlight-update); }
-  10%  { opacity: 1; background-color: var(--highlight-update); }
-  85%  { opacity: 1; background-color: var(--highlight-update); }
-  100% { opacity: 0; background-color: var(--table-bg); }
-}
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
 
-/* Pop + fade animation */
-@keyframes toastPop {
-  0%   { opacity: 0; transform: translateX(120%) translateY(20px) scale(0.9); }
-  10%  { opacity: 1; transform: translateX(0) translateY(0) scale(1.05); } /* slightly bigger */
-  15%  { transform: translateX(0) translateY(0) scale(1); }               /* settle at normal size */
-  85%  { opacity: 1; transform: translateX(0) translateY(0) scale(1); }
-  100% { opacity: 0; transform: translateX(0) translateY(0) scale(1); }
-}
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
 
+    button { font-family: inherit; cursor: pointer; }
 
-.sort-indicator { margin-left:4px; font-size:0.8em; }
+    /* ═══════════════════════════════════════════════════
+       HEADER
+    ═══════════════════════════════════════════════════ */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 20px;
+      background: rgba(6, 11, 20, 0.88);
+      backdrop-filter: saturate(180%) blur(16px);
+      -webkit-backdrop-filter: saturate(180%) blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
 
-@media(max-width:600px){
-  th, td { font-size:0.85em; padding:6px; }
-  header h1{ font-size:1.2em; }
-  .tab { padding:8px; font-size:0.85em; }
-  .search-container input{ font-size:0.85em; padding:6px;}
-  button{ padding:5px 8px; font-size:0.85em;}
-}
-.table-meta {
-  font-size: 0.9em;
-  color: var(--text-color);
-  margin: 5px 0;
-  text-align: right;
-}
-</style>
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--blue));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* chips in header */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--border-2);
+      background: var(--surface);
+      color: var(--text-muted);
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+    .chip .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+    .chip.conn-ok     { color: var(--accent);  border-color: rgba(0,229,160,0.3); }
+    .chip.conn-err    { color: var(--danger);   border-color: rgba(239,68,68,0.3); }
+    .chip.conn-warn   { color: var(--warn);     border-color: rgba(245,158,11,0.3); }
+    .chip.market-open { color: var(--accent);   border-color: rgba(0,229,160,0.3); }
+    .chip.market-closed { color: var(--text-dim); }
+    .chip.market-pre  { color: var(--warn);     border-color: rgba(245,158,11,0.3); }
+
+    .chip.conn-ok .dot  { animation: pulse-green 2s infinite; }
+    .chip.market-open .dot { animation: pulse-green 1.5s infinite; }
+    @keyframes pulse-green {
+      0%,100% { box-shadow: 0 0 0 0 rgba(0,229,160,0.6); }
+      50%      { box-shadow: 0 0 0 4px rgba(0,229,160,0); }
+    }
+
+    .clock {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       TABS NAV
+    ═══════════════════════════════════════════════════ */
+    .tabs-nav {
+      display: flex;
+      gap: 6px;
+      padding: 12px 20px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: var(--radius) var(--radius) 0 0;
+      border: 1px solid transparent;
+      border-bottom: none;
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      position: relative;
+      bottom: -1px;
+    }
+    .tab-btn:hover { color: var(--text-muted); background: var(--surface); }
+    .tab-btn.active {
+      background: var(--surface);
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .tab-pill {
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--surface-3);
+      color: var(--text-dim);
+      transition: all 0.2s;
+    }
+    .tab-btn.active .tab-pill {
+      background: var(--accent);
+      color: #000;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       MAIN CONTAINER
+    ═══════════════════════════════════════════════════ */
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 16px 20px 32px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ═══════════════════════════════════════════════════
+       TOP MOVERS
+    ═══════════════════════════════════════════════════ */
+    .top-movers {
+      margin-bottom: 16px;
+    }
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+    }
+    .movers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+    .mover-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .mover-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--blue));
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .mover-card:hover { border-color: var(--border-2); transform: translateY(-2px); box-shadow: var(--shadow); }
+    .mover-card:hover::before { opacity: 1; }
+    .mover-card a {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+      letter-spacing: 0.3px;
+    }
+    .mover-card a:hover { color: var(--accent); text-decoration: none; }
+    .mover-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .mover-count {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .mover-count strong { color: var(--accent); font-size: 13px; }
+    .mover-price {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .no-movers {
+      color: var(--text-dim);
+      font-size: 13px;
+      padding: 8px 0;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       PANEL
+    ═══════════════════════════════════════════════════ */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .panel-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(13, 20, 32, 0.6);
+    }
+
+    /* Search */
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 180px;
+      max-width: 320px;
+    }
+    .search-wrap::before {
+      content: '⌕';
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 16px;
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      padding: 7px 32px 7px 32px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input::placeholder { color: var(--text-dim); }
+    .search-input:focus { border-color: var(--accent); }
+    .search-clear {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 16px;
+      line-height: 1;
+      padding: 2px;
+      display: none;
+    }
+    .search-clear.visible { display: block; }
+    .search-clear:hover { color: var(--text); }
+
+    /* Actions */
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 13px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--border-2);
+      background: var(--surface-2);
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .btn:hover {
+      background: var(--surface-3);
+      color: var(--text);
+      border-color: var(--border-2);
+    }
+    .btn.primary {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .btn.primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+    .btn.danger {
+      background: rgba(239,68,68,0.1);
+      color: var(--danger);
+      border-color: rgba(239,68,68,0.25);
+    }
+    .btn.danger:hover { background: rgba(239,68,68,0.18); }
+
+    /* ═══════════════════════════════════════════════════
+       TABLE
+    ═══════════════════════════════════════════════════ */
+    .table-scroll {
+      overflow: auto;
+      max-height: 60vh;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: var(--surface-2);
+      color: var(--text-dim);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      user-select: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    thead th:hover { color: var(--text-muted); }
+    thead th.sorted { color: var(--accent); }
+
+    .si { font-size: 10px; margin-left: 3px; color: var(--text-dim); }
+    thead th.sorted .si { color: var(--accent); }
+
+    tbody td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    tbody tr { transition: background 0.15s ease; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.025); }
+
+    /* Stock link */
+    .stock-link {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.2s;
+    }
+    .stock-link:hover { color: var(--accent); text-decoration: none; }
+    .stock-link .ext { font-size: 9px; opacity: 0.5; }
+
+    /* Count badge */
+    .count-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--surface-3);
+      color: var(--text-muted);
+      min-width: 28px;
+      text-align: center;
+    }
+    .count-badge.hot {
+      background: rgba(0,229,160,0.15);
+      color: var(--accent);
+    }
+
+    /* Price */
+    .price-cell {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* Time */
+    .time-cell {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .date-label {
+      display: block;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    /* Scan tag */
+    .scan-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      background: rgba(59,130,246,0.1);
+      border: 1px solid rgba(59,130,246,0.2);
+      color: #93c5fd;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    a.scan-tag:hover {
+      background: rgba(59,130,246,0.18);
+      border-color: rgba(59,130,246,0.4);
+      text-decoration: none;
+      color: #bfdbfe;
+    }
+
+    /* Empty state */
+    .empty-row td {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+    .empty-icon { font-size: 32px; display: block; margin-bottom: 8px; }
+
+    /* ═══════════════════════════════════════════════════
+       HIGHLIGHT ANIMATIONS (new / update rows)
+    ═══════════════════════════════════════════════════ */
+    @keyframes rowSlideIn {
+      from { opacity: 0; transform: translateX(-6px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes rowGlowNew {
+      0%   { background: var(--new-bg); box-shadow: inset 3px 0 0 var(--accent); }
+      75%  { background: var(--new-bg); box-shadow: inset 3px 0 0 var(--accent); }
+      100% { background: transparent;  box-shadow: none; }
+    }
+    @keyframes rowGlowUpd {
+      0%   { background: var(--upd-bg); box-shadow: inset 3px 0 0 var(--blue); }
+      75%  { background: var(--upd-bg); box-shadow: inset 3px 0 0 var(--blue); }
+      100% { background: transparent;  box-shadow: none; }
+    }
+
+    tbody tr.hl-new  { animation: rowGlowNew 10s ease forwards, rowSlideIn 0.3s ease; }
+    tbody tr.hl-upd  { animation: rowGlowUpd 10s ease forwards; }
+
+    /* ═══════════════════════════════════════════════════
+       PAGINATION
+    ═══════════════════════════════════════════════════ */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      background: rgba(13,20,32,0.5);
+    }
+    .page-info {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .page-buttons {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .pg-btn {
+      min-width: 30px;
+      height: 30px;
+      padding: 0 6px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pg-btn:hover:not(:disabled) {
+      background: var(--surface-3);
+      border-color: var(--border-2);
+      color: var(--text);
+    }
+    .pg-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #000;
+      font-weight: 700;
+    }
+    .pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .pg-dots {
+      color: var(--text-dim);
+      font-size: 12px;
+      padding: 0 2px;
+      user-select: none;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       TOAST NOTIFICATIONS
+    ═══════════════════════════════════════════════════ */
+    .toast-box {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 8px;
+      max-width: 340px;
+      pointer-events: none;
+    }
+
+    .toast {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      line-height: 1.4;
+      cursor: pointer;
+      pointer-events: all;
+      overflow: hidden;
+      animation: toastIn 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+      backdrop-filter: blur(8px);
+    }
+    .toast.removing {
+      animation: toastOut 0.3s ease forwards !important;
+    }
+    .toast.new    { background: rgba(0,  229,160,0.12); border-color: var(--new-border); }
+    .toast.update { background: rgba(59, 130,246,0.12); border-color: var(--upd-border); }
+    .toast.error  { background: rgba(239,68, 68, 0.12); border-color: rgba(239,68,68,0.35); }
+    .toast.info   { background: rgba(13, 20, 32, 0.9);  border-color: var(--border-2); }
+
+    .toast-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .toast-body { flex: 1; }
+    .toast-title {
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+    .toast.new    .toast-title { color: var(--accent); }
+    .toast.update .toast-title { color: #93c5fd; }
+    .toast.error  .toast-title { color: var(--danger); }
+    .toast.info   .toast-title { color: var(--text-muted); }
+
+    .toast-msg { color: var(--text-muted); font-size: 13px; }
+    .toast-close {
+      background: none; border: none;
+      color: var(--text-dim); font-size: 16px;
+      line-height: 1; padding: 0; flex-shrink: 0;
+      margin-top: -1px;
+      transition: color 0.15s;
+    }
+    .toast-close:hover { color: var(--text); }
+
+    /* progress bar at bottom of toast */
+    .toast-bar {
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 2px;
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+    .toast.new    .toast-bar { background: var(--accent); }
+    .toast.update .toast-bar { background: var(--blue); }
+    .toast.error  .toast-bar { background: var(--danger); }
+    .toast.info   .toast-bar { background: var(--border-2); }
+
+    @keyframes toastBar { from { width: 100%; } to { width: 0%; } }
+    @keyframes toastIn  {
+      from { opacity: 0; transform: translateX(100%) scale(0.9); }
+      to   { opacity: 1; transform: translateX(0) scale(1); }
+    }
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateX(0); max-height: 100px; margin-bottom: 0; }
+      to   { opacity: 0; transform: translateX(120%); max-height: 0; margin-bottom: -8px; }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       CONFIRM MODAL
+    ═══════════════════════════════════════════════════ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.15s ease;
+    }
+    .modal-overlay.hidden { display: none; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      border-radius: 16px;
+      padding: 28px 32px;
+      width: min(400px, calc(100vw - 40px));
+      box-shadow: var(--shadow);
+      animation: modalPop 0.2s cubic-bezier(0.34, 1.4, 0.64, 1);
+    }
+    @keyframes modalPop {
+      from { transform: scale(0.92); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+    .modal-icon   { font-size: 32px; margin-bottom: 12px; }
+    .modal h3     { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .modal p      { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* ═══════════════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════════════ */
+    @media (max-width: 700px) {
+      header { padding: 10px 14px; }
+      .container { padding: 12px 14px 24px; }
+      .movers-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+      .panel-toolbar { padding: 10px 12px; }
+      thead th, tbody td { padding: 8px 10px; }
+      .table-scroll { max-height: 55vh; }
+      .toast-box { left: 10px; right: 10px; max-width: none; bottom: 10px; }
+    }
+  </style>
 </head>
-<body class="dark">
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     CONFIRM MODAL
+═══════════════════════════════════════════════════ -->
+<div id="confirm-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-icon" id="confirm-icon">⚠️</div>
+    <h3 id="confirm-title">Confirm Action</h3>
+    <p id="confirm-msg">Are you sure?</p>
+    <div class="modal-actions">
+      <button id="confirm-cancel" class="btn">Cancel</button>
+      <button id="confirm-ok" class="btn danger">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════════════ -->
 <header>
-  <h1>Stock Dashboard</h1>
-  <button onclick="document.body.classList.toggle('dark')">Toggle Dark Mode</button>
+  <div class="logo">
+    <div class="logo-icon">📈</div>
+    Stock Dashboard
+  </div>
+
+  <div class="header-meta">
+    <span id="market-chip" class="chip market-closed">
+      <span class="dot"></span>
+      <span id="market-label">Checking…</span>
+    </span>
+    <span id="conn-chip" class="chip conn-warn">
+      <span class="dot"></span>
+      <span id="conn-label">Connecting</span>
+    </span>
+    <span class="chip" style="border:none;background:none;">
+      <span id="ist-clock" class="clock">--:--:-- --</span>
+    </span>
+  </div>
 </header>
 
-<div class="tabs">
-  <div class="tab active" data-tab="live">Live Stocks</div>
-  <div class="tab" data-tab="history">History</div>
+<!-- ═══════════════════════════════════════════════════
+     TABS
+═══════════════════════════════════════════════════ -->
+<div class="tabs-nav">
+  <button class="tab-btn active" data-tab="live">
+    Live <span class="tab-pill" id="live-pill">0</span>
+  </button>
+  <button class="tab-btn" data-tab="history">
+    History <span class="tab-pill" id="history-pill">0</span>
+  </button>
 </div>
 
-<div id="live" class="tab-content active">
-  <div class="search-container">
-    <input id="live-search" placeholder="Search Live Stocks..." />
-    <div>
-      <button onclick="clearLive()">Clear Live</button>
-      <button onclick="downloadCSV(false)">Download CSV</button>
-      <button onclick="copyToTV()">Copy to TV</button>
+<!-- ═══════════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════════ -->
+<div class="container">
+
+  <!-- LIVE TAB -->
+  <section id="tab-live" class="tab-panel active">
+
+    <!-- Top Movers -->
+    <div class="top-movers">
+      <div class="section-label">🔥 Top Movers by Count</div>
+      <div class="movers-grid" id="movers-grid">
+        <p class="no-movers">No live data yet</p>
+      </div>
     </div>
-  </div>
-  <div class="table-wrapper">
-    <div class="table-meta">Records: <span id="live-count">0</span></div>
-    <table id="live-table">
-      <thead>
-        <tr>
-          <th data-col="ts_ist">Time <span class="sort-indicator">↓</span></th>
-          <th data-col="stock">Stock<span class="sort-indicator"></span></th>
-          <th data-col="count">Count<span class="sort-indicator"></span></th>
-          <th data-col="trigger_price">Price<span class="sort-indicator"></span></th>
-        </tr>
-      </thead>
-      <tbody id="live-tbody"></tbody>
-    </table>
-  </div>
-</div>
 
-<div id="history" class="tab-content">
-  <div class="search-container">
-    <input id="history-search" placeholder="Search History..." />
-    <div>
-      <button onclick="clearHistory()">Clear History</button>
-      <button onclick="downloadCSV(true)">Download CSV</button>
+    <!-- Main Panel -->
+    <div class="panel">
+      <div class="panel-toolbar">
+        <div class="search-wrap">
+          <input id="live-search" class="search-input" type="text" placeholder="Search stocks, scans…" autocomplete="off" />
+          <button class="search-clear" id="live-clear-search" title="Clear">×</button>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btn-copy-tv" title="Copy all live stock symbols for TradingView watchlist">📋 Copy TV</button>
+          <button class="btn" id="btn-dl-live" title="Download live table as CSV">⬇ CSV</button>
+          <button class="btn danger" id="btn-clear-live">🗑 Clear Live</button>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table id="live-table">
+          <thead>
+            <tr>
+              <th data-col="ts_ist">Time <span class="si">↓</span></th>
+              <th data-col="stock">Stock <span class="si">↕</span></th>
+              <th data-col="count">Count <span class="si">↕</span></th>
+              <th data-col="trigger_price">Price <span class="si">↕</span></th>
+              <th data-col="scan_name">Scan <span class="si">↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="live-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="pagination" id="live-pagination">
+        <span class="page-info" id="live-page-info">0 records</span>
+        <div class="page-buttons" id="live-pages"></div>
+      </div>
     </div>
-  </div>
-  <div class="table-wrapper">
-    <div class="table-meta">Records: <span id="history-count">0</span></div>
-    <table id="history-table">
-      <thead>
-        <tr>
-          <th data-col="ts_ist">Time <span class="sort-indicator">↓</span></th>
-          <th data-col="stock">Stock<span class="sort-indicator"></span></th>
-          <th data-col="count">Count<span class="sort-indicator"></span></th>
-          <th data-col="trigger_price">Price<span class="sort-indicator"></span></th>
-        </tr>
-      </thead>
-      <tbody id="history-tbody"></tbody>
-    </table>
-  </div>
-</div>
+  </section>
 
-<div class="toast-container" id="toast-container"></div>
+  <!-- HISTORY TAB -->
+  <section id="tab-history" class="tab-panel">
+    <div class="panel">
+      <div class="panel-toolbar">
+        <div class="search-wrap">
+          <input id="history-search" class="search-input" type="text" placeholder="Search history…" autocomplete="off" />
+          <button class="search-clear" id="history-clear-search" title="Clear">×</button>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btn-dl-history">⬇ CSV</button>
+          <button class="btn danger" id="btn-clear-history">🗑 Clear History</button>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th data-col="ts_ist">Date / Time <span class="si">↓</span></th>
+              <th data-col="stock">Stock <span class="si">↕</span></th>
+              <th data-col="count">Count <span class="si">↕</span></th>
+              <th data-col="trigger_price">Price <span class="si">↕</span></th>
+              <th data-col="scan_name">Scan <span class="si">↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="pagination" id="history-pagination">
+        <span class="page-info" id="history-page-info">0 records</span>
+        <div class="page-buttons" id="history-pages"></div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /container -->
+
+<!-- Toast container -->
+<div id="toast-box" class="toast-box"></div>
+
+<!-- Audio for new stock alerts -->
+<audio id="alert-sound" src="res/new-notification-09-352705.mp3" preload="auto"></audio>
 
 <script>
-/* ---------- State ---------- */
-let liveData = [];        // rows with { stock, trigger_price, count, time_ist, ts_ist, ... }
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════ */
+let liveData    = [];
 let historyData = [];
-const sortConfig = {
-  live: { column: "ts_ist", direction: "desc" },
-  history: { column: "ts_ist", direction: "desc" }
+const PAGE_SIZE = 15;
+let livePage    = 1;
+let historyPage = 1;
+let liveFilter  = '';
+let histFilter  = '';
+
+const sortCfg = {
+  live:    { col: 'ts_ist',  dir: 'desc' },
+  history: { col: 'ts_ist',  dir: 'desc' },
 };
 
-/* ---------- Helpers ---------- */
-function showToast(message, type="default", icon="") {
-  const container = document.getElementById('toast-container');
-  const toast = document.createElement('div');
-  toast.className = 'toast ' + type;
-  toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
-  container.appendChild(toast);
-  void toast.offsetWidth; // reflow
-  toast.classList.add('show');
-  const remove = () => { toast.classList.remove('show'); setTimeout(()=>toast.remove(), 500); };
-  setTimeout(remove, 60000);// 1 minute
-  toast.addEventListener('click', remove);
-}
-function tradingViewLink(sym){ return `https://in.tradingview.com/chart/?symbol=NSE:${sym}`; }
+/* ═══════════════════════════════════════════════════════════════
+   FORMATTERS
+═══════════════════════════════════════════════════════════════ */
+const fmtINR = new Intl.NumberFormat('en-IN', {
+  minimumFractionDigits: 2, maximumFractionDigits: 2,
+});
 
-function sortTableData(data, config) {
-  const sorted = [...data].sort((a, b) => {
-    let A = a[config.column], B = b[config.column];
-    if (config.column === "ts_ist") {
-      return (config.direction === "asc" ? 1 : -1) * ((A ?? 0) - (B ?? 0));
+function fmtPrice(p) {
+  if (p == null || p === '') return '—';
+  return '₹' + fmtINR.format(Number(p));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SOUND  (Web Audio API — ascending chime for new, ping for update)
+═══════════════════════════════════════════════════════════════ */
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playBeep(freqs, vol = 0.35, dur = 0.22) {
+  try {
+    const ctx = getAudioCtx();
+    freqs.forEach((freq, i) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.14;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(vol, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      osc.start(t);
+      osc.stop(t + dur + 0.05);
+    });
+  } catch (_) {
+    // Fallback: play mp3
+    const el = document.getElementById('alert-sound');
+    if (el) { el.currentTime = 0; el.play().catch(() => {}); }
+  }
+}
+
+function playAlert(type) {
+  if (type === 'new') {
+    // Try mp3 first (richer sound), then beep fallback
+    const el = document.getElementById('alert-sound');
+    if (el && el.readyState >= 2) {
+      el.currentTime = 0;
+      el.play().catch(() => playBeep([523, 659, 784]));
+    } else {
+      playBeep([523, 659, 784]);           // C5 → E5 → G5 ascending chime
     }
-    if (config.column === "count" || config.column === "trigger_price") {
-      return (config.direction === "asc" ? 1 : -1) * ((A ?? 0) - (B ?? 0));
+  } else {
+    playBeep([440], 0.2, 0.18);            // single A4 ping for updates
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONFIRM MODAL (Promise-based, replaces native confirm())
+═══════════════════════════════════════════════════════════════ */
+function askConfirm(title, msg, icon = '⚠️') {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('confirm-modal');
+    document.getElementById('confirm-icon').textContent  = icon;
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-msg').textContent   = msg;
+    overlay.classList.remove('hidden');
+
+    const ok     = document.getElementById('confirm-ok');
+    const cancel = document.getElementById('confirm-cancel');
+
+    function done(val) {
+      overlay.classList.add('hidden');
+      ok.removeEventListener('click', onOk);
+      cancel.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onOverlay);
+      resolve(val);
     }
-    A = String(A ?? ""); B = String(B ?? "");
-    return (config.direction === "asc" ? 1 : -1) * A.localeCompare(B);
+    const onOk      = () => done(true);
+    const onCancel  = () => done(false);
+    const onOverlay = (e) => { if (e.target === overlay) done(false); };
+
+    ok.addEventListener('click', onOk);
+    cancel.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onOverlay);
   });
-  return sorted;
 }
 
-/* ---------- Rendering ---------- */
-function renderTable(tbodyId, data, isHistory=false, highlightMap=new Map()) {
-  const tableType = isHistory ? "history" : "live";
-  const config = sortConfig[tableType];
-  const tbody = document.getElementById(tbodyId);
-  tbody.innerHTML = "";
+/* ═══════════════════════════════════════════════════════════════
+   TOAST SYSTEM
+═══════════════════════════════════════════════════════════════ */
+const MAX_TOASTS = 5;
 
-  const search = document.getElementById(isHistory ? "history-search" : "live-search")
-                  .value.trim().toLowerCase();
+function showToast(msg, type = 'info', title = '', duration = 8000) {
+  const box = document.getElementById('toast-box');
+
+  // Prune if too many
+  while (box.children.length >= MAX_TOASTS) {
+    removeToast(box.firstChild);
+  }
+
+  const icons = { new: '🆕', update: '🔄', error: '⚠️', info: 'ℹ️' };
+  const titles = { new: 'New Stock', update: 'Updated', error: 'Error', info: 'Info' };
+
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+
+  // Icon
+  const iconEl = document.createElement('div');
+  iconEl.className = 'toast-icon';
+  iconEl.textContent = icons[type] || 'ℹ️';
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'toast-body';
+
+  const tTitle = document.createElement('div');
+  tTitle.className = 'toast-title';
+  tTitle.textContent = title || titles[type] || '';
+
+  const tMsg = document.createElement('div');
+  tMsg.className = 'toast-msg';
+  tMsg.textContent = msg;
+
+  body.appendChild(tTitle);
+  body.appendChild(tMsg);
+
+  // Close btn
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'toast-close';
+  closeBtn.textContent = '×';
+  closeBtn.addEventListener('click', (e) => { e.stopPropagation(); removeToast(t); });
+
+  // Progress bar
+  const bar = document.createElement('div');
+  bar.className = 'toast-bar';
+  bar.style.animation = `toastBar ${duration}ms linear forwards`;
+
+  t.appendChild(iconEl);
+  t.appendChild(body);
+  t.appendChild(closeBtn);
+  t.appendChild(bar);
+
+  t.addEventListener('click', () => removeToast(t));
+  box.appendChild(t);
+
+  t._timer = setTimeout(() => removeToast(t), duration);
+}
+
+function removeToast(t) {
+  if (!t || t._removing) return;
+  t._removing = true;
+  clearTimeout(t._timer);
+  t.classList.add('removing');
+  t.addEventListener('animationend', () => t.remove(), { once: true });
+  setTimeout(() => t.remove(), 350); // fallback
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MARKET STATUS + IST CLOCK
+═══════════════════════════════════════════════════════════════ */
+function getMarketStatus() {
+  const now    = new Date();
+  const ist    = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const day    = ist.getDay();     // 0=Sun, 6=Sat
+  const mins   = ist.getHours() * 60 + ist.getMinutes();
+
+  if (day === 0 || day === 6) return { key: 'weekend', label: 'Weekend' };
+  if (mins < 9 * 60 + 15)    return { key: 'pre',     label: 'Pre-Market' };
+  if (mins > 15 * 60 + 30)   return { key: 'closed',  label: 'Closed' };
+  return { key: 'open', label: 'OPEN' };
+}
+
+function updateHeaderMeta() {
+  const ms = getMarketStatus();
+  const chip = document.getElementById('market-chip');
+  const label = document.getElementById('market-label');
+  chip.className = 'chip';
+  if (ms.key === 'open')    chip.classList.add('market-open');
+  else if (ms.key === 'pre') chip.classList.add('market-pre');
+  else                       chip.classList.add('market-closed');
+  label.textContent = ms.label;
+
+  // IST clock
+  document.getElementById('ist-clock').textContent =
+    new Date().toLocaleTimeString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
+    });
+}
+
+setInterval(updateHeaderMeta, 1000);
+updateHeaderMeta();
+
+/* ═══════════════════════════════════════════════════════════════
+   SORTING
+═══════════════════════════════════════════════════════════════ */
+function sortData(data, cfg) {
+  const dir = cfg.dir === 'asc' ? 1 : -1;
+  return [...data].sort((a, b) => {
+    const col = cfg.col;
+    if (col === 'ts_ist' || col === 'count' || col === 'trigger_price') {
+      return dir * ((a[col] ?? 0) - (b[col] ?? 0));
+    }
+    return dir * String(a[col] ?? '').localeCompare(String(b[col] ?? ''));
+  });
+}
+
+function updateSortIcons(tableId, cfg) {
+  document.querySelectorAll(`#${tableId} thead th`).forEach(th => {
+    const si = th.querySelector('.si');
+    if (!si) return;
+    if (th.dataset.col === cfg.col) {
+      si.textContent = cfg.dir === 'asc' ? '↑' : '↓';
+      th.classList.add('sorted');
+    } else {
+      si.textContent = '↕';
+      th.classList.remove('sorted');
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGINATION  (ellipsis style)
+═══════════════════════════════════════════════════════════════ */
+function getPageRange(cur, total, delta = 2) {
+  if (total <= 1) return [1];
+  const pages = new Set([1, total]);
+  for (let i = Math.max(2, cur - delta); i <= Math.min(total - 1, cur + delta); i++) {
+    pages.add(i);
+  }
+  const sorted = [...pages].sort((a, b) => a - b);
+  const result = [];
+  let prev = 0;
+  for (const p of sorted) {
+    if (p - prev > 1) result.push('…');
+    result.push(p);
+    prev = p;
+  }
+  return result;
+}
+
+function renderPagination(which, filteredLen) {
+  const isHist  = which === 'history';
+  const cfg     = sortCfg[which];
+  const page    = isHist ? historyPage : livePage;
+  const total   = Math.max(1, Math.ceil(filteredLen / PAGE_SIZE));
+  const pagesEl = document.getElementById(`${which}-pages`);
+  const infoEl  = document.getElementById(`${which}-page-info`);
+
+  infoEl.textContent = filteredLen > 0
+    ? `${filteredLen} record${filteredLen !== 1 ? 's' : ''} · Page ${page} of ${total}`
+    : '0 records';
+
+  pagesEl.innerHTML = '';
+
+  // Prev
+  const prev = document.createElement('button');
+  prev.className = 'pg-btn';
+  prev.textContent = '‹';
+  prev.disabled = page <= 1;
+  prev.addEventListener('click', () => setPage(which, page - 1, filteredLen));
+  pagesEl.appendChild(prev);
+
+  // Page numbers
+  for (const p of getPageRange(page, total)) {
+    if (p === '…') {
+      const dots = document.createElement('span');
+      dots.className = 'pg-dots';
+      dots.textContent = '…';
+      pagesEl.appendChild(dots);
+    } else {
+      const btn = document.createElement('button');
+      btn.className = 'pg-btn' + (p === page ? ' active' : '');
+      btn.textContent = p;
+      btn.addEventListener('click', () => setPage(which, p, filteredLen));
+      pagesEl.appendChild(btn);
+    }
+  }
+
+  // Next
+  const next = document.createElement('button');
+  next.className = 'pg-btn';
+  next.textContent = '›';
+  next.disabled = page >= total;
+  next.addEventListener('click', () => setPage(which, page + 1, filteredLen));
+  pagesEl.appendChild(next);
+}
+
+function setPage(which, p, filteredLen) {
+  const total = Math.max(1, Math.ceil(filteredLen / PAGE_SIZE));
+  p = Math.max(1, Math.min(p, total));
+  if (which === 'live') { livePage = p; renderLive(); }
+  else                  { historyPage = p; renderHistory(); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TABLE RENDERING  (XSS-safe DOM construction)
+═══════════════════════════════════════════════════════════════ */
+function buildRow(item, isHistory, hlClass) {
+  const tr = document.createElement('tr');
+  if (hlClass) tr.classList.add(hlClass);
+
+  // Time cell
+  const tdTime = document.createElement('td');
+  tdTime.className = 'time-cell';
+  if (isHistory && item.date_ist) {
+    const dateSpan = document.createElement('span');
+    dateSpan.className = 'date-label';
+    dateSpan.textContent = item.date_ist;
+    tdTime.appendChild(dateSpan);
+  }
+  tdTime.appendChild(document.createTextNode(item.time_ist ?? '—'));
+
+  // Stock cell
+  const tdStock = document.createElement('td');
+  const a = document.createElement('a');
+  a.className = 'stock-link';
+  a.href = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(item.stock)}`;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  a.textContent = item.stock;
+  const ext = document.createElement('span');
+  ext.className = 'ext';
+  ext.textContent = '↗';
+  a.appendChild(ext);
+  tdStock.appendChild(a);
+
+  // Count cell
+  const tdCount = document.createElement('td');
+  const badge = document.createElement('span');
+  const cnt = item.count ?? 0;
+  badge.className = 'count-badge' + (cnt >= 3 ? ' hot' : '');
+  badge.textContent = cnt;
+  tdCount.appendChild(badge);
+
+  // Price cell
+  const tdPrice = document.createElement('td');
+  tdPrice.className = 'price-cell';
+  tdPrice.textContent = fmtPrice(item.trigger_price);
+
+  // Scan cell
+  const tdScan = document.createElement('td');
+  if (item.scan_name) {
+    const scanName = item.scan_name;
+    if (item.scan_url) {
+      const scanA = document.createElement('a');
+      scanA.className = 'scan-tag';
+      scanA.href = item.scan_url;
+      scanA.target = '_blank';
+      scanA.rel = 'noopener noreferrer';
+      scanA.title = scanName;
+      scanA.textContent = scanName;
+      tdScan.appendChild(scanA);
+    } else {
+      const scanSpan = document.createElement('span');
+      scanSpan.className = 'scan-tag';
+      scanSpan.title = scanName;
+      scanSpan.textContent = scanName;
+      tdScan.appendChild(scanSpan);
+    }
+  } else {
+    tdScan.textContent = '—';
+    tdScan.style.color = 'var(--text-dim)';
+  }
+
+  tr.appendChild(tdTime);
+  tr.appendChild(tdStock);
+  tr.appendChild(tdCount);
+  tr.appendChild(tdPrice);
+  tr.appendChild(tdScan);
+
+  return tr;
+}
+
+function renderTable(tbodyId, data, isHistory, hlMap = new Map()) {
+  const which   = isHistory ? 'history' : 'live';
+  const cfg     = sortCfg[which];
+  const tbody   = document.getElementById(tbodyId);
+  const search  = isHistory ? histFilter : liveFilter;
+  const page    = isHistory ? historyPage : livePage;
 
   const filtered = search
-    ? data.filter(row => Object.values(row).some(v => String(v).toLowerCase().includes(search)))
+    ? data.filter(r =>
+        [r.stock, r.scan_name, r.alert_name, r.time_ist, r.date_ist]
+          .some(v => v && String(v).toLowerCase().includes(search))
+      )
     : data;
 
-  const sorted = sortTableData(filtered, config);
+  const sorted = sortData(filtered, cfg);
+  const start  = (page - 1) * PAGE_SIZE;
+  const paged  = sorted.slice(start, start + PAGE_SIZE);
 
-  sorted.forEach(item => {
-    const tr = document.createElement("tr");
-    const stockLink = `<a href="${tradingViewLink(item.stock)}" target="_blank">${item.stock}</a>`;
-    tr.innerHTML = `<td>${item.time_ist}</td><td>${stockLink}</td><td>${item.count}</td><td>${item.trigger_price}</td>`;
+  tbody.innerHTML = '';
 
-    if (!isHistory && highlightMap.has(item.stock)) {
-      const type = highlightMap.get(item.stock);
-      const cls = (type === "new") ? "highlight-new" : "highlight-update";
-      tr.classList.add(cls);
-      setTimeout(() => tr.classList.remove(cls), 3000);
-    }
+  if (!paged.length) {
+    const tr = document.createElement('tr');
+    tr.className = 'empty-row';
+    const td = document.createElement('td');
+    td.colSpan = 5;
+    td.innerHTML = `<span class="empty-icon">${isHistory ? '📂' : '📡'}</span>${isHistory ? 'No history records' : 'Waiting for alerts…'}`;
+    tr.appendChild(td);
     tbody.appendChild(tr);
-  });
-  document.getElementById(isHistory ? "history-count" : "live-count").textContent = filtered.length;
+  } else {
+    paged.forEach(item => {
+      const hlClass = !isHistory && hlMap.has(item.stock)
+        ? (hlMap.get(item.stock) === 'new' ? 'hl-new' : 'hl-upd')
+        : null;
+      tbody.appendChild(buildRow(item, isHistory, hlClass));
+    });
+  }
+
+  // Pill counts
+  document.getElementById(isHistory ? 'history-pill' : 'live-pill').textContent = filtered.length;
+
+  renderPagination(which, filtered.length);
+  updateSortIcons(isHistory ? 'history-table' : 'live-table', cfg);
 }
 
-/* ---------- Incremental updates ---------- */
+function renderLive(hlMap = new Map())    { renderTable('live-tbody',    liveData,    false, hlMap); renderMovers(); }
+function renderHistory(hlMap = new Map()) { renderTable('history-tbody', historyData, true,  hlMap); }
+
+/* ═══════════════════════════════════════════════════════════════
+   TOP MOVERS
+═══════════════════════════════════════════════════════════════ */
+function renderMovers() {
+  const grid = document.getElementById('movers-grid');
+  if (!liveData.length) {
+    grid.innerHTML = '<p class="no-movers">No live data yet</p>';
+    return;
+  }
+  const top = [...liveData].sort((a, b) => (b.count ?? 0) - (a.count ?? 0)).slice(0, 5);
+  grid.innerHTML = '';
+  top.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'mover-card';
+
+    const link = document.createElement('a');
+    link.href = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(s.stock)}`;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = s.stock;
+
+    const meta = document.createElement('div');
+    meta.className = 'mover-meta';
+
+    const cnt = document.createElement('div');
+    cnt.className = 'mover-count';
+    cnt.innerHTML = `Count: <strong>${s.count ?? 0}</strong>`;
+
+    const price = document.createElement('div');
+    price.className = 'mover-price';
+    price.textContent = fmtPrice(s.trigger_price);
+
+    meta.appendChild(cnt);
+    meta.appendChild(price);
+    card.appendChild(link);
+    card.appendChild(meta);
+
+    card.addEventListener('click', (e) => {
+      if (e.target !== link) link.click();
+    });
+    grid.appendChild(card);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DELTA UPSERT
+═══════════════════════════════════════════════════════════════ */
 function upsertLiveDelta(delta) {
   const byStock = new Map(liveData.map(x => [x.stock, x]));
   delta.forEach(row => {
-    if (byStock.has(row.stock)) {
-      Object.assign(byStock.get(row.stock), row);
-    } else {
-      liveData.push(row);
-    }
+    if (byStock.has(row.stock)) Object.assign(byStock.get(row.stock), row);
+    else liveData.push(row);
   });
 }
 
-/* ---------- CSV & Copy ---------- */
-function downloadCSV(isHistory=false){
+/* ═══════════════════════════════════════════════════════════════
+   CSV EXPORT
+═══════════════════════════════════════════════════════════════ */
+function downloadCSV(isHistory = false) {
   const data = isHistory ? historyData : liveData;
-  if (!data.length) return showToast("No data to download!", "default", "ℹ️");
-  const headers = ["Time(IST)", "Stock", "Count", "Price"];
-  const rows = data.map(d => [d.time_ist, d.stock, d.count, d.trigger_price]);
-  const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-  const blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+  if (!data.length) { showToast('No data to export', 'info'); return; }
+
+  const headers = isHistory
+    ? ['Date','Time(IST)','Stock','Count','Price','Scan','Alert']
+    : ['Time(IST)','Stock','Count','Price','Scan','Alert'];
+
+  const rows = data.map(d => isHistory
+    ? [d.date_ist, d.time_ist, d.stock, d.count, d.trigger_price, d.scan_name ?? '', d.alert_name ?? '']
+    : [d.time_ist, d.stock, d.count, d.trigger_price, d.scan_name ?? '', d.alert_name ?? '']
+  );
+
+  // Escape CSV values
+  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const csv = [headers.map(esc).join(','), ...rows.map(r => r.map(esc).join(','))].join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
   a.href = url;
-  a.download = isHistory ? "history_stocks.csv" : "live_stocks.csv";
-  document.body.appendChild(a); a.click(); a.remove();
+  a.download = isHistory ? 'history_stocks.csv' : 'live_stocks.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
   URL.revokeObjectURL(url);
-}
-function copyToTV(){
-  if(!liveData.length) return showToast("No live stocks to copy!", "default", "ℹ️");
-  const stockList = liveData.map(x => x.stock).join(",");
-  navigator.clipboard.writeText(stockList)
-    .then(() => showToast("Copied to clipboard!", "new", "✅"))
-    .catch(() => showToast("Failed to copy!", "default", "⚠️"));
+  showToast(`Exported ${data.length} rows`, 'info');
 }
 
-/* ---------- Tabs ---------- */
-document.querySelectorAll(".tab").forEach(tab => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    document.querySelectorAll(".tab-content").forEach(tc => tc.classList.remove("active"));
-    tab.classList.add("active");
-    document.getElementById(tab.dataset.tab).classList.add("active");
-    if (tab.dataset.tab === "live") renderTable("live-tbody", liveData, false);
-    else renderTable("history-tbody", historyData, true);
+function copyToTV() {
+  if (!liveData.length) { showToast('No live stocks to copy', 'info'); return; }
+  const list = [...new Set(liveData.map(x => x.stock))].join(',');
+  navigator.clipboard.writeText(list)
+    .then(() => showToast(`${liveData.length} symbols copied`, 'new', 'Clipboard'))
+    .catch(() => showToast('Copy failed — try manually', 'error'));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TAB SWITCHING
+═══════════════════════════════════════════════════════════════ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const panel = document.getElementById(`tab-${btn.dataset.tab}`);
+    if (panel) panel.classList.add('active');
+    if (btn.dataset.tab === 'live') renderLive();
+    else                            renderHistory();
   });
 });
 
-/* ---------- Sort (click headers) ---------- */
-document.querySelectorAll("th[data-col]").forEach(th => {
-  const tableId = th.closest("table").id; // live-table / history-table
-  const tableKey = tableId.startsWith("live") ? "live" : "history";
-  th.addEventListener("click", () => {
-    const col = th.dataset.col;
-    const cfg = sortConfig[tableKey];
-    if (cfg.column === col) {
-      cfg.direction = (cfg.direction === "asc" ? "desc" : "asc");
+/* ═══════════════════════════════════════════════════════════════
+   COLUMN SORT
+═══════════════════════════════════════════════════════════════ */
+document.querySelectorAll('th[data-col]').forEach(th => {
+  const tableId = th.closest('table').id;
+  const which   = tableId.startsWith('live') ? 'live' : 'history';
+  th.addEventListener('click', () => {
+    const cfg = sortCfg[which];
+    if (cfg.col === th.dataset.col) {
+      cfg.dir = cfg.dir === 'asc' ? 'desc' : 'asc';
     } else {
-      cfg.column = col;
-      cfg.direction = "asc";
+      cfg.col = th.dataset.col;
+      cfg.dir = 'desc';
     }
-    document.querySelectorAll(`#${tableId} th .sort-indicator`).forEach(si => si.textContent = "");
-    th.querySelector(".sort-indicator").textContent = (cfg.direction === "asc" ? "↑" : "↓");
-    if (tableKey === "live") renderTable("live-tbody", liveData, false);
-    else renderTable("history-tbody", historyData, true);
+    if (which === 'live') renderLive();
+    else                  renderHistory();
   });
 });
 
-/* ---------- Search ---------- */
-document.getElementById("live-search").addEventListener("input", () => renderTable("live-tbody", liveData, false));
-document.getElementById("history-search").addEventListener("input", () => renderTable("history-tbody", historyData, true));
+/* ═══════════════════════════════════════════════════════════════
+   SEARCH
+═══════════════════════════════════════════════════════════════ */
+function wireSearch(inputId, clearId, which) {
+  const input = document.getElementById(inputId);
+  const clearBtn = document.getElementById(clearId);
+  input.addEventListener('input', () => {
+    const val = input.value.trim().toLowerCase();
+    if (which === 'live') { liveFilter = val;  livePage = 1;    renderLive(); }
+    else                  { histFilter = val;  historyPage = 1; renderHistory(); }
+    clearBtn.classList.toggle('visible', val.length > 0);
+  });
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    if (which === 'live') { liveFilter = '';  livePage = 1;    renderLive(); }
+    else                  { histFilter = '';  historyPage = 1; renderHistory(); }
+    clearBtn.classList.remove('visible');
+    input.focus();
+  });
+}
 
-/* ---------- Clear ---------- */
-function clearLive(){ fetch("/clear-live", { method: "POST" }); }
-function clearHistory(){ fetch("/clear-history", { method: "POST" }); }
+wireSearch('live-search',    'live-clear-search',    'live');
+wireSearch('history-search', 'history-clear-search', 'history');
 
-/* ---------- WebSocket ---------- */
-(function initWS(){
-  const loc = window.location;
-  const wsProtocol = loc.protocol === "https:" ? "wss" : "ws";
-  const ws = new WebSocket(`${wsProtocol}://${loc.host}`);
+/* ═══════════════════════════════════════════════════════════════
+   ACTION BUTTONS
+═══════════════════════════════════════════════════════════════ */
+document.getElementById('btn-copy-tv').addEventListener('click', copyToTV);
+document.getElementById('btn-dl-live').addEventListener('click', () => downloadCSV(false));
+document.getElementById('btn-dl-history').addEventListener('click', () => downloadCSV(true));
 
-  ws.onopen = () => showToast("Connected", "new", "✅");
-  ws.onclose = () => showToast("Disconnected", "default", "🔌");
-  ws.onerror = () => showToast("WebSocket error", "default", "⚠️");
+document.getElementById('btn-clear-live').addEventListener('click', async () => {
+  const ok = await askConfirm(
+    'Clear Live Data',
+    'This will permanently delete all live stock alerts for today. This cannot be undone.',
+    '🗑️'
+  );
+  if (!ok) return;
+  fetch('/clear-live', { method: 'POST' }).catch(() => showToast('Request failed', 'error'));
+});
 
-  ws.onmessage = (evt) => {
-    const msg = JSON.parse(evt.data);
-    if (msg.type === "init") {
-      liveData = Array.isArray(msg.liveStocks) ? msg.liveStocks : [];
-      historyData = Array.isArray(msg.historyStocks) ? msg.historyStocks : [];
-      renderTable("live-tbody", liveData, false);
-      renderTable("history-tbody", historyData, true);
-    } else if (msg.type === "delta" && Array.isArray(msg.liveDelta)) {
-      // Build highlight map (new vs update) based on current liveData before upsert
-      const highlightMap = new Map();
-      msg.liveDelta.forEach(it => {
-        const existed = liveData.some(d => d.stock === it.stock);
-        const type = existed ? "update" : "new";
-        const icon = existed ? "🔄" : "🆕";
-        highlightMap.set(it.stock, type);
-        showToast(`${existed ? "Stock Updated" : "New Stock"}: ${it.stock} @ ${it.time_ist}`, type, icon);
-      });
+document.getElementById('btn-clear-history').addEventListener('click', async () => {
+  const ok = await askConfirm(
+    'Clear History',
+    'This will permanently delete all historical stock data (before today). This cannot be undone.',
+    '🗑️'
+  );
+  if (!ok) return;
+  fetch('/clear-history', { method: 'POST' }).catch(() => showToast('Request failed', 'error'));
+});
 
-      upsertLiveDelta(msg.liveDelta);
-      renderTable("live-tbody", liveData, false, highlightMap);
+/* ═══════════════════════════════════════════════════════════════
+   WEBSOCKET  (auto-reconnect with exponential back-off)
+═══════════════════════════════════════════════════════════════ */
+(function initWS() {
+  let ws         = null;
+  let retryDelay = 1500;
+  let retryTimer = null;
+  let intentional = false;
+
+  function setConn(state) {
+    const chip  = document.getElementById('conn-chip');
+    const label = document.getElementById('conn-label');
+    chip.className = 'chip';
+    if (state === 'ok') {
+      chip.classList.add('conn-ok');
+      label.textContent = 'Connected';
+      retryDelay = 1500;
+    } else if (state === 'err') {
+      chip.classList.add('conn-err');
+      label.textContent = 'Disconnected';
+    } else {
+      chip.classList.add('conn-warn');
+      label.textContent = 'Reconnecting…';
     }
-  };
+  }
+
+  function connect() {
+    intentional = false;
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}`);
+
+    ws.onopen = () => {
+      setConn('ok');
+      showToast('Real-time feed connected', 'new', 'Connected');
+    };
+
+    ws.onclose = () => {
+      if (intentional) return;
+      setConn('err');
+      showToast(`Reconnecting in ${Math.round(retryDelay / 1000)}s…`, 'info', 'Disconnected');
+      retryTimer = setTimeout(() => {
+        setConn('warn');
+        connect();
+      }, retryDelay);
+      retryDelay = Math.min(retryDelay * 2, 30000);  // cap at 30s
+    };
+
+    ws.onerror = () => {
+      // onclose will fire next and handle retry
+    };
+
+    ws.onmessage = (evt) => {
+      let msg;
+      try { msg = JSON.parse(evt.data); } catch { return; }
+
+      if (msg.type === 'init') {
+        liveData    = Array.isArray(msg.liveStocks)    ? msg.liveStocks    : [];
+        historyData = Array.isArray(msg.historyStocks) ? msg.historyStocks : [];
+        livePage = historyPage = 1;
+        renderLive();
+        renderHistory();
+
+      } else if (msg.type === 'delta' && Array.isArray(msg.liveDelta)) {
+        const hlMap = new Map();
+        msg.liveDelta.forEach(it => {
+          const isNew = !liveData.some(d => d.stock === it.stock);
+          hlMap.set(it.stock, isNew ? 'new' : 'update');
+          playAlert(isNew ? 'new' : 'update');
+          showToast(
+            `${it.stock}  ${fmtPrice(it.trigger_price)}  ·  ${it.time_ist ?? ''}`,
+            isNew ? 'new' : 'update'
+          );
+        });
+        upsertLiveDelta(msg.liveDelta);
+        renderLive(hlMap);
+      }
+    };
+  }
+
+  connect();
 })();
+
+// Request browser notification permission
+if ('Notification' in window && Notification.permission === 'default') {
+  Notification.requestPermission();
+}
 </script>
 </body>
 </html>
