@@ -227,25 +227,36 @@ setInterval(() => {
 // ============================================================
 
 // --- Telegram Mobile Push Notification (Optional) ---
-function notifyTelegram(items) {
-  const token  = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId || !items?.length) return;
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
 
-  items.forEach((it) => {
-    const isNew = Number(it.count || 1) <= 1;
-    const headline = isNew ? "🟢 *NEW CHARTINK ALERT*" : `🟡 *STOCK UPDATE (Count: ${it.count})*`;
-    const price = it.trigger_price ? `₹${Number(it.trigger_price).toFixed(2)}` : "—";
-    const scan = it.scan_name ? `\n🔍 *Scan:* ${it.scan_name}` : "";
-    const time = it.time_ist ? `\n⏱ *Time:* ${it.time_ist} IST` : "";
-    const chartUrl = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(it.stock)}`;
+function formatTelegramMessage(it) {
+  const isNew = Number(it.count || 1) <= 1;
+  const headline = isNew ? "🟢 <b>NEW CHARTINK ALERT</b>" : `🟡 <b>STOCK UPDATE (Count: ${escapeHtml(it.count)})</b>`;
+  const price = it.trigger_price ? `₹${Number(it.trigger_price).toFixed(2)}` : "—";
+  const scan = it.scan_name ? `\n🔍 <b>Scan:</b> ${escapeHtml(it.scan_name)}` : "";
+  const time = it.time_ist ? `\n⏱ <b>Time:</b> ${escapeHtml(it.time_ist)} IST` : "";
+  const chartUrl = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(it.stock)}`;
 
-    const text = `${headline}\n📈 *${it.stock}* @ ${price}${time}${scan}\n🔗 [Open TradingView](${chartUrl})`;
+  return `${headline}\n📈 <b>${escapeHtml(it.stock)}</b> @ ${price}${time}${scan}\n🔗 <a href="${chartUrl}">Open TradingView Chart</a>`;
+}
 
-    const data = JSON.stringify({
+function sendTelegramRaw(text) {
+  return new Promise((resolve, reject) => {
+    const token  = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+    if (!token || !chatId) {
+      return reject(new Error("TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is not configured"));
+    }
+
+    const payload = JSON.stringify({
       chat_id: chatId,
       text: text,
-      parse_mode: "Markdown",
+      parse_mode: "HTML",
       disable_web_page_preview: true,
     });
 
@@ -255,20 +266,113 @@ function notifyTelegram(items) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Content-Length": Buffer.byteLength(data),
+          "Content-Length": Buffer.byteLength(payload),
         },
+      },
+      (res) => {
+        let body = "";
+        res.on("data", (chunk) => (body += chunk));
+        res.on("end", () => {
+          try {
+            const json = JSON.parse(body);
+            if (res.statusCode === 200 && json.ok) {
+              console.log("[telegram] message delivered successfully");
+              resolve(json);
+            } else {
+              console.error(`[telegram] API error (${res.statusCode}):`, body);
+              const err = new Error(`Telegram error (${res.statusCode}): ${json.description || body}`);
+              err.details = json;
+              reject(err);
+            }
+          } catch (_) {
+            reject(new Error(`Telegram response error (${res.statusCode}): ${body}`));
+          }
+        });
       }
     );
-    req.on("error", (err) => console.warn("[telegram] error:", err.message));
-    req.write(data);
+
+    req.on("error", (err) => {
+      console.error("[telegram] network error:", err.message);
+      reject(err);
+    });
+
+    req.write(payload);
     req.end();
+  });
+}
+
+function notifyTelegram(items) {
+  const token  = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) {
+    return;
+  }
+  if (!items?.length) return;
+
+  items.forEach((it) => {
+    const text = formatTelegramMessage(it);
+    sendTelegramRaw(text).catch((err) => {
+      console.error(`[telegram] failed to send alert for ${it.stock}:`, err.message);
+    });
   });
 }
 
 // Health check (also used by keep-alive pings)
 app.get("/health", (req, res) =>
-  res.json({ status: "ok", uptime: Math.floor(process.uptime()), clients: wss.clients.size })
+  res.json({
+    status: "ok",
+    uptime: Math.floor(process.uptime()),
+    clients: wss.clients.size,
+    telegramConfigured: Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),
+  })
 );
+
+// Diagnostic test endpoint to test Telegram delivery from browser
+app.get("/test-telegram", async (req, res) => {
+  const token  = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!token || !chatId) {
+    return res.status(400).json({
+      ok: false,
+      error: "Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID in environment variables.",
+      help: [
+        "1. Create a bot in Telegram via @BotFather to get your token.",
+        "2. Find your numeric chat ID via @userinfobot.",
+        "3. CRITICAL: Open your new bot in Telegram and click 'Start' (send /start) so it has permission to message you!",
+        "4. Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in Render Environment variables and redeploy."
+      ]
+    });
+  }
+
+  try {
+    const sample = {
+      stock: "NIFTY-TEST",
+      trigger_price: 24500.50,
+      count: 1,
+      scan_name: "Test Scan Connection",
+      time_ist: new Date().toLocaleTimeString("en-IN", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: true })
+    };
+    const text = formatTelegramMessage(sample);
+    const result = await sendTelegramRaw(text);
+    res.json({
+      ok: true,
+      message: "Test message sent to Telegram successfully! Check your Telegram app.",
+      telegramResponse: result
+    });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      error: err.message,
+      troubleshooting: [
+        "If 401 Unauthorized: The TELEGRAM_BOT_TOKEN is invalid or mistyped.",
+        "If 400 Chat not found: The TELEGRAM_CHAT_ID is invalid.",
+        "If 403 Forbidden: You must open the bot in Telegram and click 'Start' (/start) first before it can send you messages!"
+      ],
+      details: err.details || null
+    });
+  }
+});
 
 // Chartink webhook
 app.post("/new-stocks", verifySecret, async (req, res) => {
@@ -357,6 +461,11 @@ async function main() {
   try {
     await initDB();
     await refreshCache(true);                 // prime cache before accepting requests
+    if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+      console.log(`[telegram] enabled — mobile push active for chat ${process.env.TELEGRAM_CHAT_ID}`);
+    } else {
+      console.log("[telegram] disabled — TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set");
+    }
     server.listen(PORT, () =>
       console.log(`[server] listening on port ${PORT}`)
     );
