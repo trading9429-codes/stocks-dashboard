@@ -226,6 +226,45 @@ setInterval(() => {
 // Routes
 // ============================================================
 
+// --- Telegram Mobile Push Notification (Optional) ---
+function notifyTelegram(items) {
+  const token  = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId || !items?.length) return;
+
+  items.forEach((it) => {
+    const isNew = Number(it.count || 1) <= 1;
+    const headline = isNew ? "🟢 *NEW CHARTINK ALERT*" : `🟡 *STOCK UPDATE (Count: ${it.count})*`;
+    const price = it.trigger_price ? `₹${Number(it.trigger_price).toFixed(2)}` : "—";
+    const scan = it.scan_name ? `\n🔍 *Scan:* ${it.scan_name}` : "";
+    const time = it.time_ist ? `\n⏱ *Time:* ${it.time_ist} IST` : "";
+    const chartUrl = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(it.stock)}`;
+
+    const text = `${headline}\n📈 *${it.stock}* @ ${price}${time}${scan}\n🔗 [Open TradingView](${chartUrl})`;
+
+    const data = JSON.stringify({
+      chat_id: chatId,
+      text: text,
+      parse_mode: "Markdown",
+      disable_web_page_preview: true,
+    });
+
+    const req = https.request(
+      `https://api.telegram.org/bot${token}/sendMessage`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(data),
+        },
+      }
+    );
+    req.on("error", (err) => console.warn("[telegram] error:", err.message));
+    req.write(data);
+    req.end();
+  });
+}
+
 // Health check (also used by keep-alive pings)
 app.get("/health", (req, res) =>
   res.json({ status: "ok", uptime: Math.floor(process.uptime()), clients: wss.clients.size })
@@ -239,6 +278,7 @@ app.post("/new-stocks", verifySecret, async (req, res) => {
 
     const deltaRows = await dbUtils.upsertAndFetchIST(items);
     await refreshCache(false, deltaRows);
+    notifyTelegram(deltaRows);
 
     res.json({ status: "ok", processed: items.length });
   } catch (e) {
