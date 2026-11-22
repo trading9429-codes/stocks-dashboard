@@ -633,32 +633,64 @@
     .sector-badge {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 2px 8px;
-      border-radius: 6px;
+      gap: 5px;
+      padding: 3px 8.5px;
+      border-radius: 7px;
       font-size: 11px;
-      font-weight: 500;
-      background: var(--surface-2);
-      border: 1px solid var(--border-2);
-      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.15px;
+      background: rgba(99, 102, 241, 0.14);
+      border: 1px solid rgba(129, 140, 248, 0.35);
+      color: #c7d2fe;
       max-width: 140px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+    }
+    .sector-badge .sec-icon {
+      font-size: 10.5px;
+      opacity: 0.9;
+    }
+    .sector-badge .sec-name {
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
     }
     .sector-badge:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: rgba(16,185,129,0.08);
+      border-color: #818cf8;
+      color: #ffffff;
+      background: rgba(99, 102, 241, 0.28);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
     }
     .sector-badge.active-filter {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: rgba(16,185,129,0.16);
-      font-weight: 600;
+      border-color: #818cf8;
+      color: #ffffff;
+      background: #4f46e5;
+      font-weight: 700;
+      box-shadow: 0 0 14px rgba(99, 102, 241, 0.6);
     }
+    .sector-badge.sector-na {
+      background: var(--surface-2);
+      border-color: var(--border);
+      color: var(--text-dim);
+      opacity: 0.55;
+      cursor: default;
+    }
+    .sector-badge.sector-na:hover {
+      border-color: var(--border);
+      color: var(--text-dim);
+      background: var(--surface-2);
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Broker button label responsiveness */
+    .btn-broker-fyers .b-full, .btn-broker-dhan .b-full { display: none; }
+    .btn-broker-fyers .b-short, .btn-broker-dhan .b-short { display: inline; }
 
     /* Sector Momentum Ribbon */
     .sector-ribbon-wrap {
@@ -1593,21 +1625,54 @@
         height: 28px;
       }
 
-      /* Tabs: 50/50 thumb-friendly split */
+      /* Tabs: Modern segmented control */
       .tabs-nav {
-        padding: 8px 12px 0;
-        gap: 4px;
+        display: flex !important;
+        padding: 4px !important;
+        gap: 4px !important;
+        background: rgba(13, 22, 38, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 14px !important;
+        margin: 10px 12px 10px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
       }
       .tab-btn {
-        flex: 1;
-        justify-content: center;
-        padding: 9px 10px;
-        font-size: 13px;
+        flex: 1 !important;
+        justify-content: center !important;
+        padding: 10px 12px !important;
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
+        border-radius: 10px !important;
+        border: none !important;
+        color: var(--text-dim) !important;
+        background: transparent !important;
+        position: static !important;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      }
+      .tab-btn.active {
+        background: linear-gradient(180deg, #182846 0%, #121f36 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.45) !important;
+        font-weight: 700 !important;
+      }
+      .tab-btn .tab-pill {
+        padding: 2px 7.5px !important;
+        border-radius: 999px !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: var(--text-muted) !important;
+      }
+      .tab-btn.active .tab-pill {
+        background: #10b981 !important;
+        color: #050a14 !important;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.45) !important;
       }
 
       /* Top Movers: Smooth horizontal swipe carousel */
       .top-movers {
-        margin-bottom: 12px;
+        margin-bottom: 12px !important;
       }
       .section-label {
         font-size: 11px;
@@ -1631,17 +1696,42 @@
         min-width: 135px;
         scroll-snap-align: start;
         padding: 10px 12px;
+        background: linear-gradient(180deg, rgba(18, 29, 50, 0.8) 0%, rgba(12, 19, 34, 0.95) 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
       }
       .mover-card a {
         font-size: 13.5px;
       }
 
-      /* Toolbar: Full-width search & distributed action buttons */
+      /* Sector Ribbon on mobile */
+      .sector-ribbon-wrap {
+        padding: 8px 12px !important;
+        margin-bottom: 10px !important;
+        background: rgba(13, 22, 38, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 12px !important;
+      }
+
+      /* Main Panel & Toolbar */
+      .panel {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+      }
       .panel-toolbar {
         padding: 10px 12px;
         flex-direction: column;
         align-items: stretch;
         gap: 8px;
+        background: rgba(13, 22, 38, 0.75) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 14px !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        margin-bottom: 10px !important;
       }
       .search-wrap {
         width: 100%;
@@ -1663,6 +1753,29 @@
         padding: 8px 6px;
         font-size: 11.5px;
         text-align: center;
+      }
+
+      /* Quick Filter Pills Bar: Swipeable carousel on mobile */
+      .filter-pills-bar {
+        display: flex !important;
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        background: transparent !important;
+        border: none !important;
+        padding: 2px 2px 10px 2px !important;
+        gap: 7px !important;
+      }
+      .filter-pills-bar::-webkit-scrollbar {
+        display: none !important;
+      }
+      .filter-pill-btn {
+        flex-shrink: 0 !important;
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+        border-radius: 999px !important;
+        white-space: nowrap !important;
       }
 
       /* Table: Responsive Mobile Trading Card Transformation (Zero horizontal scroll) */
@@ -1692,15 +1805,19 @@
         display: flex !important;
         flex-wrap: wrap !important;
         align-items: center !important;
-        background: var(--surface) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 14px !important;
-        padding: 14px !important;
+        background: linear-gradient(180deg, rgba(16, 26, 46, 0.92) 0%, rgba(10, 16, 30, 0.98) 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.09) !important;
+        border-radius: 16px !important;
+        padding: 13px 14px 12px !important;
         position: relative !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
         box-sizing: border-box !important;
         width: 100% !important;
         gap: 6px 8px !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease !important;
+      }
+      tbody tr:active {
+        transform: scale(0.99) !important;
       }
       tbody tr td {
         padding: 0 !important;
@@ -1710,115 +1827,132 @@
 
       /* Card Alert Highlights (Entire card left-border accent) */
       tbody tr.hl-new {
-        border-left: 5px solid #10b981 !important;
-        border-color: rgba(16, 185, 129, 0.5) !important;
-        box-shadow: 0 0 20px rgba(16, 185, 129, 0.2) !important;
+        border-left: 4.5px solid #10b981 !important;
+        border-color: rgba(16, 185, 129, 0.45) !important;
+        background: linear-gradient(180deg, rgba(16, 185, 129, 0.09) 0%, rgba(10, 16, 30, 0.98) 100%) !important;
+        box-shadow: 0 0 24px rgba(16, 185, 129, 0.18), 0 4px 20px rgba(0, 0, 0, 0.45) !important;
       }
       tbody tr.hl-upd {
-        border-left: 5px solid #f59e0b !important;
-        border-color: rgba(245, 158, 11, 0.5) !important;
-        box-shadow: 0 0 20px rgba(245, 158, 11, 0.2) !important;
+        border-left: 4.5px solid #f59e0b !important;
+        border-color: rgba(245, 158, 11, 0.45) !important;
+        background: linear-gradient(180deg, rgba(245, 158, 11, 0.09) 0%, rgba(10, 16, 30, 0.98) 100%) !important;
+        box-shadow: 0 0 24px rgba(245, 158, 11, 0.18), 0 4px 20px rgba(0, 0, 0, 0.45) !important;
       }
 
-      /* Line 1: Stock Symbol & Status (Left) + Time & Chop (Right) */
+      /* Line 1: Stock Symbol (Left) + Sector Badge (Prominent) + Time & Chop (Right) */
       tbody tr .td-stock {
         order: 1 !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-        flex: 1 1 auto !important;
-        max-width: calc(100% - 110px) !important;
-      }
-      tbody tr .td-time {
-        order: 2 !important;
-        display: flex !important;
+        display: inline-flex !important;
         align-items: center !important;
         gap: 6px !important;
+        flex: 0 0 auto !important;
+        max-width: 58% !important;
+      }
+      tbody tr .td-sector {
+        order: 2 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        flex: 0 1 auto !important;
+        max-width: 42% !important;
+      }
+      tbody tr .td-sector .sector-badge {
+        padding: 2.5px 7.5px !important;
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+      }
+      tbody tr .td-sector .sector-badge.sector-na {
+        display: none !important;
+      }
+      tbody tr .td-time {
+        order: 3 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
         margin-left: auto !important;
-        font-size: 11px !important;
+        font-size: 11.5px !important;
         color: var(--text-dim) !important;
         white-space: nowrap !important;
       }
 
       /* Line 2: Trigger Price (Large Bold) + % Chg + Rel Vol + ADR % */
       tbody tr .td-price {
-        order: 3 !important;
-        display: inline-flex !important;
-        font-size: 17px !important;
-        font-weight: 800 !important;
-        color: var(--text) !important;
-        margin-right: 6px !important;
-        margin-top: 2px !important;
-      }
-      tbody tr .td-pct {
         order: 4 !important;
         display: inline-flex !important;
-        align-items: center !important;
-        margin-top: 2px !important;
+        align-items: baseline !important;
+        font-size: 18px !important;
+        font-weight: 800 !important;
+        color: #f8fafc !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        letter-spacing: -0.2px !important;
+        margin-right: 4px !important;
+        margin-top: 3px !important;
       }
-      tbody tr .td-relvol {
+      tbody tr .td-pct {
         order: 5 !important;
         display: inline-flex !important;
         align-items: center !important;
-        margin-top: 2px !important;
+        margin-top: 3px !important;
       }
-      tbody tr .td-adr {
+      tbody tr .td-relvol {
         order: 6 !important;
         display: inline-flex !important;
         align-items: center !important;
-        margin-top: 2px !important;
+        margin-top: 3px !important;
       }
-
-      /* Line 3: Sector + Scan Name + Count */
-      tbody tr .td-sector {
+      tbody tr .td-adr {
         order: 7 !important;
         display: inline-flex !important;
         align-items: center !important;
-        margin-top: 2px !important;
+        margin-top: 3px !important;
       }
+
+      /* Line 3: Scan Tag & Confluence + Trigger Count */
       tbody tr .td-scan {
         order: 8 !important;
         display: inline-flex !important;
         align-items: center !important;
         gap: 6px !important;
         flex: 1 1 auto !important;
-        min-width: 120px !important;
-        margin-top: 2px !important;
+        min-width: 110px !important;
+        margin-top: 4px !important;
       }
       tbody tr .td-count {
         order: 9 !important;
         display: inline-flex !important;
         align-items: center !important;
         margin-left: auto !important;
-        margin-top: 2px !important;
+        margin-top: 4px !important;
       }
 
-      /* Line 4: Full-width Thumb Execution Action Bar */
+      /* Line 4: Full-width Fast Execution Action Bar */
       tbody tr .td-exec {
         order: 10 !important;
         width: 100% !important;
-        margin-top: 8px !important;
-        padding-top: 10px !important;
-        border-top: 1px solid var(--border) !important;
+        margin-top: 7px !important;
+        padding-top: 9px !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
       }
       tbody tr .td-exec .exec-btns {
         display: flex !important;
         width: 100% !important;
         gap: 6px !important;
         justify-content: space-between !important;
+        align-items: center !important;
       }
       tbody tr .td-exec .btn-mini {
         flex: 1 !important;
         height: 38px !important;
-        min-width: 38px !important;
-        border-radius: 8px !important;
+        min-width: 36px !important;
+        border-radius: 9px !important;
         font-size: 13.5px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        background: var(--surface-2) !important;
-        border: 1px solid var(--border) !important;
+        background: rgba(22, 34, 58, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: var(--text) !important;
         touch-action: manipulation !important;
+        transition: all 0.15s ease !important;
       }
       tbody tr .td-exec .btn-mini:active {
         transform: scale(0.96) !important;
@@ -1826,28 +1960,32 @@
       }
 
       tbody tr .td-exec .btn-broker-fyers {
-        background: rgba(37, 99, 235, 0.22) !important;
-        border-color: rgba(37, 99, 235, 0.55) !important;
-        color: #93c5fd !important;
-        font-weight: 800 !important;
-        flex: 1.25 !important;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.3) 0%, rgba(29, 78, 216, 0.4) 100%) !important;
+        border-color: rgba(96, 165, 250, 0.55) !important;
+        color: #bfdbfe !important;
+        font-weight: 700 !important;
+        font-size: 12.5px !important;
+        flex: 1.4 !important;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25) !important;
       }
       tbody tr .td-exec .btn-broker-fyers:active {
         background: #2563eb !important;
         color: #ffffff !important;
-        transform: scale(0.95) !important;
+        transform: scale(0.96) !important;
       }
       tbody tr .td-exec .btn-broker-dhan {
-        background: rgba(245, 158, 11, 0.22) !important;
-        border-color: rgba(245, 158, 11, 0.55) !important;
-        color: #fcd34d !important;
-        font-weight: 800 !important;
-        flex: 1.25 !important;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(217, 119, 6, 0.4) 100%) !important;
+        border-color: rgba(251, 191, 36, 0.55) !important;
+        color: #fef08a !important;
+        font-weight: 700 !important;
+        font-size: 12.5px !important;
+        flex: 1.4 !important;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25) !important;
       }
       tbody tr .td-exec .btn-broker-dhan:active {
         background: #d97706 !important;
         color: #ffffff !important;
-        transform: scale(0.95) !important;
+        transform: scale(0.96) !important;
       }
 
       /* Card Elements */
@@ -1993,88 +2131,11 @@
         font-size: 13px;
       }
 
-      /* Mobile Navigation Bar */
-      .mobile-nav-bar {
-        display: flex !important;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: calc(58px + env(safe-area-inset-bottom, 0px));
-        background: rgba(6, 11, 20, 0.98);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-top: 1px solid var(--border-2);
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6);
-        z-index: 9990;
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-        justify-content: space-around;
-        align-items: center;
-        user-select: none;
-        -webkit-user-select: none;
-      }
-      .m-nav-item {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background: transparent;
-        border: none;
-        color: var(--text-dim);
-        font-size: 10px;
-        font-weight: 600;
-        cursor: pointer;
-        position: relative;
-        padding: 6px 0;
-        gap: 3px;
-        min-height: 48px;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: transparent;
-        transition: color 0.15s ease, transform 0.1s ease;
-      }
-      .m-nav-item:active {
-        transform: scale(0.92);
-      }
-      .m-nav-item.active {
-        color: var(--accent);
-      }
-      .m-nav-item.active .m-nav-icon {
-        transform: translateY(-1px);
-        filter: drop-shadow(0 2px 6px rgba(16, 185, 129, 0.5));
-      }
-      .m-nav-item.active::after {
-        content: '';
-        position: absolute;
-        bottom: 2px;
-        width: 18px;
-        height: 2.5px;
-        background: var(--accent);
-        border-radius: 2px;
-      }
-      .m-nav-icon {
-        font-size: 18px;
-        line-height: 1;
-      }
-      .m-nav-badge {
-        position: absolute;
-        top: 2px;
-        right: 18%;
-        background: var(--accent);
-        color: #060b14;
-        font-size: 9px;
-        font-weight: 800;
-        padding: 1px 4.5px;
-        border-radius: 8px;
-        min-width: 14px;
-        text-align: center;
-        box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
-      }
       .container {
-        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: 24px !important;
       }
       .toast-box {
-        bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important;
+        bottom: 24px !important;
       }
     }
 
@@ -2090,9 +2151,6 @@
     @media (min-width: 769px) {
       .sheet-drag-handle {
         display: none;
-      }
-      .mobile-nav-bar {
-        display: none !important;
       }
     }
   </style>
@@ -2475,33 +2533,6 @@
 
 <!-- Audio for new stock alerts -->
 <audio id="alert-sound" src="res/new-notification-09-352705.mp3" preload="auto"></audio>
-
-<!-- Mobile App Bottom Navigation Bar -->
-<nav class="mobile-nav-bar" id="mobile-nav-bar" aria-label="Mobile Navigation">
-  <button class="m-nav-item active" data-tab="live" data-qf="all" type="button" id="m-nav-live-btn" aria-label="Live Scanner Alerts">
-    <span class="m-nav-icon">📡</span>
-    <span class="m-nav-label">Live</span>
-    <span class="m-nav-badge" id="m-nav-live-badge">0</span>
-  </button>
-  <button class="m-nav-item" data-tab="history" type="button" id="m-nav-hist-btn" aria-label="Alerts History">
-    <span class="m-nav-icon">📂</span>
-    <span class="m-nav-label">History</span>
-    <span class="m-nav-badge" id="m-nav-hist-badge">0</span>
-  </button>
-  <button class="m-nav-item" data-tab="live" data-qf="starred" type="button" id="m-nav-star-btn" aria-label="Starred Watchlist">
-    <span class="m-nav-icon">⭐</span>
-    <span class="m-nav-label">Watchlist</span>
-    <span class="m-nav-badge" id="m-nav-star-badge">0</span>
-  </button>
-  <button class="m-nav-item" data-tab="live" data-qf="rv2" type="button" id="m-nav-rv-btn" aria-label="High Relative Volume">
-    <span class="m-nav-icon">🔥</span>
-    <span class="m-nav-label">Rel Vol</span>
-  </button>
-  <button class="m-nav-item" id="m-nav-sizer-btn" type="button" aria-label="Risk and Position Sizer">
-    <span class="m-nav-icon">⚡</span>
-    <span class="m-nav-label">Sizer</span>
-  </button>
-</nav>
 
 <script>
 /* ═══════════════════════════════════════════════════════════════
@@ -3847,7 +3878,7 @@ function renderSectorRibbon() {
   entries.forEach(([sec, cnt]) => {
     const chip = document.createElement('button');
     chip.className = 'sector-chip' + (activeSectorFilter === sec ? ' active' : '');
-    chip.innerHTML = `${escapeHtml(sec)} <span class="sec-count">${cnt}</span>`;
+    chip.innerHTML = `🏢 ${escapeHtml(sec)} <span class="sec-count">${cnt}</span>`;
     chip.onclick = () => {
       activeSectorFilter = (activeSectorFilter === sec) ? null : sec;
       renderLive();
@@ -3935,20 +3966,26 @@ function buildRow(item, isHistory, hlClass) {
   // 3. Sector cell
   const tdSector = document.createElement('td');
   tdSector.className = 'sector-cell td-sector';
-  if (item.sector) {
+  const rawSec = item.sector ?? (item.extra_data && (item.extra_data.sector || item.extra_data.Sector));
+  const hasSector = rawSec !== undefined && rawSec !== null && String(rawSec).trim() !== '' && String(rawSec).trim() !== '—' && String(rawSec).trim() !== '-';
+  if (hasSector) {
+    const secStr = String(rawSec).trim();
     const secBadge = document.createElement('span');
-    secBadge.className = 'sector-badge' + (activeSectorFilter === item.sector ? ' active-filter' : '');
-    secBadge.textContent = item.sector;
-    secBadge.title = `Click to filter by sector: ${item.sector}`;
+    secBadge.className = 'sector-badge' + (activeSectorFilter === secStr ? ' active-filter' : '');
+    secBadge.innerHTML = `<span class="sec-icon">🏢</span><span class="sec-name">${escapeHtml(secStr)}</span>`;
+    secBadge.title = `Click to filter by sector: ${secStr}`;
     secBadge.onclick = (e) => {
       e.stopPropagation();
       hapticTap();
-      activeSectorFilter = (activeSectorFilter === item.sector) ? null : item.sector;
+      activeSectorFilter = (activeSectorFilter === secStr) ? null : secStr;
       renderLive();
     };
     tdSector.appendChild(secBadge);
   } else {
-    tdSector.innerHTML = '<span class="rv-na">—</span>';
+    const naBadge = document.createElement('span');
+    naBadge.className = 'sector-badge sector-na';
+    naBadge.innerHTML = `<span class="sec-icon">🏢</span><span class="sec-name">—</span>`;
+    tdSector.appendChild(naBadge);
   }
 
   // 4. Rel Vol (10d) cell
@@ -4039,7 +4076,7 @@ function buildRow(item, isHistory, hlClass) {
   btnFyers.href = `https://trade.fyers.in/?symbol=NSE:${encodeURIComponent(item.stock)}-EQ`;
   btnFyers.target = '_blank';
   btnFyers.rel = 'noopener noreferrer';
-  btnFyers.innerHTML = `<span style="font-weight:800;letter-spacing:-0.2px;">⚡F</span>`;
+  btnFyers.innerHTML = `<span class="b-full">⚡ Fyers</span><span class="b-short">⚡F</span>`;
   btnFyers.onclick = () => hapticTap(true);
 
   // 1-Click Dhan Order
@@ -4049,7 +4086,7 @@ function buildRow(item, isHistory, hlClass) {
   btnDhan.href = `https://web.dhan.co/index/order?symbol=NSE:${encodeURIComponent(item.stock)}&type=BUY`;
   btnDhan.target = '_blank';
   btnDhan.rel = 'noopener noreferrer';
-  btnDhan.innerHTML = `<span style="font-weight:800;letter-spacing:-0.2px;">⚡D</span>`;
+  btnDhan.innerHTML = `<span class="b-full">⚡ Dhan</span><span class="b-short">⚡D</span>`;
   btnDhan.onclick = () => hapticTap(true);
 
   // Fyers Basket Order JSON copy
@@ -4192,31 +4229,11 @@ function renderTable(tbodyId, data, isHistory, hlMap = new Map()) {
   updateSortIcons(isHistory ? 'history-table' : 'live-table', cfg);
 }
 
-function updateMobileNavBadges() {
-  const mLiveBadge = document.getElementById('m-nav-live-badge');
-  if (mLiveBadge) {
-    mLiveBadge.textContent = liveData.length;
-    mLiveBadge.style.display = liveData.length > 0 ? 'block' : 'none';
-  }
-  const mHistBadge = document.getElementById('m-nav-hist-badge');
-  if (mHistBadge) {
-    mHistBadge.textContent = historyData.length;
-    mHistBadge.style.display = historyData.length > 0 ? 'block' : 'none';
-  }
-  const mStarBadge = document.getElementById('m-nav-star-badge');
-  if (mStarBadge) {
-    mStarBadge.textContent = starredStocks.size;
-    mStarBadge.style.display = starredStocks.size > 0 ? 'block' : 'none';
-  }
-}
-
 function renderLive(hlMap = new Map()) {
   renderTable('live-tbody', liveData, false, hlMap);
   renderMovers();
   renderSectorRibbon();
   updateStarCount();
-  updateMobileNavBadges();
-  syncMobileNavActive();
 
   // PWA App Badging
   if ('setAppBadge' in navigator) {
@@ -4231,8 +4248,6 @@ function renderLive(hlMap = new Map()) {
 
 function renderHistory(hlMap = new Map()) {
   renderTable('history-tbody', historyData, true, hlMap);
-  updateMobileNavBadges();
-  syncMobileNavActive();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -4571,83 +4586,6 @@ window.addEventListener('focus', () => {
     navigator.clearAppBadge().catch(() => {});
   }
 });
-
-// Sync Mobile Navigation Bar active button with current tab/filter
-function syncMobileNavActive() {
-  const isHistory = document.getElementById('tab-history')?.classList.contains('active');
-  const items = document.querySelectorAll('.m-nav-item');
-  items.forEach(btn => {
-    if (btn.id === 'm-nav-sizer-btn') return;
-    if (isHistory) {
-      btn.classList.toggle('active', btn.dataset.tab === 'history');
-    } else {
-      if (btn.dataset.tab === 'history') {
-        btn.classList.remove('active');
-      } else if (activeQuickFilter === 'starred') {
-        btn.classList.toggle('active', btn.dataset.qf === 'starred');
-      } else if (activeQuickFilter === 'rv2') {
-        btn.classList.toggle('active', btn.dataset.qf === 'rv2');
-      } else {
-        btn.classList.toggle('active', !btn.dataset.qf || btn.dataset.qf === 'all');
-      }
-    }
-  });
-}
-
-// Wire Mobile Bottom Navigation Bar with instant touch feedback
-function initMobileNav() {
-  const navItems = document.querySelectorAll('.m-nav-item');
-  if (!navItems.length) return;
-
-  let lastTap = 0;
-  navItems.forEach(btn => {
-    const handleTap = (e) => {
-      const now = Date.now();
-      if (now - lastTap < 220) return;
-      lastTap = now;
-      hapticTap();
-
-      // Position Sizer modal
-      if (btn.id === 'm-nav-sizer-btn') {
-        const top = liveData[0];
-        openPositionSizer(top ? top.stock : 'NIFTY', top ? top.trigger_price : 24500);
-        return;
-      }
-
-      navItems.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      const tab = btn.dataset.tab;
-      if (tab === 'history') {
-        const histBtn = document.querySelector('.tab-btn[data-tab="history"]');
-        if (histBtn) histBtn.click();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-
-      // Live Tab
-      const liveBtn = document.querySelector('.tab-btn[data-tab="live"]');
-      if (liveBtn) liveBtn.click();
-
-      const qf = btn.dataset.qf || 'all';
-      activeQuickFilter = qf;
-      document.querySelectorAll('.filter-pill-btn').forEach(b => {
-        b.classList.toggle('active', (b.dataset.qf || 'all') === qf);
-      });
-      livePage = 1;
-      renderLive();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    btn.addEventListener('click', handleTap);
-  });
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initMobileNav);
-} else {
-  initMobileNav();
-}
 </script>
 </body>
 </html>
