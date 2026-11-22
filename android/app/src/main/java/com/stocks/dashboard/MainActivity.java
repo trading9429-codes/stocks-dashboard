@@ -96,8 +96,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                // Keep dashboard routes inside WebView, open external sites in browser or external apps
-                if (url.contains("tradingview.com") || url.contains("kite.zerodha.com") || url.contains("dhan.co")) {
+                // Keep dashboard routes inside WebView, open external broker & charting sites in native app/browser
+                if (url.contains("tradingview.com") || url.contains("fyers.in") || url.contains("dhan.co") || url.contains("chartink.com")) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        startActivity(intent);
+                        return true;
+                    } catch (Exception ignored) {}
+                }
+                return false;
+            }
+
+            @SuppressWarnings("deprecation")
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url.contains("tradingview.com") || url.contains("fyers.in") || url.contains("dhan.co") || url.contains("chartink.com")) {
                     try {
                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                         startActivity(intent);

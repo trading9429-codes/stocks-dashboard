@@ -412,9 +412,10 @@ function formatTelegramMessage(it) {
   }
 
   const chartUrl = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(it.stock)}`;
-  const kiteUrl  = `https://kite.zerodha.com/chart/ext/ciq/NSE/${encodeURIComponent(it.stock)}`;
+  const fyersUrl = `https://trade.fyers.in/?symbol=NSE:${encodeURIComponent(it.stock)}-EQ`;
+  const dhanUrl  = `https://web.dhan.co/index/order?symbol=NSE:${encodeURIComponent(it.stock)}&type=BUY`;
 
-  return `${headline}\n📈 <b>${escapeHtml(it.stock)}</b> @ ${price}${metricsStr}${relVolStr}${sectorStr}${time}${scan}${confluenceStr}\n🔗 <a href="${chartUrl}">TradingView</a> | <a href="${kiteUrl}">Zerodha Kite</a>`;
+  return `${headline}\n📈 <b>${escapeHtml(it.stock)}</b> @ ${price}${metricsStr}${relVolStr}${sectorStr}${time}${scan}${confluenceStr}\n🔗 <a href="${chartUrl}">TradingView</a> | <a href="${fyersUrl}">⚡ Fyers</a> | <a href="${dhanUrl}">⚡ Dhan</a>`;
 }
 
 function sendTelegramRaw(text) {

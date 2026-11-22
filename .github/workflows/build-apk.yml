@@ -62,7 +62,7 @@ jobs:
             #### Features:
             - 📡 **Real-time Mobile Trading Cards**: Custom 1-hand thumb layout.
             - 🔔 **Native Android Notifications**: High-priority alert channel with vibration.
-            - 🛒 **1-Click Broker Orders**: Zerodha Kite Basket JSON copy & Dhan web order link.
+            - ⚡ **1-Click Broker Orders**: Fyers 1-Click order & Fyers Basket JSON copy + Dhan 1-click order.
             - 📊 **5-minute TradingView Chart Bottom Sheet**.
             - 🚀 Built automatically from commit `${{ github.sha }}`.
         env:

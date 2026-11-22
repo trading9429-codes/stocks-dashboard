@@ -1239,6 +1239,58 @@
       border-color: #fbbf24;
       color: #fff;
     }
+    .btn-mini.btn-broker-fyers {
+      color: #60a5fa;
+      border-color: rgba(37, 99, 235, 0.45);
+      background: rgba(37, 99, 235, 0.12);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 0 4px;
+      width: auto;
+      min-width: 27px;
+    }
+    .btn-mini.btn-broker-fyers:hover {
+      background: #2563eb;
+      border-color: #60a5fa;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(37, 99, 235, 0.45);
+    }
+    .btn-mini.btn-broker-dhan {
+      color: #fbbf24;
+      border-color: rgba(245, 158, 11, 0.45);
+      background: rgba(245, 158, 11, 0.12);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 0 4px;
+      width: auto;
+      min-width: 27px;
+    }
+    .btn-mini.btn-broker-dhan:hover {
+      background: #d97706;
+      border-color: #fbbf24;
+      color: #060b14;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.45);
+    }
+    .btn.primary-fyers {
+      background: #2563eb;
+      color: #ffffff;
+      border: 1px solid #3b82f6;
+      font-weight: 700;
+    }
+    .btn.primary-fyers:hover, .btn.primary-fyers:active {
+      background: #1d4ed8;
+      box-shadow: 0 0 12px rgba(37, 99, 235, 0.5);
+    }
+    .btn.primary-dhan {
+      background: #d97706;
+      color: #ffffff;
+      border: 1px solid #f59e0b;
+      font-weight: 700;
+    }
+    .btn.primary-dhan:hover, .btn.primary-dhan:active {
+      background: #b45309;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+    }
 
     .sizer-card {
       width: min(480px, calc(100vw - 32px));
@@ -1773,6 +1825,31 @@
         background: var(--surface-3) !important;
       }
 
+      tbody tr .td-exec .btn-broker-fyers {
+        background: rgba(37, 99, 235, 0.22) !important;
+        border-color: rgba(37, 99, 235, 0.55) !important;
+        color: #93c5fd !important;
+        font-weight: 800 !important;
+        flex: 1.25 !important;
+      }
+      tbody tr .td-exec .btn-broker-fyers:active {
+        background: #2563eb !important;
+        color: #ffffff !important;
+        transform: scale(0.95) !important;
+      }
+      tbody tr .td-exec .btn-broker-dhan {
+        background: rgba(245, 158, 11, 0.22) !important;
+        border-color: rgba(245, 158, 11, 0.55) !important;
+        color: #fcd34d !important;
+        font-weight: 800 !important;
+        flex: 1.25 !important;
+      }
+      tbody tr .td-exec .btn-broker-dhan:active {
+        background: #d97706 !important;
+        color: #ffffff !important;
+        transform: scale(0.95) !important;
+      }
+
       /* Card Elements */
       .stock-link {
         font-size: 15.5px !important;
@@ -1923,15 +2000,18 @@
         bottom: 0;
         left: 0;
         right: 0;
-        height: 58px;
-        background: rgba(6, 11, 20, 0.96);
+        height: calc(58px + env(safe-area-inset-bottom, 0px));
+        background: rgba(6, 11, 20, 0.98);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border-top: 1px solid var(--border);
-        z-index: 990;
+        border-top: 1px solid var(--border-2);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6);
+        z-index: 9990;
         padding-bottom: env(safe-area-inset-bottom, 0px);
         justify-content: space-around;
         align-items: center;
+        user-select: none;
+        -webkit-user-select: none;
       }
       .m-nav-item {
         flex: 1;
@@ -1948,11 +2028,29 @@
         position: relative;
         padding: 6px 0;
         gap: 3px;
+        min-height: 48px;
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
+        transition: color 0.15s ease, transform 0.1s ease;
+      }
+      .m-nav-item:active {
+        transform: scale(0.92);
       }
       .m-nav-item.active {
         color: var(--accent);
+      }
+      .m-nav-item.active .m-nav-icon {
+        transform: translateY(-1px);
+        filter: drop-shadow(0 2px 6px rgba(16, 185, 129, 0.5));
+      }
+      .m-nav-item.active::after {
+        content: '';
+        position: absolute;
+        bottom: 2px;
+        width: 18px;
+        height: 2.5px;
+        background: var(--accent);
+        border-radius: 2px;
       }
       .m-nav-icon {
         font-size: 18px;
@@ -1960,19 +2058,20 @@
       }
       .m-nav-badge {
         position: absolute;
-        top: 3px;
+        top: 2px;
         right: 18%;
         background: var(--accent);
         color: #060b14;
         font-size: 9px;
         font-weight: 800;
-        padding: 1px 4px;
+        padding: 1px 4.5px;
         border-radius: 8px;
         min-width: 14px;
         text-align: center;
+        box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
       }
       .container {
-        padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
       }
       .toast-box {
         bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important;
@@ -2110,11 +2209,11 @@
     </div>
 
     <div class="sizer-actions" style="display: flex; flex-wrap: wrap; gap: 8px;">
-      <button id="btn-copy-kite-basket" class="btn primary" type="button" style="flex: 1; min-width: 135px;" title="Copy Zerodha Kite Basket JSON for 1-click batch order">🛒 Kite Basket</button>
-      <a id="sizer-dhan-link" class="btn" target="_blank" rel="noopener noreferrer" style="flex: 1; min-width: 110px;" title="Open Direct Order in Dhan Web">⚡ Dhan Order</a>
-      <button id="btn-copy-plan" class="btn" type="button" style="flex: 1; min-width: 110px;">📋 Copy Plan</button>
-      <a id="sizer-tv-link" class="btn" target="_blank" rel="noopener noreferrer">📈 TV</a>
-      <a id="sizer-kite-link" class="btn" target="_blank" rel="noopener noreferrer">🪁 Kite</a>
+      <a id="sizer-fyers-link" class="btn primary-fyers" target="_blank" rel="noopener noreferrer" style="flex: 1; min-width: 125px;" title="1-Click Direct Order in Fyers Web Terminal">⚡ Fyers Order</a>
+      <a id="sizer-dhan-link" class="btn primary-dhan" target="_blank" rel="noopener noreferrer" style="flex: 1; min-width: 125px;" title="1-Click Direct Order in Dhan Web">⚡ Dhan Order</a>
+      <button id="btn-copy-fyers-basket" class="btn" type="button" style="flex: 1; min-width: 125px;" title="Copy Fyers v3 Basket JSON for 1-click batch order">🛒 Fyers Basket</button>
+      <button id="btn-copy-plan" class="btn" type="button" style="flex: 1; min-width: 105px;" title="Copy Trade Plan">📋 Copy Plan</button>
+      <a id="sizer-tv-link" class="btn" target="_blank" rel="noopener noreferrer" style="flex: 0 0 auto; min-width: 65px;" title="Open 5m Chart in TradingView">📈 TV 5m</a>
     </div>
   </div>
 </div>
@@ -2123,13 +2222,25 @@
      KEYBOARD HOTKEYS MODAL
 ═══════════════════════════════════════════════════ -->
 <div id="hotkeys-modal" class="modal-overlay hidden">
-  <div class="modal" style="width: min(420px, calc(100vw - 32px));">
+  <div class="modal" style="width: min(440px, calc(100vw - 32px));">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
       <h3 style="margin: 0; font-size: 16px;">⌨️ Execution Hotkeys</h3>
       <button id="hotkeys-close" class="modal-close-x">×</button>
     </div>
     <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 12px;">Press these keys anywhere on the dashboard for instant execution:</p>
     <div class="hotkey-list">
+      <div class="hotkey-row">
+        <span class="hotkey-key">F</span>
+        <span class="hotkey-desc">1-Click Order in Fyers Web for latest alert</span>
+      </div>
+      <div class="hotkey-row">
+        <span class="hotkey-key">D</span>
+        <span class="hotkey-desc">1-Click Order in Dhan Web for latest alert</span>
+      </div>
+      <div class="hotkey-row">
+        <span class="hotkey-key">B</span>
+        <span class="hotkey-desc">Copy Fyers Basket JSON for latest alert</span>
+      </div>
       <div class="hotkey-row">
         <span class="hotkey-key">Space</span>
         <span class="hotkey-desc">Open Chart of latest alert in TradingView</span>
@@ -2175,9 +2286,11 @@
         <span id="tv-modal-sector"></span>
         <span id="tv-modal-relvol"></span>
       </div>
-      <div class="tv-modal-actions" style="display:flex;gap:8px;align-items:center;">
-        <button id="tv-modal-sizer" class="btn" style="padding:5px 12px;font-size:12px;">⚡ Sizer</button>
-        <a id="tv-modal-ext" class="btn primary" target="_blank" rel="noopener noreferrer" style="padding:5px 12px;font-size:12px;">↗ Open in TV Tab</a>
+      <div class="tv-modal-actions" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <a id="tv-modal-fyers" class="btn primary-fyers" target="_blank" rel="noopener noreferrer" style="padding:4px 10px;font-size:12px;" title="1-Click Order in Fyers">⚡ Fyers</a>
+        <a id="tv-modal-dhan" class="btn primary-dhan" target="_blank" rel="noopener noreferrer" style="padding:4px 10px;font-size:12px;" title="1-Click Order in Dhan">⚡ Dhan</a>
+        <button id="tv-modal-sizer" class="btn" style="padding:4px 10px;font-size:12px;">🎯 Sizer</button>
+        <a id="tv-modal-ext" class="btn" target="_blank" rel="noopener noreferrer" style="padding:4px 10px;font-size:12px;">↗ TV</a>
         <button id="tv-modal-close" class="modal-close-x" style="position:static;">×</button>
       </div>
     </div>
@@ -2300,7 +2413,7 @@
               <th data-col="trigger_price">Price <span class="si">↕</span></th>
               <th data-col="count" style="width: 65px;">Count <span class="si">↕</span></th>
               <th data-col="scan_name">Scan <span class="si">↕</span></th>
-              <th style="text-align: right; width: 175px;">Action</th>
+              <th style="text-align: right; width: 215px;">Action</th>
             </tr>
           </thead>
           <tbody id="live-tbody"></tbody>
@@ -2341,7 +2454,7 @@
               <th data-col="trigger_price">Price <span class="si">↕</span></th>
               <th data-col="count" style="width: 65px;">Count <span class="si">↕</span></th>
               <th data-col="scan_name">Scan <span class="si">↕</span></th>
-              <th style="text-align: right; width: 175px;">Action</th>
+              <th style="text-align: right; width: 215px;">Action</th>
             </tr>
           </thead>
           <tbody id="history-tbody"></tbody>
@@ -2362,6 +2475,33 @@
 
 <!-- Audio for new stock alerts -->
 <audio id="alert-sound" src="res/new-notification-09-352705.mp3" preload="auto"></audio>
+
+<!-- Mobile App Bottom Navigation Bar -->
+<nav class="mobile-nav-bar" id="mobile-nav-bar" aria-label="Mobile Navigation">
+  <button class="m-nav-item active" data-tab="live" data-qf="all" type="button" id="m-nav-live-btn" aria-label="Live Scanner Alerts">
+    <span class="m-nav-icon">📡</span>
+    <span class="m-nav-label">Live</span>
+    <span class="m-nav-badge" id="m-nav-live-badge">0</span>
+  </button>
+  <button class="m-nav-item" data-tab="history" type="button" id="m-nav-hist-btn" aria-label="Alerts History">
+    <span class="m-nav-icon">📂</span>
+    <span class="m-nav-label">History</span>
+    <span class="m-nav-badge" id="m-nav-hist-badge">0</span>
+  </button>
+  <button class="m-nav-item" data-tab="live" data-qf="starred" type="button" id="m-nav-star-btn" aria-label="Starred Watchlist">
+    <span class="m-nav-icon">⭐</span>
+    <span class="m-nav-label">Watchlist</span>
+    <span class="m-nav-badge" id="m-nav-star-badge">0</span>
+  </button>
+  <button class="m-nav-item" data-tab="live" data-qf="rv2" type="button" id="m-nav-rv-btn" aria-label="High Relative Volume">
+    <span class="m-nav-icon">🔥</span>
+    <span class="m-nav-label">Rel Vol</span>
+  </button>
+  <button class="m-nav-item" id="m-nav-sizer-btn" type="button" aria-label="Risk and Position Sizer">
+    <span class="m-nav-icon">⚡</span>
+    <span class="m-nav-label">Sizer</span>
+  </button>
+</nav>
 
 <script>
 /* ═══════════════════════════════════════════════════════════════
@@ -3053,47 +3193,54 @@ function sortData(data, cfg) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   BROKER 1-CLICK ORDER EXECUTION (ZERODHA & DHAN)
+   BROKER 1-CLICK ORDER EXECUTION (FYERS & DHAN)
 ═══════════════════════════════════════════════════════════════ */
-function generateKiteBasket(stock, entryPrice, slPrice, qty, direction = 'BUY') {
+function generateFyersBasket(stock, entryPrice, slPrice, qty, direction = 'BUY') {
   const price = Number(entryPrice || 0);
   const sl = Number(slPrice || 0);
   const q = Math.max(1, parseInt(qty, 10) || 1);
-  const transType = (String(direction).toUpperCase() === 'SHORT' || String(direction).toUpperCase() === 'SELL') ? 'SELL' : 'BUY';
+  const isShort = String(direction).toUpperCase() === 'SHORT' || String(direction).toUpperCase() === 'SELL';
+  const sym = `NSE:${String(stock).toUpperCase()}-EQ`;
   return [
     {
-      variety: "regular",
-      tradingsymbol: String(stock).toUpperCase(),
-      exchange: "NSE",
-      transaction_type: transType,
-      order_type: "LIMIT",
-      price: parseFloat(price.toFixed(2)),
-      trigger_price: 0,
-      quantity: q,
-      product: "MIS",
-      readonly: false
+      symbol: sym,
+      qty: q,
+      type: 1, // 1: Limit, 2: Market
+      side: isShort ? -1 : 1, // 1: BUY, -1: SELL
+      productType: "INTRADAY",
+      limitPrice: parseFloat(price.toFixed(2)),
+      stopPrice: sl > 0 ? parseFloat(sl.toFixed(2)) : 0,
+      validity: "DAY",
+      disclosedQty: 0,
+      offlineOrder: false,
+      stopLoss: 0,
+      takeProfit: 0
     }
   ];
 }
 
-function copyKiteBasketJSON(stock, entryPrice, slPrice, qty, direction = 'BUY') {
-  const basket = generateKiteBasket(stock, entryPrice, slPrice, qty, direction);
+function copyFyersBasketJSON(stock, entryPrice, slPrice, qty, direction = 'BUY') {
+  const basket = generateFyersBasket(stock, entryPrice, slPrice, qty, direction);
   const jsonStr = JSON.stringify(basket, null, 2);
+  const price = Number(entryPrice || 0);
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(jsonStr).then(() => {
-      showToast(`Kite Basket JSON for ${stock} copied! Paste in Zerodha Basket Orders.`, 'new', 'Zerodha Basket');
+      showToast(`Fyers Basket JSON for ${stock} copied! Qty: ${qty} @ ₹${price.toFixed(2)}. Paste into Fyers Basket Orders.`, 'new', 'Fyers Basket');
     }).catch(() => {
-      showToast('Could not copy Kite Basket JSON', 'error');
+      showToast('Could not copy Fyers Basket JSON', 'error');
     });
+  } else if (window.Android && window.Android.copyToClipboard) {
+    window.Android.copyToClipboard('Fyers Basket', jsonStr);
+    showToast(`Fyers Basket copied for ${stock}!`, 'new', 'Fyers Basket');
   }
 }
 
-function copyRowKiteBasket(item) {
+function copyRowFyersBasket(item) {
   const entry = parseFloat(item.trigger_price) || 100;
   const sl = entry * 0.99; // 1% default SL for long
   const rps = Math.abs(entry - sl);
   const qty = rps > 0 ? Math.floor(sizerRiskAmount / rps) : 1;
-  copyKiteBasketJSON(item.stock, entry, sl, qty, 'BUY');
+  copyFyersBasketJSON(item.stock, entry, sl, qty, 'BUY');
 }
 
 function updateSortIcons(tableId, cfg) {
@@ -3137,7 +3284,10 @@ function openPositionSizer(stock, price) {
 
   // Update chart & broker links
   document.getElementById('sizer-tv-link').href = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(sizerStock)}`;
-  document.getElementById('sizer-kite-link').href = `https://kite.zerodha.com/chart/ext/ciq/NSE/${encodeURIComponent(sizerStock)}`;
+  const fyersLink = document.getElementById('sizer-fyers-link');
+  if (fyersLink) {
+    fyersLink.href = `https://trade.fyers.in/?symbol=NSE:${encodeURIComponent(sizerStock)}-EQ`;
+  }
 
   calculatePosition();
   document.getElementById('sizer-modal').classList.remove('hidden');
@@ -3182,7 +3332,11 @@ function calculatePosition() {
   document.getElementById('res-t2').textContent = `₹${t2.toFixed(2)}`;
   document.getElementById('res-t2-p').textContent = `+₹${fmtINR.format(Math.round(risk * 2.0))}`;
 
-  // Update Dhan 1-click web order link with action type
+  // Update Fyers & Dhan 1-click web order links with action type
+  const fyersLink = document.getElementById('sizer-fyers-link');
+  if (fyersLink) {
+    fyersLink.href = `https://trade.fyers.in/?symbol=NSE:${encodeURIComponent(sizerStock)}-EQ`;
+  }
   const dhanLink = document.getElementById('sizer-dhan-link');
   if (dhanLink) {
     const act = sizerDirection === 'short' ? 'SELL' : 'BUY';
@@ -3265,15 +3419,15 @@ document.getElementById('btn-copy-plan')?.addEventListener('click', () => {
   });
 });
 
-// Copy Kite Basket JSON button
-document.getElementById('btn-copy-kite-basket')?.addEventListener('click', () => {
+// Copy Fyers Basket JSON button
+document.getElementById('btn-copy-fyers-basket')?.addEventListener('click', () => {
   const entry = parseFloat(document.getElementById('sizer-entry').value) || 0;
   const sl = parseFloat(document.getElementById('sizer-sl').value) || 0;
   const risk = parseFloat(document.getElementById('sizer-risk').value) || 0;
   const rps = Math.abs(entry - sl);
   const qty = rps > 0 ? Math.floor(risk / rps) : 1;
   const dir = sizerDirection === 'short' ? 'SELL' : 'BUY';
-  copyKiteBasketJSON(sizerStock, entry, sl, qty, dir);
+  copyFyersBasketJSON(sizerStock, entry, sl, qty, dir);
 });
 
 document.getElementById('sizer-close')?.addEventListener('click', closePositionSizer);
@@ -3374,6 +3528,34 @@ window.addEventListener('keydown', (e) => {
   }
 
   const latest = liveData[0];
+
+  // F -> 1-Click Fyers order for latest stock
+  if (e.key === 'f' || e.key === 'F') {
+    e.preventDefault();
+    if (latest) {
+      const url = `https://trade.fyers.in/?symbol=NSE:${encodeURIComponent(latest.stock)}-EQ`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+      showToast(`Opening Fyers order for ${latest.stock}`, 'new', 'Fyers 1-Click');
+    }
+  }
+
+  // D -> 1-Click Dhan order for latest stock
+  if (e.key === 'd' || e.key === 'D') {
+    e.preventDefault();
+    if (latest) {
+      const url = `https://web.dhan.co/index/order?symbol=NSE:${encodeURIComponent(latest.stock)}&type=BUY`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+      showToast(`Opening Dhan order for ${latest.stock}`, 'new', 'Dhan 1-Click');
+    }
+  }
+
+  // B -> Copy Fyers Basket JSON for latest stock
+  if (e.key === 'b' || e.key === 'B') {
+    e.preventDefault();
+    if (latest) {
+      copyRowFyersBasket(latest);
+    }
+  }
 
   // Space -> Open latest stock chart in TradingView
   if (e.code === 'Space') {
@@ -3573,6 +3755,16 @@ function openTvModal(stock, price, sector, relVol) {
   const extLink = document.getElementById('tv-modal-ext');
   if (extLink) {
     extLink.href = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(stock)}`;
+  }
+
+  const fyersLink = document.getElementById('tv-modal-fyers');
+  if (fyersLink) {
+    fyersLink.href = `https://trade.fyers.in/?symbol=NSE:${encodeURIComponent(stock)}-EQ`;
+  }
+
+  const dhanLink = document.getElementById('tv-modal-dhan');
+  if (dhanLink) {
+    dhanLink.href = `https://web.dhan.co/index/order?symbol=NSE:${encodeURIComponent(stock)}&type=BUY`;
   }
 
   const sizerBtn = document.getElementById('tv-modal-sizer');
@@ -3832,22 +4024,42 @@ function buildRow(item, isHistory, hlClass) {
   const btnSizer = document.createElement('button');
   btnSizer.className = 'btn-mini btn-sizer';
   btnSizer.title = 'Open Risk & Position Sizer (S)';
-  btnSizer.textContent = '⚡';
+  btnSizer.textContent = '🎯';
   btnSizer.addEventListener('click', (e) => {
     e.stopPropagation();
     hapticTap();
     openPositionSizer(item.stock, item.trigger_price);
   });
 
-  // Kite Basket Order JSON copy
+  // 1-Click Fyers Order
+  const btnFyers = document.createElement('a');
+  btnFyers.className = 'btn-mini btn-broker-fyers';
+  btnFyers.title = `1-Click Order in Fyers (NSE:${item.stock}-EQ) [F]`;
+  btnFyers.href = `https://trade.fyers.in/?symbol=NSE:${encodeURIComponent(item.stock)}-EQ`;
+  btnFyers.target = '_blank';
+  btnFyers.rel = 'noopener noreferrer';
+  btnFyers.innerHTML = `<span style="font-weight:800;letter-spacing:-0.2px;">⚡F</span>`;
+  btnFyers.onclick = () => hapticTap(true);
+
+  // 1-Click Dhan Order
+  const btnDhan = document.createElement('a');
+  btnDhan.className = 'btn-mini btn-broker-dhan';
+  btnDhan.title = `1-Click Order in Dhan (NSE:${item.stock}) [D]`;
+  btnDhan.href = `https://web.dhan.co/index/order?symbol=NSE:${encodeURIComponent(item.stock)}&type=BUY`;
+  btnDhan.target = '_blank';
+  btnDhan.rel = 'noopener noreferrer';
+  btnDhan.innerHTML = `<span style="font-weight:800;letter-spacing:-0.2px;">⚡D</span>`;
+  btnDhan.onclick = () => hapticTap(true);
+
+  // Fyers Basket Order JSON copy
   const btnBasket = document.createElement('button');
   btnBasket.className = 'btn-mini';
-  btnBasket.title = 'Copy Zerodha Kite Basket JSON for 1-Click Order';
+  btnBasket.title = 'Copy Fyers Basket JSON for 1-Click Order [B]';
   btnBasket.textContent = '🛒';
   btnBasket.addEventListener('click', (e) => {
     e.stopPropagation();
     hapticTap(true);
-    copyRowKiteBasket(item);
+    copyRowFyersBasket(item);
   });
 
   // TradingView Inline Preview Modal
@@ -3884,22 +4096,13 @@ function buildRow(item, isHistory, hlClass) {
   btnTv.textContent = '↗';
   btnTv.onclick = () => hapticTap();
 
-  // Zerodha Kite
-  const btnKite = document.createElement('a');
-  btnKite.className = 'btn-mini';
-  btnKite.title = 'Open in Zerodha Kite';
-  btnKite.href = `https://kite.zerodha.com/chart/ext/ciq/NSE/${encodeURIComponent(item.stock)}`;
-  btnKite.target = '_blank';
-  btnKite.rel = 'noopener noreferrer';
-  btnKite.textContent = '🪁';
-  btnKite.onclick = () => hapticTap();
-
-  btnWrap.appendChild(btnSizer);
+  btnWrap.appendChild(btnFyers);
+  btnWrap.appendChild(btnDhan);
   btnWrap.appendChild(btnBasket);
+  btnWrap.appendChild(btnSizer);
   btnWrap.appendChild(btnTvModal);
-  btnWrap.appendChild(btnCopy);
   btnWrap.appendChild(btnTv);
-  btnWrap.appendChild(btnKite);
+  btnWrap.appendChild(btnCopy);
   tdExec.appendChild(btnWrap);
 
   tr.appendChild(tdTime);
@@ -4012,6 +4215,7 @@ function renderLive(hlMap = new Map()) {
   renderSectorRibbon();
   updateStarCount();
   updateMobileNavBadges();
+  syncMobileNavActive();
 
   // PWA App Badging
   if ('setAppBadge' in navigator) {
@@ -4027,6 +4231,7 @@ function renderLive(hlMap = new Map()) {
 function renderHistory(hlMap = new Map()) {
   renderTable('history-tbody', historyData, true, hlMap);
   updateMobileNavBadges();
+  syncMobileNavActive();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -4366,63 +4571,82 @@ window.addEventListener('focus', () => {
   }
 });
 
-// Wire Mobile Bottom Navigation Bar
-document.querySelectorAll('.m-nav-item').forEach(btn => {
-  btn.addEventListener('click', () => {
-    hapticTap();
-    document.querySelectorAll('.m-nav-item').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    if (btn.id === 'm-nav-sizer-btn') {
-      const top = liveData[0];
-      openPositionSizer(top ? top.stock : 'NIFTY', top ? top.trigger_price : 24500);
-      return;
+// Sync Mobile Navigation Bar active button with current tab/filter
+function syncMobileNavActive() {
+  const isHistory = document.getElementById('tab-history')?.classList.contains('active');
+  const items = document.querySelectorAll('.m-nav-item');
+  items.forEach(btn => {
+    if (btn.id === 'm-nav-sizer-btn') return;
+    if (isHistory) {
+      btn.classList.toggle('active', btn.dataset.tab === 'history');
+    } else {
+      if (btn.dataset.tab === 'history') {
+        btn.classList.remove('active');
+      } else if (activeQuickFilter === 'starred') {
+        btn.classList.toggle('active', btn.dataset.qf === 'starred');
+      } else if (activeQuickFilter === 'rv2') {
+        btn.classList.toggle('active', btn.dataset.qf === 'rv2');
+      } else {
+        btn.classList.toggle('active', !btn.dataset.qf || btn.dataset.qf === 'all');
+      }
     }
+  });
+}
 
-    const tab = btn.dataset.tab;
-    if (tab) {
-      const tabBtn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
-      if (tabBtn) tabBtn.click();
-    }
+// Wire Mobile Bottom Navigation Bar with instant touch feedback
+function initMobileNav() {
+  const navItems = document.querySelectorAll('.m-nav-item');
+  if (!navItems.length) return;
 
-    const qf = btn.dataset.qf;
-    if (qf) {
+  let lastTap = 0;
+  navItems.forEach(btn => {
+    const handleTap = (e) => {
+      const now = Date.now();
+      if (now - lastTap < 220) return;
+      lastTap = now;
+      hapticTap();
+
+      // Position Sizer modal
+      if (btn.id === 'm-nav-sizer-btn') {
+        const top = liveData[0];
+        openPositionSizer(top ? top.stock : 'NIFTY', top ? top.trigger_price : 24500);
+        return;
+      }
+
+      navItems.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const tab = btn.dataset.tab;
+      if (tab === 'history') {
+        const histBtn = document.querySelector('.tab-btn[data-tab="history"]');
+        if (histBtn) histBtn.click();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      // Live Tab
+      const liveBtn = document.querySelector('.tab-btn[data-tab="live"]');
+      if (liveBtn) liveBtn.click();
+
+      const qf = btn.dataset.qf || 'all';
       activeQuickFilter = qf;
       document.querySelectorAll('.filter-pill-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.qf === qf);
+        b.classList.toggle('active', (b.dataset.qf || 'all') === qf);
       });
       livePage = 1;
       renderLive();
-    }
-  });
-});
-</script>
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
-<!-- Mobile App Bottom Navigation Bar -->
-<nav class="mobile-nav-bar" id="mobile-nav-bar">
-  <button class="m-nav-item active" data-tab="live" type="button">
-    <span class="m-nav-icon">📡</span>
-    <span class="m-nav-label">Live</span>
-    <span class="m-nav-badge" id="m-nav-live-badge">0</span>
-  </button>
-  <button class="m-nav-item" data-tab="history" type="button">
-    <span class="m-nav-icon">📂</span>
-    <span class="m-nav-label">History</span>
-    <span class="m-nav-badge" id="m-nav-hist-badge">0</span>
-  </button>
-  <button class="m-nav-item" data-tab="live" data-qf="starred" type="button">
-    <span class="m-nav-icon">⭐</span>
-    <span class="m-nav-label">Watchlist</span>
-    <span class="m-nav-badge" id="m-nav-star-badge">0</span>
-  </button>
-  <button class="m-nav-item" data-tab="live" data-qf="rv2" type="button">
-    <span class="m-nav-icon">🔥</span>
-    <span class="m-nav-label">Rel Vol</span>
-  </button>
-  <button class="m-nav-item" id="m-nav-sizer-btn" type="button">
-    <span class="m-nav-icon">⚡</span>
-    <span class="m-nav-label">Sizer</span>
-  </button>
-</nav>
+    btn.addEventListener('click', handleTap);
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initMobileNav);
+} else {
+  initMobileNav();
+}
+</script>
 </body>
 </html>
