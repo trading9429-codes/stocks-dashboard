@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build Android APK
@@ -20,11 +23,15 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.4
+
+      - name: Configure Android SDK Path
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+          echo "Android SDK location: $ANDROID_HOME"
 
       - name: Build Debug APK with Gradle
         run: |
@@ -39,18 +46,24 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish Release with APK
-        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+      - name: Publish Direct Download APK Release
         uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
         with:
-          name: "Stock Alerts Android APK"
-          tag_name: "v2.1-${{ github.run_number }}"
+          name: "📱 Stock Scanner Android App (Latest APK)"
+          tag_name: "apk-latest"
           files: android/app/build/outputs/apk/debug/app-debug.apk
+          prerelease: false
           body: |
-            ### 📱 Stock Scanner Android App
-            - Real-time mobile trading cards & bottom navigation
-            - Background push notifications & high-priority alert channels
-            - 1-click Zerodha Kite basket copy & Dhan order link
-            - Download `app-debug.apk` and install directly on your Android device.
+            ### 📱 Stock Scanner Android App - Ready to Install
+            
+            **Direct Download:** Click **`app-debug.apk`** below to install directly on your Android phone!
+            
+            #### Features:
+            - 📡 **Real-time Mobile Trading Cards**: Custom 1-hand thumb layout.
+            - 🔔 **Native Android Notifications**: High-priority alert channel with vibration.
+            - 🛒 **1-Click Broker Orders**: Zerodha Kite Basket JSON copy & Dhan web order link.
+            - 📊 **5-minute TradingView Chart Bottom Sheet**.
+            - 🚀 Built automatically from commit `${{ github.sha }}`.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
