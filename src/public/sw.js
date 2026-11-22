@@ -2,9 +2,8 @@
 // Service Worker — Mobile PWA & Push Notifications Engine
 // ============================================================
 
-const CACHE_NAME = "stock-dashboard-v2.1";
+const CACHE_NAME = "stock-dashboard-v3.0";
 const STATIC_ASSETS = [
-  "/",
   "/manifest.json",
   "/res/icon.svg",
   "/res/new-notification-09-352705.mp3"
@@ -25,13 +24,13 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+        keys.map((k) => caches.delete(k))
       );
     }).then(() => self.clients.claim())
   );
 });
 
-// Cache-first for audio/icons, Network-first for HTML/data
+// HTML & Live data: Always fresh from network; Media/audio: Cache-first
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
@@ -44,6 +43,14 @@ self.addEventListener("fetch", (event) => {
     url.pathname.startsWith("/subscribe") ||
     event.request.method !== "GET"
   ) {
+    return;
+  }
+
+  // HTML / navigation requests: ALWAYS fetch fresh from network to prevent stale UI
+  if (event.request.mode === "navigate" || url.pathname === "/" || url.pathname.endsWith(".html")) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
     return;
   }
 
@@ -63,7 +70,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Network-first for pages
+  // Network-first for everything else
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );

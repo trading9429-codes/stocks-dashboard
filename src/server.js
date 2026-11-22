@@ -21,7 +21,25 @@ const SELF_URL       = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL; /
 // --- App & Server ---
 const app    = express();
 app.use(express.json());                                      // built-in; body-parser not needed
-app.use(express.static(path.join(__dirname, "public")));
+
+// Disable caching for HTML, Service Worker & Manifest so client apps & WebViews always receive latest updates
+app.use(express.static(path.join(__dirname, "public"), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith("index.html") || filePath.endsWith("sw.js") || filePath.endsWith("manifest.json")) {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+    }
+  }
+}));
+
+app.get("/", (req, res) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
 const server = http.createServer(app);
 const wss    = new WebSocket.Server({ server });
 

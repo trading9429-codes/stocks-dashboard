@@ -45,7 +45,10 @@ public class MainActivity extends AppCompatActivity {
         // Configure SwipeRefreshLayout
         swipeRefresh.setColorSchemeResources(R.color.accent_green, R.color.accent_blue);
         swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.surface_dark);
-        swipeRefresh.setOnRefreshListener(() -> webView.reload());
+        swipeRefresh.setOnRefreshListener(() -> {
+            webView.clearCache(true);
+            webView.reload();
+        });
 
         // Configure WebView
         WebSettings settings = webView.getSettings();
@@ -58,9 +61,12 @@ public class MainActivity extends AppCompatActivity {
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         settings.setMediaPlaybackRequiresUserGesture(false); // Enable auto alert chime
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+
+        // Clear stale disk cache so user immediately receives latest UI updates
+        webView.clearCache(true);
 
         // Append custom user agent identifier
         String defaultUA = settings.getUserAgentString();
