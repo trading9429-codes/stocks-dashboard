@@ -36,7 +36,7 @@ const db = new Pool({
 async function initDB() {
   await db.query(`
     CREATE TABLE IF NOT EXISTS stocks (
-      stock        TEXT PRIMARY KEY,
+      stock         TEXT PRIMARY KEY,
       trigger_price REAL,
       datetime      TIMESTAMPTZ,
       count         INTEGER,
@@ -47,6 +47,8 @@ async function initDB() {
       scans         JSONB DEFAULT '[]'::jsonb,
       sector        TEXT,
       rel_vol       REAL,
+      pct_change    REAL,
+      adr_pct       REAL,
       extra_data    JSONB DEFAULT '{}'::jsonb
     )
   `);
@@ -56,6 +58,8 @@ async function initDB() {
     ALTER TABLE stocks ADD COLUMN IF NOT EXISTS scans JSONB DEFAULT '[]'::jsonb;
     ALTER TABLE stocks ADD COLUMN IF NOT EXISTS sector TEXT;
     ALTER TABLE stocks ADD COLUMN IF NOT EXISTS rel_vol REAL;
+    ALTER TABLE stocks ADD COLUMN IF NOT EXISTS pct_change REAL;
+    ALTER TABLE stocks ADD COLUMN IF NOT EXISTS adr_pct REAL;
     ALTER TABLE stocks ADD COLUMN IF NOT EXISTS extra_data JSONB DEFAULT '{}'::jsonb;
   `);
 
@@ -97,7 +101,7 @@ const timeUtils = {
 // --- IST projection SQL fragment ---
 const SELECT_IST = `
   stock, trigger_price, count, scan_name, scan_url, alert_name,
-  sector, rel_vol, scans, extra_data,
+  sector, rel_vol, pct_change, adr_pct, scans, extra_data,
   to_char(datetime AT TIME ZONE '${TZ}', 'YYYY-MM-DD')   AS date_ist,
   to_char(datetime AT TIME ZONE '${TZ}', 'HH12:MI AM')   AS time_ist,
   EXTRACT(EPOCH FROM (datetime AT TIME ZONE '${TZ}'))*1000 AS ts_ist,
@@ -124,9 +128,9 @@ const dbUtils = {
     const vals  = [];
     const parts = [];
     items.forEach((it, i) => {
-      const b = i * 12;
+      const b = i * 14;
       parts.push(
-        `($${b+1},$${b+2},$${b+3},$${b+4},$${b+5},$${b+6},$${b+7},$${b+8},$${b+9}::jsonb,$${b+10},$${b+11},$${b+12}::jsonb)`
+        `($${b+1},$${b+2},$${b+3},$${b+4},$${b+5},$${b+6},$${b+7},$${b+8},$${b+9}::jsonb,$${b+10},$${b+11},$${b+12},$${b+13},$${b+14}::jsonb)`
       );
       vals.push(
         it.stock,
@@ -140,6 +144,8 @@ const dbUtils = {
         JSON.stringify(it.scans || []),
         it.sector || null,
         it.rel_vol != null ? it.rel_vol : null,
+        it.pct_change != null ? it.pct_change : null,
+        it.adr_pct != null ? it.adr_pct : null,
         JSON.stringify(it.extra_data || {})
       );
     });
@@ -147,7 +153,7 @@ const dbUtils = {
     const { rows } = await db.query(
       `WITH upserted AS (
          INSERT INTO stocks
-           (stock, trigger_price, datetime, count, lastUpdated, scan_name, scan_url, alert_name, scans, sector, rel_vol, extra_data)
+           (stock, trigger_price, datetime, count, lastUpdated, scan_name, scan_url, alert_name, scans, sector, rel_vol, pct_change, adr_pct, extra_data)
          VALUES ${parts.join(",")}
          ON CONFLICT (stock) DO UPDATE SET
            trigger_price = EXCLUDED.trigger_price,
@@ -164,6 +170,8 @@ const dbUtils = {
                            END,
            sector        = COALESCE(EXCLUDED.sector, stocks.sector),
            rel_vol       = COALESCE(EXCLUDED.rel_vol, stocks.rel_vol),
+           pct_change    = COALESCE(EXCLUDED.pct_change, stocks.pct_change),
+           adr_pct       = COALESCE(EXCLUDED.adr_pct, stocks.adr_pct),
            extra_data    = COALESCE(stocks.extra_data, '{}'::jsonb) || EXCLUDED.extra_data
          RETURNING *
        )
@@ -221,13 +229,14 @@ function verifySecret(req, res, next) {
   next();
 }
 
-// Helper to safely extract column values regardless of case, spacing, or underscores
-function getCaseInsensitiveProp(obj, targetProp) {
+// Helper to safely extract column values regardless of case, spacing, dashes, or percentage signs
+function extractColumnValue(obj, ...possibleKeys) {
   if (!obj || typeof obj !== "object") return undefined;
-  const cleanTarget = targetProp.toLowerCase().replace(/[\s_-]/g, "");
-  for (const k of Object.keys(obj)) {
-    if (k.toLowerCase().replace(/[\s_-]/g, "") === cleanTarget) {
-      return obj[k];
+  for (const target of possibleKeys) {
+    const cleanTarget = target.toLowerCase().replace(/[\s_\-%/]/g, "");
+    for (const k of Object.keys(obj)) {
+      const cleanK = k.toLowerCase().replace(/[\s_\-%/]/g, "");
+      if (cleanK === cleanTarget) return obj[k];
     }
   }
   return undefined;
@@ -257,19 +266,20 @@ function transform(body) {
       const colData = colMap.get(s.toUpperCase()) || {};
 
       // Parse Relative Volume (handles 'Rel Vol', 'rel_vol', 'Relative Volume', etc.)
-      let relVol = null;
-      const rawRv = getCaseInsensitiveProp(colData, "relvol") ?? getCaseInsensitiveProp(colData, "relativevolume");
-      if (rawRv != null) {
-        const parsed = parseFloat(rawRv);
-        if (Number.isFinite(parsed)) relVol = parsed;
-      }
+      const rawRv = extractColumnValue(colData, "Rel Vol", "rel_vol", "relvol", "relativevolume");
+      const relVol = Number.isFinite(parseFloat(rawRv)) ? parseFloat(rawRv) : null;
 
       // Parse Sector
-      let sector = null;
-      const rawSector = getCaseInsensitiveProp(colData, "sector");
-      if (rawSector != null && String(rawSector).trim() !== "") {
-        sector = String(rawSector).trim();
-      }
+      const rawSector = extractColumnValue(colData, "sector");
+      const sector = rawSector != null && String(rawSector).trim() !== "" ? String(rawSector).trim() : null;
+
+      // Parse % Change (handles '%_change', 'change', 'pct_change', 'chg', etc.)
+      const rawPct = extractColumnValue(colData, "%_change", "change", "pct_change", "pctchange", "chg");
+      const pctChange = Number.isFinite(parseFloat(rawPct)) ? parseFloat(rawPct) : null;
+
+      // Parse ADR-H/L% (handles 'ADR-H/L%', 'adrhl', 'adr', 'adr_pct', etc.)
+      const rawAdr = extractColumnValue(colData, "ADR-H/L%", "adrhl", "adr", "adr_pct");
+      const adrPct = Number.isFinite(parseFloat(rawAdr)) ? parseFloat(rawAdr) : null;
 
       return {
         stock:          s,
@@ -282,6 +292,8 @@ function transform(body) {
         scans:          scan_name ? [scan_name] : [],
         sector,
         rel_vol:        relVol,
+        pct_change:     pctChange,
+        adr_pct:        adrPct,
         extra_data:     colData,
       };
     })
@@ -331,7 +343,17 @@ function formatTelegramMessage(it) {
   if (it.rel_vol != null && !isNaN(Number(it.rel_vol))) {
     const rv = Number(it.rel_vol);
     const fire = rv >= 2.0 ? " 🔥" : "";
-    relVolStr = `\n📊 <b>Rel Vol (10d):</b> ${rv.toFixed(2)}x${fire}`;
+    relVolStr = `\n📊 <b>Rel Vol:</b> ${rv.toFixed(2)}x${fire}`;
+  }
+
+  let metricsStr = "";
+  if (it.pct_change != null && !isNaN(Number(it.pct_change))) {
+    const chg = Number(it.pct_change);
+    const sign = chg > 0 ? "+" : "";
+    metricsStr += ` | <b>Chg:</b> ${sign}${chg.toFixed(2)}%`;
+  }
+  if (it.adr_pct != null && !isNaN(Number(it.adr_pct))) {
+    metricsStr += ` | <b>ADR:</b> ${Number(it.adr_pct).toFixed(2)}%`;
   }
 
   const sectorStr = it.sector ? `\n🏢 <b>Sector:</b> ${escapeHtml(it.sector)}` : "";
@@ -344,7 +366,7 @@ function formatTelegramMessage(it) {
   const chartUrl = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(it.stock)}`;
   const kiteUrl  = `https://kite.zerodha.com/chart/ext/ciq/NSE/${encodeURIComponent(it.stock)}`;
 
-  return `${headline}\n📈 <b>${escapeHtml(it.stock)}</b> @ ${price}${relVolStr}${sectorStr}${time}${scan}${confluenceStr}\n🔗 <a href="${chartUrl}">TradingView</a> | <a href="${kiteUrl}">Zerodha Kite</a>`;
+  return `${headline}\n📈 <b>${escapeHtml(it.stock)}</b> @ ${price}${metricsStr}${relVolStr}${sectorStr}${time}${scan}${confluenceStr}\n🔗 <a href="${chartUrl}">TradingView</a> | <a href="${kiteUrl}">Zerodha Kite</a>`;
 }
 
 function sendTelegramRaw(text) {

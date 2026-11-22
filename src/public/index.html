@@ -772,6 +772,100 @@
       color: #fde68a;
     }
 
+    /* % Change Badges */
+    .chg-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+    }
+    .chg-badge.chg-pos {
+      background: rgba(16,185,129,0.14);
+      border: 1px solid rgba(16,185,129,0.4);
+      color: #34d399;
+    }
+    .chg-badge.chg-neg {
+      background: rgba(239,68,68,0.14);
+      border: 1px solid rgba(239,68,68,0.4);
+      color: #f87171;
+    }
+    .chg-badge.chg-zero {
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+
+    /* ADR (Average Daily Range) Badges */
+    .adr-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(139,92,246,0.14);
+      border: 1px solid rgba(139,92,246,0.35);
+      color: #c4b5fd;
+      white-space: nowrap;
+    }
+    .adr-badge.adr-high {
+      background: rgba(236,72,153,0.18);
+      border-color: rgba(236,72,153,0.45);
+      color: #f472b6;
+    }
+
+    /* Session & Chop Warning Tags */
+    .chop-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      background: rgba(245,158,11,0.22);
+      border: 1px solid rgba(245,158,11,0.55);
+      color: #fbbf24;
+      margin-left: 5px;
+      vertical-align: middle;
+      cursor: help;
+    }
+
+    .chip.session-chip {
+      color: #93c5fd;
+      border-color: rgba(59,130,246,0.35);
+      background: var(--surface-2);
+      transition: all 0.2s ease;
+    }
+    .chip.session-chip.chop {
+      color: #fbbf24;
+      border-color: rgba(245,158,11,0.55);
+      background: rgba(245,158,11,0.14);
+      animation: pulse-warn 2s infinite ease-in-out;
+    }
+    .chip.session-chip.power {
+      color: #f472b6;
+      border-color: rgba(236,72,153,0.45);
+      background: rgba(236,72,153,0.14);
+    }
+    .chip.session-chip.open-drive {
+      color: #6ee7b7;
+      border-color: rgba(16,185,129,0.45);
+      background: rgba(16,185,129,0.14);
+    }
+    @keyframes pulse-warn {
+      0%, 100% { box-shadow: 0 0 0 rgba(245,158,11,0); }
+      50% { box-shadow: 0 0 8px rgba(245,158,11,0.4); }
+    }
+
     /* Star / Watchlist button */
     .btn-star {
       background: transparent;
@@ -1871,9 +1965,11 @@
       </div>
     </div>
 
-    <div class="sizer-actions">
-      <button id="btn-copy-plan" class="btn" type="button" style="flex: 1;">📋 Copy Plan</button>
-      <a id="sizer-tv-link" class="btn" target="_blank" rel="noopener noreferrer">📈 Chart</a>
+    <div class="sizer-actions" style="display: flex; flex-wrap: wrap; gap: 8px;">
+      <button id="btn-copy-kite-basket" class="btn primary" type="button" style="flex: 1; min-width: 135px;" title="Copy Zerodha Kite Basket JSON for 1-click batch order">🛒 Kite Basket</button>
+      <a id="sizer-dhan-link" class="btn" target="_blank" rel="noopener noreferrer" style="flex: 1; min-width: 110px;" title="Open Direct Order in Dhan Web">⚡ Dhan Order</a>
+      <button id="btn-copy-plan" class="btn" type="button" style="flex: 1; min-width: 110px;">📋 Copy Plan</button>
+      <a id="sizer-tv-link" class="btn" target="_blank" rel="noopener noreferrer">📈 TV</a>
       <a id="sizer-kite-link" class="btn" target="_blank" rel="noopener noreferrer">🪁 Kite</a>
     </div>
   </div>
@@ -1975,6 +2071,9 @@
       <span class="dot"></span>
       <span id="market-label">Checking…</span>
     </span>
+    <span id="session-chip" class="chip session-chip" title="Active Market Session Window">
+      <span id="session-label">Session</span>
+    </span>
     <span id="conn-chip" class="chip conn-warn">
       <span class="dot"></span>
       <span id="conn-label">Connecting</span>
@@ -2036,7 +2135,10 @@
         <button class="filter-pill-btn active" data-qf="all">All</button>
         <button class="filter-pill-btn fire" data-qf="rv2">🔥 Rel Vol ≥ 2.0x</button>
         <button class="filter-pill-btn" data-qf="rv1.5">🟢 Rel Vol ≥ 1.5x</button>
+        <button class="filter-pill-btn" data-qf="gainers">📈 Gainers (≥+2%)</button>
         <button class="filter-pill-btn" data-qf="confluence">⚡ Multi-Scan</button>
+        <button class="filter-pill-btn" data-qf="open">🚀 Open Drive</button>
+        <button class="filter-pill-btn" data-qf="power">🔥 Power Hour</button>
         <button class="filter-pill-btn star" data-qf="starred">⭐ Watchlist (<span id="star-count">0</span>)</button>
       </div>
 
@@ -2047,11 +2149,13 @@
               <th data-col="ts_ist" style="width: 85px;">Time <span class="si">↓</span></th>
               <th data-col="stock">Stock <span class="si">↕</span></th>
               <th data-col="sector">Sector <span class="si">↕</span></th>
-              <th data-col="rel_vol">Rel Vol (10d) <span class="si">↕</span></th>
+              <th data-col="rel_vol">Rel Vol <span class="si">↕</span></th>
+              <th data-col="pct_change">% Chg <span class="si">↕</span></th>
+              <th data-col="adr_pct">ADR % <span class="si">↕</span></th>
               <th data-col="trigger_price">Price <span class="si">↕</span></th>
               <th data-col="count" style="width: 65px;">Count <span class="si">↕</span></th>
               <th data-col="scan_name">Scan <span class="si">↕</span></th>
-              <th style="text-align: right; width: 155px;">Action</th>
+              <th style="text-align: right; width: 175px;">Action</th>
             </tr>
           </thead>
           <tbody id="live-tbody"></tbody>
@@ -2086,11 +2190,13 @@
               <th data-col="ts_ist" style="width: 140px;">Date / Time <span class="si">↓</span></th>
               <th data-col="stock">Stock <span class="si">↕</span></th>
               <th data-col="sector">Sector <span class="si">↕</span></th>
-              <th data-col="rel_vol">Rel Vol (10d) <span class="si">↕</span></th>
+              <th data-col="rel_vol">Rel Vol <span class="si">↕</span></th>
+              <th data-col="pct_change">% Chg <span class="si">↕</span></th>
+              <th data-col="adr_pct">ADR % <span class="si">↕</span></th>
               <th data-col="trigger_price">Price <span class="si">↕</span></th>
               <th data-col="count" style="width: 65px;">Count <span class="si">↕</span></th>
               <th data-col="scan_name">Scan <span class="si">↕</span></th>
-              <th style="text-align: right; width: 155px;">Action</th>
+              <th style="text-align: right; width: 175px;">Action</th>
             </tr>
           </thead>
           <tbody id="history-tbody"></tbody>
@@ -2420,7 +2526,7 @@ function removeToast(t) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   MARKET STATUS + IST CLOCK
+   MARKET STATUS + MARKET SESSIONS + IST CLOCK
 ═══════════════════════════════════════════════════════════════ */
 function getMarketStatus() {
   const now    = new Date();
@@ -2434,6 +2540,64 @@ function getMarketStatus() {
   return { key: 'open', label: 'OPEN' };
 }
 
+function getMarketSessionInfo() {
+  const ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const day = ist.getDay();
+  if (day === 0 || day === 6) {
+    return { key: 'weekend', name: 'Weekend', desc: 'Markets Closed on Weekends' };
+  }
+  const mins = ist.getHours() * 60 + ist.getMinutes();
+  if (mins < 9 * 60 + 15) {
+    return { key: 'pre', name: 'Pre-Market', desc: 'Pre-market 9:00 - 9:15 AM' };
+  }
+  if (mins <= 10 * 60) {
+    return { key: 'open', name: 'Opening Drive', desc: 'High Volatility & Momentum (9:15 - 10:00 AM)' };
+  }
+  if (mins <= 11 * 60 + 30) {
+    return { key: 'trend', name: 'Morning Trend', desc: 'Institutional Continuation (10:00 - 11:30 AM)' };
+  }
+  if (mins <= 13 * 60 + 15) {
+    return { key: 'chop', name: 'Mid-Day Chop Zone', desc: 'Breakouts Fail Frequently (11:30 AM - 1:15 PM)' };
+  }
+  if (mins <= 15 * 60) {
+    return { key: 'power', name: 'Power Hour', desc: 'Closing Expansion & Volume Surge (1:15 - 3:00 PM)' };
+  }
+  if (mins <= 15 * 60 + 30) {
+    return { key: 'close', name: 'Square-off', desc: 'Intraday MIS Square-Off Window (3:00 - 3:30 PM)' };
+  }
+  return { key: 'closed', name: 'Post-Market', desc: 'NSE Market Closed' };
+}
+
+function isChopWindow(timeIst) {
+  if (!timeIst) return false;
+  const m = String(timeIst).match(/(\d+):(\d+)(?::\d+)?\s*(am|pm)/i);
+  if (!m) return false;
+  let hrs = parseInt(m[1], 10);
+  const mins = parseInt(m[2], 10);
+  const mer = m[3].toLowerCase();
+  if (mer === 'pm' && hrs !== 12) hrs += 12;
+  if (mer === 'am' && hrs === 12) hrs = 0;
+  const totalMins = hrs * 60 + mins;
+  return totalMins >= (11 * 60 + 30) && totalMins <= (13 * 60 + 15);
+}
+
+function getItemSession(timeIst) {
+  if (!timeIst) return null;
+  const m = String(timeIst).match(/(\d+):(\d+)(?::\d+)?\s*(am|pm)/i);
+  if (!m) return null;
+  let hrs = parseInt(m[1], 10);
+  const mins = parseInt(m[2], 10);
+  const mer = m[3].toLowerCase();
+  if (mer === 'pm' && hrs !== 12) hrs += 12;
+  if (mer === 'am' && hrs === 12) hrs = 0;
+  const totalMins = hrs * 60 + mins;
+  if (totalMins >= 9 * 60 + 15 && totalMins <= 10 * 60) return 'open';
+  if (totalMins > 10 * 60 && totalMins <= 11 * 60 + 30) return 'trend';
+  if (totalMins > 11 * 60 + 30 && totalMins <= 13 * 60 + 15) return 'chop';
+  if (totalMins > 13 * 60 + 15 && totalMins <= 15 * 60) return 'power';
+  return null;
+}
+
 function updateHeaderMeta() {
   const ms = getMarketStatus();
   const chip = document.getElementById('market-chip');
@@ -2443,6 +2607,16 @@ function updateHeaderMeta() {
   else if (ms.key === 'pre') chip.classList.add('market-pre');
   else                       chip.classList.add('market-closed');
   label.textContent = ms.label;
+
+  // Market Session intelligence chip
+  const sess = getMarketSessionInfo();
+  const sessChip = document.getElementById('session-chip');
+  const sessLabel = document.getElementById('session-label');
+  if (sessChip && sessLabel) {
+    sessChip.className = `chip session-chip session-${sess.key}`;
+    sessChip.title = `${sess.name}: ${sess.desc}`;
+    sessLabel.textContent = sess.name;
+  }
 
   // IST clock
   document.getElementById('ist-clock').textContent =
@@ -2604,17 +2778,25 @@ function sendSystemNotification(item, isNew) {
   const volTag = (item.rel_vol != null && !isNaN(Number(item.rel_vol)))
     ? ` · RelVol: ${Number(item.rel_vol).toFixed(1)}x${Number(item.rel_vol) >= 2 ? '🔥' : ''}`
     : '';
+  const chgTag = (item.pct_change != null && !isNaN(Number(item.pct_change)))
+    ? ` · ${Number(item.pct_change) > 0 ? '+' : ''}${Number(item.pct_change).toFixed(2)}%`
+    : '';
 
   const title = isNew
-    ? `🟢 NEW: ${item.stock} @ ₹${Number(item.trigger_price || 0).toFixed(2)}${volTag}`
-    : `🟡 UPDATED: ${item.stock} (Count: ${item.count || 2})${volTag}`;
+    ? `🟢 NEW: ${item.stock} @ ₹${Number(item.trigger_price || 0).toFixed(2)}${chgTag}${volTag}`
+    : `🟡 UPDATED: ${item.stock} (Count: ${item.count || 2})${chgTag}${volTag}`;
 
   const secPart = item.sector ? `Sector: ${item.sector}\n` : '';
   const scanPart = item.scan_name ? `Scan: ${item.scan_name}\n` : '';
-  const body = `${secPart}${scanPart}Time: ${item.time_ist || 'Now'} IST`;
+  const adrPart = (item.adr_pct != null && !isNaN(Number(item.adr_pct))) ? `ADR: ${Number(item.adr_pct).toFixed(1)}%\n` : '';
+  const body = `${secPart}${scanPart}${adrPart}Time: ${item.time_ist || 'Now'} IST`;
   const icon = '/res/icon.svg';
   const tag = `stock-${item.stock}`;
   const tvUrl = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(item.stock)}`;
+
+  // Mobile tactile vibration patterns (institutional vs standard)
+  const isHighVol = Number(item.rel_vol) >= 2.0;
+  const vibPattern = isHighVol ? [250, 80, 250, 80, 250] : [150, 60, 150];
 
   const options = {
     body,
@@ -2622,7 +2804,7 @@ function sendSystemNotification(item, isNew) {
     badge: icon,
     tag,
     renotify: true,
-    vibrate: [250, 100, 250, 100, 250], // buzz vibration on mobile devices
+    vibrate: vibPattern,
     data: { url: tvUrl },
   };
 
@@ -2654,13 +2836,57 @@ function sortData(data, cfg) {
   const dir = cfg.dir === 'asc' ? 1 : -1;
   return [...data].sort((a, b) => {
     const col = cfg.col;
-    if (col === 'ts_ist' || col === 'count' || col === 'trigger_price' || col === 'rel_vol') {
+    if (col === 'ts_ist' || col === 'count' || col === 'trigger_price' || col === 'rel_vol' || col === 'pct_change' || col === 'adr_pct') {
       const aVal = (a[col] == null || a[col] === '') ? -Infinity : Number(a[col]);
       const bVal = (b[col] == null || b[col] === '') ? -Infinity : Number(b[col]);
       return dir * (aVal - bVal);
     }
     return dir * String(a[col] ?? '').localeCompare(String(b[col] ?? ''));
   });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BROKER 1-CLICK ORDER EXECUTION (ZERODHA & DHAN)
+═══════════════════════════════════════════════════════════════ */
+function generateKiteBasket(stock, entryPrice, slPrice, qty, direction = 'BUY') {
+  const price = Number(entryPrice || 0);
+  const sl = Number(slPrice || 0);
+  const q = Math.max(1, parseInt(qty, 10) || 1);
+  const transType = (String(direction).toUpperCase() === 'SHORT' || String(direction).toUpperCase() === 'SELL') ? 'SELL' : 'BUY';
+  return [
+    {
+      variety: "regular",
+      tradingsymbol: String(stock).toUpperCase(),
+      exchange: "NSE",
+      transaction_type: transType,
+      order_type: "LIMIT",
+      price: parseFloat(price.toFixed(2)),
+      trigger_price: 0,
+      quantity: q,
+      product: "MIS",
+      readonly: false
+    }
+  ];
+}
+
+function copyKiteBasketJSON(stock, entryPrice, slPrice, qty, direction = 'BUY') {
+  const basket = generateKiteBasket(stock, entryPrice, slPrice, qty, direction);
+  const jsonStr = JSON.stringify(basket, null, 2);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(jsonStr).then(() => {
+      showToast(`Kite Basket JSON for ${stock} copied! Paste in Zerodha Basket Orders.`, 'new', 'Zerodha Basket');
+    }).catch(() => {
+      showToast('Could not copy Kite Basket JSON', 'error');
+    });
+  }
+}
+
+function copyRowKiteBasket(item) {
+  const entry = parseFloat(item.trigger_price) || 100;
+  const sl = entry * 0.99; // 1% default SL for long
+  const rps = Math.abs(entry - sl);
+  const qty = rps > 0 ? Math.floor(sizerRiskAmount / rps) : 1;
+  copyKiteBasketJSON(item.stock, entry, sl, qty, 'BUY');
 }
 
 function updateSortIcons(tableId, cfg) {
@@ -2748,6 +2974,13 @@ function calculatePosition() {
 
   document.getElementById('res-t2').textContent = `₹${t2.toFixed(2)}`;
   document.getElementById('res-t2-p').textContent = `+₹${fmtINR.format(Math.round(risk * 2.0))}`;
+
+  // Update Dhan 1-click web order link with action type
+  const dhanLink = document.getElementById('sizer-dhan-link');
+  if (dhanLink) {
+    const act = sizerDirection === 'short' ? 'SELL' : 'BUY';
+    dhanLink.href = `https://web.dhan.co/index/order?symbol=NSE:${encodeURIComponent(sizerStock)}&type=${act}`;
+  }
 }
 
 // Direction toggle
@@ -2823,6 +3056,17 @@ document.getElementById('btn-copy-plan')?.addEventListener('click', () => {
   navigator.clipboard.writeText(plan).then(() => {
     showToast(`Trade plan copied!`, 'new', 'Position Sizer');
   });
+});
+
+// Copy Kite Basket JSON button
+document.getElementById('btn-copy-kite-basket')?.addEventListener('click', () => {
+  const entry = parseFloat(document.getElementById('sizer-entry').value) || 0;
+  const sl = parseFloat(document.getElementById('sizer-sl').value) || 0;
+  const risk = parseFloat(document.getElementById('sizer-risk').value) || 0;
+  const rps = Math.abs(entry - sl);
+  const qty = rps > 0 ? Math.floor(risk / rps) : 1;
+  const dir = sizerDirection === 'short' ? 'SELL' : 'BUY';
+  copyKiteBasketJSON(sizerStock, entry, sl, qty, dir);
 });
 
 document.getElementById('sizer-close')?.addEventListener('click', closePositionSizer);
@@ -3080,6 +3324,27 @@ function renderRelVolBadge(val) {
   return `<span class="rel-vol-badge ${cls}" title="Relative volume vs 10-day average: ${num.toFixed(2)}x">${icon}${num.toFixed(1)}x</span>`;
 }
 
+function renderPctChangeBadge(val) {
+  if (val == null || val === '') return '<span class="rv-na">—</span>';
+  const num = parseFloat(val);
+  if (isNaN(num)) return `<span class="rv-na">${escapeHtml(val)}</span>`;
+  const sign = num > 0 ? '+' : '';
+  let cls = 'chg-zero';
+  if (num > 0) cls = 'chg-pos';
+  else if (num < 0) cls = 'chg-neg';
+  return `<span class="chg-badge ${cls}">${sign}${num.toFixed(2)}%</span>`;
+}
+
+function renderAdrBadge(val) {
+  if (val == null || val === '') return '<span class="rv-na">—</span>';
+  const num = parseFloat(val);
+  if (isNaN(num)) return `<span class="rv-na">${escapeHtml(val)}</span>`;
+  const isHigh = num >= 3.5;
+  const cls = isHigh ? 'adr-badge adr-high' : 'adr-badge';
+  const icon = isHigh ? '🔥 ' : '';
+  return `<span class="${cls}" title="Average Daily Range: ${num.toFixed(2)}%">${icon}${num.toFixed(1)}%</span>`;
+}
+
 // Inline TradingView Preview Modal
 function openTvModal(stock, price, sector, relVol) {
   const modal = document.getElementById('tv-modal');
@@ -3210,7 +3475,7 @@ function buildRow(item, isHistory, hlClass) {
   if (hlClass) tr.classList.add(hlClass);
   const isStarred = starredStocks.has(item.stock);
 
-  // 1. Time cell
+  // 1. Time cell (with Chop Badge if triggered in 11:30 - 1:15)
   const tdTime = document.createElement('td');
   tdTime.className = 'time-cell';
   if (isHistory && item.date_ist) {
@@ -3220,6 +3485,13 @@ function buildRow(item, isHistory, hlClass) {
     tdTime.appendChild(dateSpan);
   }
   tdTime.appendChild(document.createTextNode(item.time_ist ?? '—'));
+  if (isChopWindow(item.time_ist)) {
+    const chopBadge = document.createElement('span');
+    chopBadge.className = 'chop-badge';
+    chopBadge.title = 'Triggered during 11:30 AM - 1:15 PM Mid-day Chop Zone (breakout failure risk is high)';
+    chopBadge.textContent = '⚠️ Chop';
+    tdTime.appendChild(chopBadge);
+  }
 
   // 2. Stock cell (Star + Symbol link + Status badge)
   const tdStock = document.createElement('td');
@@ -3279,12 +3551,20 @@ function buildRow(item, isHistory, hlClass) {
   const tdRelVol = document.createElement('td');
   tdRelVol.innerHTML = renderRelVolBadge(item.rel_vol);
 
-  // 5. Price cell
+  // 5. % Chg cell
+  const tdPctChange = document.createElement('td');
+  tdPctChange.innerHTML = renderPctChangeBadge(item.pct_change);
+
+  // 6. ADR % cell
+  const tdAdr = document.createElement('td');
+  tdAdr.innerHTML = renderAdrBadge(item.adr_pct);
+
+  // 7. Price cell
   const tdPrice = document.createElement('td');
   tdPrice.className = 'price-cell';
   tdPrice.textContent = fmtPrice(item.trigger_price);
 
-  // 6. Count cell
+  // 8. Count cell
   const tdCount = document.createElement('td');
   const badge = document.createElement('span');
   const cnt = item.count ?? 0;
@@ -3292,7 +3572,7 @@ function buildRow(item, isHistory, hlClass) {
   badge.textContent = cnt;
   tdCount.appendChild(badge);
 
-  // 7. Scan cell with Multi-Scan Confluence indicator
+  // 9. Scan cell with Multi-Scan Confluence indicator
   const tdScan = document.createElement('td');
   if (item.scan_name) {
     const scanName = item.scan_name;
@@ -3324,7 +3604,7 @@ function buildRow(item, isHistory, hlClass) {
     tdScan.innerHTML = '<span class="rv-na">—</span>';
   }
 
-  // 8. Action / Execution cell
+  // 10. Action / Execution cell
   const tdExec = document.createElement('td');
   tdExec.className = 'exec-cell';
   tdExec.style.textAlign = 'right';
@@ -3340,6 +3620,16 @@ function buildRow(item, isHistory, hlClass) {
   btnSizer.addEventListener('click', (e) => {
     e.stopPropagation();
     openPositionSizer(item.stock, item.trigger_price);
+  });
+
+  // Kite Basket Order JSON copy
+  const btnBasket = document.createElement('button');
+  btnBasket.className = 'btn-mini';
+  btnBasket.title = 'Copy Zerodha Kite Basket JSON for 1-Click Order';
+  btnBasket.textContent = '🛒';
+  btnBasket.addEventListener('click', (e) => {
+    e.stopPropagation();
+    copyRowKiteBasket(item);
   });
 
   // TradingView Inline Preview Modal
@@ -3383,6 +3673,7 @@ function buildRow(item, isHistory, hlClass) {
   btnKite.textContent = '🪁';
 
   btnWrap.appendChild(btnSizer);
+  btnWrap.appendChild(btnBasket);
   btnWrap.appendChild(btnTvModal);
   btnWrap.appendChild(btnCopy);
   btnWrap.appendChild(btnTv);
@@ -3393,6 +3684,8 @@ function buildRow(item, isHistory, hlClass) {
   tr.appendChild(tdStock);
   tr.appendChild(tdSector);
   tr.appendChild(tdRelVol);
+  tr.appendChild(tdPctChange);
+  tr.appendChild(tdAdr);
   tr.appendChild(tdPrice);
   tr.appendChild(tdCount);
   tr.appendChild(tdScan);
@@ -3421,8 +3714,14 @@ function renderTable(tbodyId, data, isHistory, hlMap = new Map()) {
       filtered = filtered.filter((r) => Number(r.rel_vol) >= 2.0);
     } else if (activeQuickFilter === 'rv1.5') {
       filtered = filtered.filter((r) => Number(r.rel_vol) >= 1.5);
+    } else if (activeQuickFilter === 'gainers') {
+      filtered = filtered.filter((r) => Number(r.pct_change) >= 2.0);
     } else if (activeQuickFilter === 'confluence') {
       filtered = filtered.filter((r) => (Array.isArray(r.scans) && r.scans.length > 1) || (Number(r.count) > 1));
+    } else if (activeQuickFilter === 'open') {
+      filtered = filtered.filter((r) => getItemSession(r.time_ist) === 'open');
+    } else if (activeQuickFilter === 'power') {
+      filtered = filtered.filter((r) => getItemSession(r.time_ist) === 'power');
     } else if (activeQuickFilter === 'starred') {
       filtered = filtered.filter((r) => starredStocks.has(r.stock));
     }
@@ -3431,7 +3730,7 @@ function renderTable(tbodyId, data, isHistory, hlMap = new Map()) {
   // Search filter
   if (search) {
     filtered = filtered.filter((r) =>
-      [r.stock, r.sector, r.scan_name, r.alert_name, r.time_ist, r.date_ist, String(r.rel_vol ?? '')]
+      [r.stock, r.sector, r.scan_name, r.alert_name, r.time_ist, r.date_ist, String(r.rel_vol ?? ''), String(r.pct_change ?? ''), String(r.adr_pct ?? '')]
         .some((v) => v && String(v).toLowerCase().includes(search))
     );
   }
@@ -3446,7 +3745,7 @@ function renderTable(tbodyId, data, isHistory, hlMap = new Map()) {
     const tr = document.createElement('tr');
     tr.className = 'empty-row';
     const td = document.createElement('td');
-    td.colSpan = 8;
+    td.colSpan = 10;
     td.innerHTML = `<span class="empty-icon">${isHistory ? '📂' : '📡'}</span>${isHistory ? 'No history records' : 'Waiting for alerts…'}`;
     tr.appendChild(td);
     tbody.appendChild(tr);
@@ -3472,6 +3771,16 @@ function renderLive(hlMap = new Map()) {
   renderMovers();
   renderSectorRibbon();
   updateStarCount();
+
+  // PWA App Badging
+  if ('setAppBadge' in navigator) {
+    const count = liveData.length;
+    if (count > 0) {
+      navigator.setAppBadge(count).catch(() => {});
+    } else {
+      navigator.clearAppBadge().catch(() => {});
+    }
+  }
 }
 
 function renderHistory(hlMap = new Map()) {
@@ -3560,14 +3869,14 @@ function downloadCSV(isHistory = false) {
   if (!data.length) { showToast('No data to export', 'info'); return; }
 
   const headers = isHistory
-    ? ['Date','Time(IST)','Stock','Sector','Rel Vol (10d)','Price','Count','Scan','All Scans','Alert']
-    : ['Time(IST)','Stock','Sector','Rel Vol (10d)','Price','Count','Scan','All Scans','Alert'];
+    ? ['Date','Time(IST)','Stock','Sector','Rel Vol (10d)','% Change','ADR %','Price','Count','Scan','All Scans','Alert']
+    : ['Time(IST)','Stock','Sector','Rel Vol (10d)','% Change','ADR %','Price','Count','Scan','All Scans','Alert'];
 
   const rows = data.map((d) => {
     const scanList = Array.isArray(d.scans) ? d.scans.join('; ') : (d.scan_name ?? '');
     return isHistory
-      ? [d.date_ist, d.time_ist, d.stock, d.sector ?? '', d.rel_vol ?? '', d.trigger_price, d.count, d.scan_name ?? '', scanList, d.alert_name ?? '']
-      : [d.time_ist, d.stock, d.sector ?? '', d.rel_vol ?? '', d.trigger_price, d.count, d.scan_name ?? '', scanList, d.alert_name ?? ''];
+      ? [d.date_ist, d.time_ist, d.stock, d.sector ?? '', d.rel_vol ?? '', d.pct_change ?? '', d.adr_pct ?? '', d.trigger_price, d.count, d.scan_name ?? '', scanList, d.alert_name ?? '']
+      : [d.time_ist, d.stock, d.sector ?? '', d.rel_vol ?? '', d.pct_change ?? '', d.adr_pct ?? '', d.trigger_price, d.count, d.scan_name ?? '', scanList, d.alert_name ?? ''];
   });
 
   // Escape CSV values
@@ -3583,7 +3892,7 @@ function downloadCSV(isHistory = false) {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  showToast(`Exported ${data.length} rows (includes Sector & Rel Vol)`, 'info');
+  showToast(`Exported ${data.length} rows (includes % Change, ADR %, Sector & Rel Vol)`, 'info');
 }
 
 function copyToTV() {
@@ -3763,10 +4072,12 @@ document.getElementById('btn-clear-history').addEventListener('click', async () 
         const hlMap = new Map();
         let hasNew = false;
         let hasUpdate = false;
+        let hasHighVol = false;
         msg.liveDelta.forEach(it => {
           const isNew = !liveData.some(d => d.stock === it.stock);
           const type = isNew ? 'new' : 'update';
           if (isNew) hasNew = true; else hasUpdate = true;
+          if (Number(it.rel_vol) >= 2.0) hasHighVol = true;
           hlMap.set(it.stock, type);
           registerHighlight(it.stock, type);
           sendSystemNotification(it, isNew);
@@ -3774,13 +4085,28 @@ document.getElementById('btn-clear-history').addEventListener('click', async () 
           const rvText = (it.rel_vol != null && !isNaN(Number(it.rel_vol)))
             ? `  ·  Vol: ${Number(it.rel_vol).toFixed(1)}x${Number(it.rel_vol) >= 2 ? '🔥' : ''}`
             : '';
+          const chgText = (it.pct_change != null && !isNaN(Number(it.pct_change)))
+            ? `  ·  ${Number(it.pct_change) > 0 ? '+' : ''}${Number(it.pct_change).toFixed(2)}%`
+            : '';
           const secText = it.sector ? `  ·  ${it.sector}` : '';
           showToast(
-            `${it.stock}  ${fmtPrice(it.trigger_price)}${rvText}${secText}`,
+            `${it.stock}  ${fmtPrice(it.trigger_price)}${chgText}${rvText}${secText}`,
             type,
             isNew ? 'New Stock Alert' : 'Stock Updated'
           );
         });
+
+        // Mobile tactile vibration pattern
+        if ('vibrate' in navigator) {
+          try {
+            if (hasHighVol) {
+              navigator.vibrate([250, 80, 250, 80, 250]); // Institutional high vol alert
+            } else if (hasNew) {
+              navigator.vibrate([150, 60, 150]);
+            }
+          } catch (_) {}
+        }
+
         playAlert(hasNew ? 'new' : 'update');
         upsertLiveDelta(msg.liveDelta);
         renderLive(hlMap);
@@ -3790,6 +4116,13 @@ document.getElementById('btn-clear-history').addEventListener('click', async () 
 
   connect();
 })();
+
+// Clear PWA app badge when user switches focus to the dashboard tab
+window.addEventListener('focus', () => {
+  if ('clearAppBadge' in navigator) {
+    navigator.clearAppBadge().catch(() => {});
+  }
+});
 </script>
 </body>
 </html>
