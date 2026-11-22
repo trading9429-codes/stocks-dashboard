@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Stock Alerts</string>
+    <string name="default_dashboard_url">https://imbalance-stocks-dashboard.onrender.com</string>
+    <string name="notification_channel_name">Stock Scanner Alerts</string>
+    <string name="notification_channel_desc">Real-time alerts for breakout and reversal stock scans</string>
+</resources>

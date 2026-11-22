@@ -25,6 +25,31 @@ app.use(express.static(path.join(__dirname, "public")));
 const server = http.createServer(app);
 const wss    = new WebSocket.Server({ server });
 
+// --- Web Push & VAPID Configuration ---
+let webpush = null;
+let currentVapidKeys = {
+  publicKey: process.env.VAPID_PUBLIC_KEY || null,
+  privateKey: process.env.VAPID_PRIVATE_KEY || null,
+};
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:admin@stocks-dashboard.local";
+
+try {
+  webpush = require("web-push");
+  if (currentVapidKeys.publicKey && currentVapidKeys.privateKey) {
+    webpush.setVapidDetails(VAPID_SUBJECT, currentVapidKeys.publicKey, currentVapidKeys.privateKey);
+    console.log("[push] VAPID configured from environment variables");
+  } else {
+    const generated = webpush.generateVAPIDKeys();
+    currentVapidKeys = generated;
+    webpush.setVapidDetails(VAPID_SUBJECT, generated.publicKey, generated.privateKey);
+    console.log("[push] Auto-generated session VAPID keys for mobile push");
+  }
+} catch (_) {
+  console.log("[push] web-push module not loaded. Run 'npm install web-push' to enable background Web Push.");
+}
+
+const pushSubscriptions = new Map(); // endpoint -> subscription
+
 // --- Database ---
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -63,9 +88,32 @@ async function initDB() {
     ALTER TABLE stocks ADD COLUMN IF NOT EXISTS extra_data JSONB DEFAULT '{}'::jsonb;
   `);
 
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      endpoint     TEXT PRIMARY KEY,
+      subscription JSONB NOT NULL,
+      created_at   TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+
   await db.query(
     `CREATE INDEX IF NOT EXISTS idx_datetime_stock ON stocks (datetime, stock)`
   );
+
+  // Load active push subscriptions into memory
+  try {
+    const res = await db.query(`SELECT subscription FROM push_subscriptions`);
+    res.rows.forEach(r => {
+      const sub = r.subscription;
+      if (sub && sub.endpoint) {
+        pushSubscriptions.set(sub.endpoint, sub);
+      }
+    });
+    console.log(`[push] loaded ${pushSubscriptions.size} push subscriptions`);
+  } catch (err) {
+    console.warn("[push] could not load subscriptions from db:", err.message);
+  }
+
   console.log("[db] schema ready");
 }
 
@@ -441,15 +489,96 @@ function notifyTelegram(items) {
   });
 }
 
+// Mobile Web Push Broadcaster
+async function notifyPush(items) {
+  if (!webpush || !pushSubscriptions.size || !items?.length) return;
+
+  for (const it of items) {
+    const isHighVol = Number(it.rel_vol) >= 2.0;
+    const volTag = (it.rel_vol != null && !isNaN(Number(it.rel_vol)))
+      ? ` · Vol: ${Number(it.rel_vol).toFixed(1)}x${isHighVol ? '🔥' : ''}`
+      : '';
+    const chgTag = (it.pct_change != null && !isNaN(Number(it.pct_change)))
+      ? ` · ${Number(it.pct_change) > 0 ? '+' : ''}${Number(it.pct_change).toFixed(2)}%`
+      : '';
+
+    const title = `🟢 ${it.stock} @ ₹${Number(it.trigger_price || 0).toFixed(2)}${chgTag}`;
+    const body = `${it.sector ? 'Sector: ' + it.sector + '\n' : ''}Scan: ${it.scan_name || 'Trigger'}${volTag}`;
+
+    const payload = JSON.stringify({
+      title,
+      body,
+      stock: it.stock,
+      price: it.trigger_price,
+      scan: it.scan_name,
+      isHighVol,
+      tvUrl: `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(it.stock)}`
+    });
+
+    for (const [endpoint, sub] of pushSubscriptions.entries()) {
+      webpush.sendNotification(sub, payload).catch((err) => {
+        if (err.statusCode === 404 || err.statusCode === 410) {
+          pushSubscriptions.delete(endpoint);
+          db.query(`DELETE FROM push_subscriptions WHERE endpoint = $1`, [endpoint]).catch(() => {});
+        } else {
+          console.warn(`[push] error sending to ${endpoint.slice(0, 30)}...:`, err.message);
+        }
+      });
+    }
+  }
+}
+
 // Health check (also used by keep-alive pings)
 app.get("/health", (req, res) =>
   res.json({
     status: "ok",
     uptime: Math.floor(process.uptime()),
     clients: wss.clients.size,
+    pushSubscribers: pushSubscriptions.size,
     telegramConfigured: Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),
   })
 );
+
+// Web Push VAPID public key endpoint
+app.get("/vapid-public-key", (req, res) => {
+  res.json({
+    publicKey: currentVapidKeys.publicKey || null,
+    configured: Boolean(webpush && currentVapidKeys.publicKey)
+  });
+});
+
+// Mobile push subscribe endpoint
+app.post("/subscribe", async (req, res) => {
+  const sub = req.body?.subscription;
+  if (!sub || !sub.endpoint) {
+    return res.status(400).json({ error: "Invalid subscription object" });
+  }
+
+  try {
+    pushSubscriptions.set(sub.endpoint, sub);
+    await db.query(
+      `INSERT INTO push_subscriptions (endpoint, subscription) VALUES ($1, $2)
+       ON CONFLICT (endpoint) DO UPDATE SET subscription = EXCLUDED.subscription`,
+      [sub.endpoint, JSON.stringify(sub)]
+    );
+    console.log(`[push] registered subscriber (total: ${pushSubscriptions.size})`);
+    res.json({ status: "subscribed", total: pushSubscriptions.size });
+  } catch (err) {
+    console.error("[push] subscribe error:", err.message);
+    res.status(500).json({ error: "Failed to save subscription" });
+  }
+});
+
+// Mobile push unsubscribe endpoint
+app.post("/unsubscribe", async (req, res) => {
+  const endpoint = req.body?.endpoint;
+  if (endpoint) {
+    pushSubscriptions.delete(endpoint);
+    await db.query(`DELETE FROM push_subscriptions WHERE endpoint = $1`, [endpoint]).catch(() => {});
+    console.log(`[push] unregistered subscriber (total: ${pushSubscriptions.size})`);
+  }
+  res.json({ status: "unsubscribed" });
+});
 
 // Diagnostic test endpoint to test Telegram delivery from browser
 app.get("/test-telegram", async (req, res) => {
@@ -507,6 +636,7 @@ app.post("/new-stocks", verifySecret, async (req, res) => {
     const deltaRows = await dbUtils.upsertAndFetchIST(items);
     await refreshCache(false, deltaRows);
     notifyTelegram(deltaRows);
+    notifyPush(deltaRows);
 
     res.json({ status: "ok", processed: items.length });
   } catch (e) {

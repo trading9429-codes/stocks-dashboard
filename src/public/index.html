@@ -1613,15 +1613,18 @@
         text-align: center;
       }
 
-      /* Table: Responsive Trading Card Transformation (Zero horizontal scroll) */
+      /* Table: Responsive Mobile Trading Card Transformation (Zero horizontal scroll) */
       .table-scroll {
-        max-height: calc(100vh - 275px);
-        overflow-x: hidden;
+        max-height: none;
+        overflow-x: visible;
+        border: none;
+        background: transparent;
       }
       #live-table, #history-table {
         display: block;
         width: 100%;
         border-collapse: separate;
+        background: transparent;
       }
       #live-table thead, #history-table thead {
         display: none !important;
@@ -1629,20 +1632,23 @@
       #live-table tbody, #history-table tbody {
         display: flex !important;
         flex-direction: column !important;
+        gap: 12px !important;
         width: 100% !important;
+        background: transparent !important;
       }
       tbody tr {
-        display: grid !important;
-        grid-template-columns: auto auto 1fr auto !important;
-        grid-template-rows: auto auto !important;
-        row-gap: 8px !important;
-        column-gap: 8px !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
         align-items: center !important;
-        padding: 12px 14px !important;
-        border-bottom: 1px solid var(--border) !important;
-        background: var(--surface);
-        position: relative;
-        box-sizing: border-box;
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 14px !important;
+        padding: 14px !important;
+        position: relative !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        gap: 6px 8px !important;
       }
       tbody tr td {
         padding: 0 !important;
@@ -1650,90 +1656,147 @@
         background: transparent !important;
       }
 
-      /* Card Row 1: Stock symbol (Left) + Price (Right) */
-      tbody tr td:nth-child(2) {
-        grid-column: 1 / 4 !important;
-        grid-row: 1 !important;
+      /* Card Alert Highlights (Entire card left-border accent) */
+      tbody tr.hl-new {
+        border-left: 5px solid #10b981 !important;
+        border-color: rgba(16, 185, 129, 0.5) !important;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.2) !important;
+      }
+      tbody tr.hl-upd {
+        border-left: 5px solid #f59e0b !important;
+        border-color: rgba(245, 158, 11, 0.5) !important;
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.2) !important;
+      }
+
+      /* Line 1: Stock Symbol & Status (Left) + Time & Chop (Right) */
+      tbody tr .td-stock {
+        order: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        flex: 1 1 auto !important;
+        max-width: calc(100% - 110px) !important;
+      }
+      tbody tr .td-time {
+        order: 2 !important;
         display: flex !important;
         align-items: center !important;
         gap: 6px !important;
-        justify-self: start !important;
-        overflow: hidden !important;
-      }
-      tbody tr td:nth-child(4) {
-        grid-column: 4 !important;
-        grid-row: 1 !important;
-        justify-self: end !important;
-        font-size: 14.5px !important;
-        font-weight: 700 !important;
-        color: var(--text) !important;
-      }
-
-      /* Card Row 2: Count + Time + Scan (Left) | Action Buttons (Right) */
-      tbody tr td:nth-child(3) {
-        grid-column: 1 !important;
-        grid-row: 2 !important;
-        justify-self: start !important;
-      }
-      tbody tr td:nth-child(1) {
-        grid-column: 2 !important;
-        grid-row: 2 !important;
-        justify-self: start !important;
+        margin-left: auto !important;
         font-size: 11px !important;
+        color: var(--text-dim) !important;
         white-space: nowrap !important;
       }
-      tbody tr td:nth-child(5) {
-        grid-column: 3 !important;
-        grid-row: 2 !important;
-        justify-self: start !important;
-        max-width: 125px !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
+
+      /* Line 2: Trigger Price (Large Bold) + % Chg + Rel Vol + ADR % */
+      tbody tr .td-price {
+        order: 3 !important;
+        display: inline-flex !important;
+        font-size: 17px !important;
+        font-weight: 800 !important;
+        color: var(--text) !important;
+        margin-right: 6px !important;
+        margin-top: 2px !important;
       }
-      tbody tr td:nth-child(6) {
-        grid-column: 4 !important;
-        grid-row: 2 !important;
-        justify-self: end !important;
+      tbody tr .td-pct {
+        order: 4 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        margin-top: 2px !important;
+      }
+      tbody tr .td-relvol {
+        order: 5 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        margin-top: 2px !important;
+      }
+      tbody tr .td-adr {
+        order: 6 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        margin-top: 2px !important;
+      }
+
+      /* Line 3: Sector + Scan Name + Count */
+      tbody tr .td-sector {
+        order: 7 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        margin-top: 2px !important;
+      }
+      tbody tr .td-scan {
+        order: 8 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex: 1 1 auto !important;
+        min-width: 120px !important;
+        margin-top: 2px !important;
+      }
+      tbody tr .td-count {
+        order: 9 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        margin-left: auto !important;
+        margin-top: 2px !important;
+      }
+
+      /* Line 4: Full-width Thumb Execution Action Bar */
+      tbody tr .td-exec {
+        order: 10 !important;
+        width: 100% !important;
+        margin-top: 8px !important;
+        padding-top: 10px !important;
+        border-top: 1px solid var(--border) !important;
+      }
+      tbody tr .td-exec .exec-btns {
+        display: flex !important;
+        width: 100% !important;
+        gap: 6px !important;
+        justify-content: space-between !important;
+      }
+      tbody tr .td-exec .btn-mini {
+        flex: 1 !important;
+        height: 38px !important;
+        min-width: 38px !important;
+        border-radius: 8px !important;
+        font-size: 13.5px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: var(--surface-2) !important;
+        border: 1px solid var(--border) !important;
+        touch-action: manipulation !important;
+      }
+      tbody tr .td-exec .btn-mini:active {
+        transform: scale(0.96) !important;
+        background: var(--surface-3) !important;
       }
 
       /* Card Elements */
       .stock-link {
-        font-size: 14.5px;
-        font-weight: 700;
-        letter-spacing: 0.2px;
+        font-size: 15.5px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.3px !important;
       }
       .badge-tag {
-        font-size: 9.5px;
-        padding: 2px 6px;
+        font-size: 9.5px !important;
+        padding: 2px 6px !important;
       }
       .scan-tag {
-        max-width: 120px;
-        font-size: 10.5px;
-        padding: 2px 7px;
+        max-width: 140px !important;
+        font-size: 11px !important;
+        padding: 3px 8px !important;
       }
       .count-badge {
-        font-size: 10.5px;
-        padding: 2px 6px;
-        min-width: 24px;
+        font-size: 11px !important;
+        padding: 2px 7px !important;
+        min-width: 24px !important;
       }
-
-      /* Touch-friendly Action Buttons */
-      .exec-btns {
-        gap: 5px;
-      }
-      .btn-mini {
-        width: 32px;
-        height: 32px;
-        font-size: 14px;
-        border-radius: 7px;
-      }
-
-      /* Card Alert Highlights (Entire card left-border accent) */
-      tbody tr.hl-new {
-        border-left: 4px solid #10b981 !important;
-      }
-      tbody tr.hl-upd {
-        border-left: 4px solid #f59e0b !important;
+      .btn-star {
+        font-size: 18px !important;
+        padding: 4px !important;
+        touch-action: manipulation !important;
       }
 
       /* Empty State */
@@ -1852,6 +1915,86 @@
         height: 38px;
         font-size: 13px;
       }
+
+      /* Mobile Navigation Bar */
+      .mobile-nav-bar {
+        display: flex !important;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 58px;
+        background: rgba(6, 11, 20, 0.96);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid var(--border);
+        z-index: 990;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        justify-content: space-around;
+        align-items: center;
+      }
+      .m-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        color: var(--text-dim);
+        font-size: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        position: relative;
+        padding: 6px 0;
+        gap: 3px;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .m-nav-item.active {
+        color: var(--accent);
+      }
+      .m-nav-icon {
+        font-size: 18px;
+        line-height: 1;
+      }
+      .m-nav-badge {
+        position: absolute;
+        top: 3px;
+        right: 18%;
+        background: var(--accent);
+        color: #060b14;
+        font-size: 9px;
+        font-weight: 800;
+        padding: 1px 4px;
+        border-radius: 8px;
+        min-width: 14px;
+        text-align: center;
+      }
+      .container {
+        padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+      .toast-box {
+        bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+    }
+
+    /* Drag handle for mobile bottom sheets */
+    .sheet-drag-handle {
+      width: 44px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 3px;
+      margin: 0 auto 14px;
+      display: block;
+    }
+    @media (min-width: 769px) {
+      .sheet-drag-handle {
+        display: none;
+      }
+      .mobile-nav-bar {
+        display: none !important;
+      }
     }
   </style>
 </head>
@@ -1877,6 +2020,7 @@
 ═══════════════════════════════════════════════════ -->
 <div id="sizer-modal" class="modal-overlay hidden">
   <div class="modal sizer-card">
+    <div class="sheet-drag-handle"></div>
     <div class="sizer-header">
       <div>
         <span class="sizer-badge">⚡ RISK & POSITION SIZER</span>
@@ -2023,6 +2167,7 @@
 ═══════════════════════════════════════════════════ -->
 <div id="tv-modal" class="modal-overlay hidden">
   <div class="modal-card tv-modal-card">
+    <div class="sheet-drag-handle"></div>
     <div class="tv-modal-header">
       <div class="tv-modal-title">
         <span id="tv-modal-stock">STOCK</span>
@@ -2675,9 +2820,57 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').then((reg) => {
     swRegistration = reg;
     console.log('[sw] service worker active');
+    if (Notification.permission === 'granted') {
+      initWebPush();
+    }
   }).catch((err) => {
     console.warn('[sw] registration failed:', err);
   });
+}
+
+function hapticTap(isStrong = false) {
+  try {
+    if (window.Android && typeof window.Android.vibrate === 'function') {
+      window.Android.vibrate(isStrong ? 40 : 20);
+    } else if ('vibrate' in navigator) {
+      navigator.vibrate(isStrong ? 35 : 18);
+    }
+  } catch (_) {}
+}
+
+async function initWebPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const res = await fetch('/vapid-public-key');
+    const data = await res.json();
+    if (!data.configured || !data.publicKey) return;
+
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub && Notification.permission === 'granted') {
+      const padding = '='.repeat((4 - data.publicKey.length % 4) % 4);
+      const base64 = (data.publicKey + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      const convertedKey = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) {
+        convertedKey[i] = rawData.charCodeAt(i);
+      }
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedKey
+      });
+    }
+    if (sub) {
+      await fetch('/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: sub })
+      });
+      console.log('[push] mobile web push active');
+    }
+  } catch (err) {
+    console.warn('[push] web push setup:', err.message);
+  }
 }
 
 // Load notification state from localStorage
@@ -2733,6 +2926,7 @@ async function toggleNotifications() {
       notifEnabled = true;
       try { localStorage.setItem('stocks_notif_enabled', 'true'); } catch (_) {}
       updateNotifUI();
+      initWebPush();
       sendSystemNotification({
         stock: 'DASHBOARD',
         trigger_price: 100.00,
@@ -2752,6 +2946,7 @@ async function toggleNotifications() {
   try { localStorage.setItem('stocks_notif_enabled', String(notifEnabled)); } catch (_) {}
   updateNotifUI();
   if (notifEnabled) {
+    initWebPush();
     sendSystemNotification({
       stock: 'DASHBOARD',
       trigger_price: 100.00,
@@ -2773,8 +2968,6 @@ if (notifBtn) {
 }
 
 function sendSystemNotification(item, isNew) {
-  if (!('Notification' in window) || Notification.permission !== 'granted' || !notifEnabled) return;
-
   const volTag = (item.rel_vol != null && !isNaN(Number(item.rel_vol)))
     ? ` · RelVol: ${Number(item.rel_vol).toFixed(1)}x${Number(item.rel_vol) >= 2 ? '🔥' : ''}`
     : '';
@@ -2790,6 +2983,20 @@ function sendSystemNotification(item, isNew) {
   const scanPart = item.scan_name ? `Scan: ${item.scan_name}\n` : '';
   const adrPart = (item.adr_pct != null && !isNaN(Number(item.adr_pct))) ? `ADR: ${Number(item.adr_pct).toFixed(1)}%\n` : '';
   const body = `${secPart}${scanPart}${adrPart}Time: ${item.time_ist || 'Now'} IST`;
+
+  // Native Android App bridge notification
+  if (window.Android && typeof window.Android.showNotification === 'function') {
+    window.Android.showNotification(
+      title,
+      `${item.sector ? item.sector + ' · ' : ''}${item.scan_name || 'Alert'} · ${item.time_ist || 'Now'} IST`,
+      item.stock,
+      String(item.trigger_price || 0),
+      Number(item.rel_vol || 1.0)
+    );
+    return;
+  }
+
+  if (!('Notification' in window) || Notification.permission !== 'granted' || !notifEnabled) return;
   const icon = '/res/icon.svg';
   const tag = `stock-${item.stock}`;
   const tvUrl = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(item.stock)}`;
@@ -3477,7 +3684,7 @@ function buildRow(item, isHistory, hlClass) {
 
   // 1. Time cell (with Chop Badge if triggered in 11:30 - 1:15)
   const tdTime = document.createElement('td');
-  tdTime.className = 'time-cell';
+  tdTime.className = 'time-cell td-time';
   if (isHistory && item.date_ist) {
     const dateSpan = document.createElement('span');
     dateSpan.className = 'date-label';
@@ -3495,6 +3702,7 @@ function buildRow(item, isHistory, hlClass) {
 
   // 2. Stock cell (Star + Symbol link + Status badge)
   const tdStock = document.createElement('td');
+  tdStock.className = 'stock-cell td-stock';
 
   const starBtn = document.createElement('button');
   starBtn.className = 'btn-star' + (isStarred ? ' starred' : '');
@@ -3502,6 +3710,7 @@ function buildRow(item, isHistory, hlClass) {
   starBtn.title = isStarred ? 'Remove from Watchlist (P)' : 'Pin to Watchlist (P)';
   starBtn.onclick = (e) => {
     e.stopPropagation();
+    hapticTap(true);
     toggleStar(item.stock);
   };
   tdStock.appendChild(starBtn);
@@ -3532,6 +3741,7 @@ function buildRow(item, isHistory, hlClass) {
 
   // 3. Sector cell
   const tdSector = document.createElement('td');
+  tdSector.className = 'sector-cell td-sector';
   if (item.sector) {
     const secBadge = document.createElement('span');
     secBadge.className = 'sector-badge' + (activeSectorFilter === item.sector ? ' active-filter' : '');
@@ -3539,6 +3749,7 @@ function buildRow(item, isHistory, hlClass) {
     secBadge.title = `Click to filter by sector: ${item.sector}`;
     secBadge.onclick = (e) => {
       e.stopPropagation();
+      hapticTap();
       activeSectorFilter = (activeSectorFilter === item.sector) ? null : item.sector;
       renderLive();
     };
@@ -3549,23 +3760,27 @@ function buildRow(item, isHistory, hlClass) {
 
   // 4. Rel Vol (10d) cell
   const tdRelVol = document.createElement('td');
+  tdRelVol.className = 'relvol-cell td-relvol';
   tdRelVol.innerHTML = renderRelVolBadge(item.rel_vol);
 
   // 5. % Chg cell
   const tdPctChange = document.createElement('td');
+  tdPctChange.className = 'pct-cell td-pct';
   tdPctChange.innerHTML = renderPctChangeBadge(item.pct_change);
 
   // 6. ADR % cell
   const tdAdr = document.createElement('td');
+  tdAdr.className = 'adr-cell td-adr';
   tdAdr.innerHTML = renderAdrBadge(item.adr_pct);
 
   // 7. Price cell
   const tdPrice = document.createElement('td');
-  tdPrice.className = 'price-cell';
+  tdPrice.className = 'price-cell td-price';
   tdPrice.textContent = fmtPrice(item.trigger_price);
 
   // 8. Count cell
   const tdCount = document.createElement('td');
+  tdCount.className = 'count-cell td-count';
   const badge = document.createElement('span');
   const cnt = item.count ?? 0;
   badge.className = 'count-badge' + (cnt >= 3 ? ' hot' : '');
@@ -3574,6 +3789,7 @@ function buildRow(item, isHistory, hlClass) {
 
   // 9. Scan cell with Multi-Scan Confluence indicator
   const tdScan = document.createElement('td');
+  tdScan.className = 'scan-cell td-scan';
   if (item.scan_name) {
     const scanName = item.scan_name;
     if (item.scan_url) {
@@ -3606,7 +3822,7 @@ function buildRow(item, isHistory, hlClass) {
 
   // 10. Action / Execution cell
   const tdExec = document.createElement('td');
-  tdExec.className = 'exec-cell';
+  tdExec.className = 'exec-cell td-exec';
   tdExec.style.textAlign = 'right';
 
   const btnWrap = document.createElement('div');
@@ -3619,6 +3835,7 @@ function buildRow(item, isHistory, hlClass) {
   btnSizer.textContent = '⚡';
   btnSizer.addEventListener('click', (e) => {
     e.stopPropagation();
+    hapticTap();
     openPositionSizer(item.stock, item.trigger_price);
   });
 
@@ -3629,6 +3846,7 @@ function buildRow(item, isHistory, hlClass) {
   btnBasket.textContent = '🛒';
   btnBasket.addEventListener('click', (e) => {
     e.stopPropagation();
+    hapticTap(true);
     copyRowKiteBasket(item);
   });
 
@@ -3639,6 +3857,7 @@ function buildRow(item, isHistory, hlClass) {
   btnTvModal.textContent = '📊';
   btnTvModal.addEventListener('click', (e) => {
     e.stopPropagation();
+    hapticTap();
     openTvModal(item.stock, item.trigger_price, item.sector, item.rel_vol);
   });
 
@@ -3649,6 +3868,7 @@ function buildRow(item, isHistory, hlClass) {
   btnCopy.textContent = '📋';
   btnCopy.addEventListener('click', (e) => {
     e.stopPropagation();
+    hapticTap();
     navigator.clipboard.writeText(item.stock).then(() => {
       showToast(`Copied ${item.stock}`, 'new', 'Clipboard');
     });
@@ -3662,6 +3882,7 @@ function buildRow(item, isHistory, hlClass) {
   btnTv.target = '_blank';
   btnTv.rel = 'noopener noreferrer';
   btnTv.textContent = '↗';
+  btnTv.onclick = () => hapticTap();
 
   // Zerodha Kite
   const btnKite = document.createElement('a');
@@ -3671,6 +3892,7 @@ function buildRow(item, isHistory, hlClass) {
   btnKite.target = '_blank';
   btnKite.rel = 'noopener noreferrer';
   btnKite.textContent = '🪁';
+  btnKite.onclick = () => hapticTap();
 
   btnWrap.appendChild(btnSizer);
   btnWrap.appendChild(btnBasket);
@@ -3766,11 +3988,30 @@ function renderTable(tbodyId, data, isHistory, hlMap = new Map()) {
   updateSortIcons(isHistory ? 'history-table' : 'live-table', cfg);
 }
 
+function updateMobileNavBadges() {
+  const mLiveBadge = document.getElementById('m-nav-live-badge');
+  if (mLiveBadge) {
+    mLiveBadge.textContent = liveData.length;
+    mLiveBadge.style.display = liveData.length > 0 ? 'block' : 'none';
+  }
+  const mHistBadge = document.getElementById('m-nav-hist-badge');
+  if (mHistBadge) {
+    mHistBadge.textContent = historyData.length;
+    mHistBadge.style.display = historyData.length > 0 ? 'block' : 'none';
+  }
+  const mStarBadge = document.getElementById('m-nav-star-badge');
+  if (mStarBadge) {
+    mStarBadge.textContent = starredStocks.size;
+    mStarBadge.style.display = starredStocks.size > 0 ? 'block' : 'none';
+  }
+}
+
 function renderLive(hlMap = new Map()) {
   renderTable('live-tbody', liveData, false, hlMap);
   renderMovers();
   renderSectorRibbon();
   updateStarCount();
+  updateMobileNavBadges();
 
   // PWA App Badging
   if ('setAppBadge' in navigator) {
@@ -3785,6 +4026,7 @@ function renderLive(hlMap = new Map()) {
 
 function renderHistory(hlMap = new Map()) {
   renderTable('history-tbody', historyData, true, hlMap);
+  updateMobileNavBadges();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -4123,6 +4365,64 @@ window.addEventListener('focus', () => {
     navigator.clearAppBadge().catch(() => {});
   }
 });
+
+// Wire Mobile Bottom Navigation Bar
+document.querySelectorAll('.m-nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    hapticTap();
+    document.querySelectorAll('.m-nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    if (btn.id === 'm-nav-sizer-btn') {
+      const top = liveData[0];
+      openPositionSizer(top ? top.stock : 'NIFTY', top ? top.trigger_price : 24500);
+      return;
+    }
+
+    const tab = btn.dataset.tab;
+    if (tab) {
+      const tabBtn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+      if (tabBtn) tabBtn.click();
+    }
+
+    const qf = btn.dataset.qf;
+    if (qf) {
+      activeQuickFilter = qf;
+      document.querySelectorAll('.filter-pill-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.qf === qf);
+      });
+      livePage = 1;
+      renderLive();
+    }
+  });
+});
 </script>
+
+<!-- Mobile App Bottom Navigation Bar -->
+<nav class="mobile-nav-bar" id="mobile-nav-bar">
+  <button class="m-nav-item active" data-tab="live" type="button">
+    <span class="m-nav-icon">📡</span>
+    <span class="m-nav-label">Live</span>
+    <span class="m-nav-badge" id="m-nav-live-badge">0</span>
+  </button>
+  <button class="m-nav-item" data-tab="history" type="button">
+    <span class="m-nav-icon">📂</span>
+    <span class="m-nav-label">History</span>
+    <span class="m-nav-badge" id="m-nav-hist-badge">0</span>
+  </button>
+  <button class="m-nav-item" data-tab="live" data-qf="starred" type="button">
+    <span class="m-nav-icon">⭐</span>
+    <span class="m-nav-label">Watchlist</span>
+    <span class="m-nav-badge" id="m-nav-star-badge">0</span>
+  </button>
+  <button class="m-nav-item" data-tab="live" data-qf="rv2" type="button">
+    <span class="m-nav-icon">🔥</span>
+    <span class="m-nav-label">Rel Vol</span>
+  </button>
+  <button class="m-nav-item" id="m-nav-sizer-btn" type="button">
+    <span class="m-nav-icon">⚡</span>
+    <span class="m-nav-label">Sizer</span>
+  </button>
+</nav>
 </body>
 </html>

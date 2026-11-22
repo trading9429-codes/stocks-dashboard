@@ -1,9 +1,12 @@
 {
-  "name": "Stock Dashboard",
-  "short_name": "Stocks",
-  "description": "Real-time Chartink Stock Alerts Dashboard with Sound and Notifications",
-  "start_url": "/",
+  "id": "com.stocks.dashboard",
+  "name": "Stock Scanner - Realtime Trading Alerts",
+  "short_name": "StockAlerts",
+  "description": "Real-time Chartink Stock Scanner, Confluence Radar & 1-Click Execution Suite",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#060b14",
   "theme_color": "#060b14",
   "icons": [
@@ -13,5 +16,29 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Live Scanner",
+      "short_name": "Live",
+      "description": "Open Live Stock Scanner",
+      "url": "/?tab=live",
+      "icons": [{ "src": "/res/icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Starred Watchlist",
+      "short_name": "Watchlist",
+      "description": "View Starred Stocks",
+      "url": "/?qf=starred",
+      "icons": [{ "src": "/res/icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "History Alerts",
+      "short_name": "History",
+      "description": "View Alert History",
+      "url": "/?tab=history",
+      "icons": [{ "src": "/res/icon.svg", "sizes": "96x96" }]
+    }
+  ],
+  "categories": ["finance", "productivity", "business"]
 }
