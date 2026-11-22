@@ -581,6 +581,280 @@
       color: #bfdbfe;
     }
 
+    /* ═══════════════════════════════════════════════════
+       CUSTOM COLUMNS & LIVE MARKET SUITE STYLES
+    ═══════════════════════════════════════════════════ */
+    /* Relative Volume (Rel Vol) Badges */
+    .rel-vol-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .rel-vol-badge.rv-ultra {
+      background: linear-gradient(135deg, rgba(239,68,68,0.28), rgba(245,158,11,0.28));
+      border: 1px solid rgba(239,68,68,0.55);
+      color: #fca5a5;
+      box-shadow: 0 0 10px rgba(239,68,68,0.25);
+      animation: pulse-fire 2s infinite ease-in-out;
+    }
+    .rel-vol-badge.rv-high {
+      background: rgba(16,185,129,0.18);
+      border: 1px solid rgba(16,185,129,0.45);
+      color: #6ee7b7;
+    }
+    .rel-vol-badge.rv-mid {
+      background: rgba(59,130,246,0.14);
+      border: 1px solid rgba(59,130,246,0.3);
+      color: #93c5fd;
+    }
+    .rel-vol-badge.rv-low {
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+    .rv-na {
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+    @keyframes pulse-fire {
+      0%, 100% { box-shadow: 0 0 4px rgba(245,158,11,0.2); }
+      50% { box-shadow: 0 0 12px rgba(239,68,68,0.45); }
+    }
+
+    /* Sector Badges */
+    .sector-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      color: var(--text-muted);
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .sector-badge:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(16,185,129,0.08);
+    }
+    .sector-badge.active-filter {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(16,185,129,0.16);
+      font-weight: 600;
+    }
+
+    /* Sector Momentum Ribbon */
+    .sector-ribbon-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      scrollbar-width: none;
+    }
+    .sector-ribbon-wrap::-webkit-scrollbar { display: none; }
+    .ribbon-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-dim);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .sector-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 500;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .sector-chip:hover {
+      background: var(--surface-3);
+      border-color: var(--border-2);
+      color: var(--text);
+    }
+    .sector-chip.active {
+      background: rgba(16,185,129,0.18);
+      border-color: var(--accent);
+      color: #6ee7b7;
+      font-weight: 600;
+    }
+    .sector-chip .sec-count {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      background: var(--surface-3);
+      color: var(--text-dim);
+    }
+    .sector-chip.active .sec-count {
+      background: var(--accent);
+      color: #000;
+    }
+
+    /* Filter Bar */
+    .filter-pills-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(17, 27, 45, 0.4);
+    }
+    .filter-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 500;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .filter-pill-btn:hover {
+      border-color: var(--border-2);
+      color: var(--text);
+    }
+    .filter-pill-btn.active {
+      background: rgba(59,130,246,0.18);
+      border-color: var(--blue);
+      color: #93c5fd;
+      font-weight: 600;
+    }
+    .filter-pill-btn.fire.active {
+      background: rgba(239,68,68,0.22);
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
+    .filter-pill-btn.star.active {
+      background: rgba(245,158,11,0.22);
+      border-color: #f59e0b;
+      color: #fde68a;
+    }
+
+    /* Star / Watchlist button */
+    .btn-star {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0 4px;
+      line-height: 1;
+      opacity: 0.3;
+      transition: all 0.15s ease;
+      vertical-align: middle;
+    }
+    .btn-star:hover {
+      opacity: 0.85;
+      transform: scale(1.18);
+    }
+    .btn-star.starred {
+      opacity: 1;
+      color: #fbbf24;
+      filter: drop-shadow(0 0 5px rgba(251,191,36,0.6));
+    }
+
+    /* Confluence tag */
+    .confluence-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+      background: rgba(245,158,11,0.18);
+      border: 1px solid rgba(245,158,11,0.4);
+      color: #fde68a;
+      margin-left: 6px;
+      cursor: help;
+      vertical-align: middle;
+    }
+
+    /* TradingView Inline Modal */
+    .tv-modal-card {
+      width: 92vw;
+      max-width: 1100px;
+      height: 84vh;
+      max-height: 740px;
+      display: flex;
+      flex-direction: column;
+      padding: 0 !important;
+      overflow: hidden;
+      border-radius: var(--radius);
+      background: #131722;
+      border: 1px solid var(--border-2);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    }
+    .tv-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .tv-modal-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .tv-modal-body {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      background: #131722;
+    }
+    .tv-modal-body iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
     /* Empty state */
     .empty-row td {
       text-align: center;
@@ -1621,6 +1895,14 @@
         <span class="hotkey-desc">Open Chart of latest alert in TradingView</span>
       </div>
       <div class="hotkey-row">
+        <span class="hotkey-key">V</span>
+        <span class="hotkey-desc">Open / Close Inline TradingView Chart modal</span>
+      </div>
+      <div class="hotkey-row">
+        <span class="hotkey-key">P</span>
+        <span class="hotkey-desc">Star / Pin latest alert to Focus Watchlist</span>
+      </div>
+      <div class="hotkey-row">
         <span class="hotkey-key">S</span>
         <span class="hotkey-desc">Open Position Sizer & Risk Calculator for latest alert</span>
       </div>
@@ -1636,6 +1918,30 @@
         <span class="hotkey-key">Esc</span>
         <span class="hotkey-desc">Close any open modal or calculator</span>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TRADINGVIEW INLINE PREVIEW MODAL
+═══════════════════════════════════════════════════ -->
+<div id="tv-modal" class="modal-overlay hidden">
+  <div class="modal-card tv-modal-card">
+    <div class="tv-modal-header">
+      <div class="tv-modal-title">
+        <span id="tv-modal-stock">STOCK</span>
+        <span id="tv-modal-price" class="price-cell">₹0.00</span>
+        <span id="tv-modal-sector"></span>
+        <span id="tv-modal-relvol"></span>
+      </div>
+      <div class="tv-modal-actions" style="display:flex;gap:8px;align-items:center;">
+        <button id="tv-modal-sizer" class="btn" style="padding:5px 12px;font-size:12px;">⚡ Sizer</button>
+        <a id="tv-modal-ext" class="btn primary" target="_blank" rel="noopener noreferrer" style="padding:5px 12px;font-size:12px;">↗ Open in TV Tab</a>
+        <button id="tv-modal-close" class="modal-close-x" style="position:static;">×</button>
+      </div>
+    </div>
+    <div class="tv-modal-body">
+      <iframe id="tv-frame" src="" frameborder="0" allowfullscreen></iframe>
     </div>
   </div>
 </div>
@@ -1707,30 +2013,45 @@
       </div>
     </div>
 
+    <!-- Sector Momentum Ribbon -->
+    <div class="sector-ribbon-wrap" id="sector-ribbon" style="display: none;"></div>
+
     <!-- Main Panel -->
     <div class="panel">
       <div class="panel-toolbar">
         <div class="search-wrap">
-          <input id="live-search" class="search-input" type="text" placeholder="Search stocks, scans…" autocomplete="off" />
+          <input id="live-search" class="search-input" type="text" placeholder="Search stocks, sectors, scans…" autocomplete="off" />
           <button class="search-clear" id="live-clear-search" title="Clear">×</button>
         </div>
         <div class="actions">
-          <button class="btn" id="btn-copy-tv" title="Copy all live stock symbols for TradingView watchlist">📋 Copy TV</button>
+          <button class="btn" id="btn-copy-tv" title="Copy active live stock symbols for TradingView watchlist">📋 Copy TV</button>
           <button class="btn" id="btn-dl-live" title="Download live table as CSV">⬇ CSV</button>
           <button class="btn danger" id="btn-clear-live">🗑 Clear Live</button>
         </div>
+      </div>
+
+      <!-- Quick Filter Pills -->
+      <div class="filter-pills-bar">
+        <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-right: 2px;">Filters:</span>
+        <button class="filter-pill-btn active" data-qf="all">All</button>
+        <button class="filter-pill-btn fire" data-qf="rv2">🔥 Rel Vol ≥ 2.0x</button>
+        <button class="filter-pill-btn" data-qf="rv1.5">🟢 Rel Vol ≥ 1.5x</button>
+        <button class="filter-pill-btn" data-qf="confluence">⚡ Multi-Scan</button>
+        <button class="filter-pill-btn star" data-qf="starred">⭐ Watchlist (<span id="star-count">0</span>)</button>
       </div>
 
       <div class="table-scroll">
         <table id="live-table">
           <thead>
             <tr>
-              <th data-col="ts_ist">Time <span class="si">↓</span></th>
+              <th data-col="ts_ist" style="width: 85px;">Time <span class="si">↓</span></th>
               <th data-col="stock">Stock <span class="si">↕</span></th>
-              <th data-col="count">Count <span class="si">↕</span></th>
+              <th data-col="sector">Sector <span class="si">↕</span></th>
+              <th data-col="rel_vol">Rel Vol (10d) <span class="si">↕</span></th>
               <th data-col="trigger_price">Price <span class="si">↕</span></th>
+              <th data-col="count" style="width: 65px;">Count <span class="si">↕</span></th>
               <th data-col="scan_name">Scan <span class="si">↕</span></th>
-              <th style="text-align: right; width: 130px;">Action</th>
+              <th style="text-align: right; width: 155px;">Action</th>
             </tr>
           </thead>
           <tbody id="live-tbody"></tbody>
@@ -1762,12 +2083,14 @@
         <table id="history-table">
           <thead>
             <tr>
-              <th data-col="ts_ist">Date / Time <span class="si">↓</span></th>
+              <th data-col="ts_ist" style="width: 140px;">Date / Time <span class="si">↓</span></th>
               <th data-col="stock">Stock <span class="si">↕</span></th>
-              <th data-col="count">Count <span class="si">↕</span></th>
+              <th data-col="sector">Sector <span class="si">↕</span></th>
+              <th data-col="rel_vol">Rel Vol (10d) <span class="si">↕</span></th>
               <th data-col="trigger_price">Price <span class="si">↕</span></th>
+              <th data-col="count" style="width: 65px;">Count <span class="si">↕</span></th>
               <th data-col="scan_name">Scan <span class="si">↕</span></th>
-              <th style="text-align: right; width: 130px;">Action</th>
+              <th style="text-align: right; width: 155px;">Action</th>
             </tr>
           </thead>
           <tbody id="history-tbody"></tbody>
@@ -1800,6 +2123,20 @@ let livePage    = 1;
 let historyPage = 1;
 let liveFilter  = '';
 let histFilter  = '';
+let activeQuickFilter  = 'all'; // 'all' | 'rv2' | 'rv1.5' | 'confluence' | 'starred'
+let activeSectorFilter = null;  // string | null
+
+// Starred stocks for Focus Watchlist
+let starredStocks = new Set();
+try {
+  const savedStars = localStorage.getItem('stocks_starred');
+  if (savedStars) starredStocks = new Set(JSON.parse(savedStars));
+} catch (_) {}
+
+function updateStarCount() {
+  const el = document.getElementById('star-count');
+  if (el) el.textContent = starredStocks.size;
+}
 
 const sortCfg = {
   live:    { col: 'ts_ist',  dir: 'desc' },
@@ -1816,6 +2153,15 @@ const fmtINR = new Intl.NumberFormat('en-IN', {
 function fmtPrice(p) {
   if (p == null || p === '') return '—';
   return '₹' + fmtINR.format(Number(p));
+}
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2255,11 +2601,17 @@ if (notifBtn) {
 function sendSystemNotification(item, isNew) {
   if (!('Notification' in window) || Notification.permission !== 'granted' || !notifEnabled) return;
 
-  const title = isNew
-    ? `🟢 NEW: ${item.stock} @ ₹${Number(item.trigger_price || 0).toFixed(2)}`
-    : `🟡 UPDATED: ${item.stock} (Count: ${item.count || 2})`;
+  const volTag = (item.rel_vol != null && !isNaN(Number(item.rel_vol)))
+    ? ` · RelVol: ${Number(item.rel_vol).toFixed(1)}x${Number(item.rel_vol) >= 2 ? '🔥' : ''}`
+    : '';
 
-  const body = `${item.scan_name ? 'Scan: ' + item.scan_name + '\n' : ''}Time: ${item.time_ist || 'Now'} IST`;
+  const title = isNew
+    ? `🟢 NEW: ${item.stock} @ ₹${Number(item.trigger_price || 0).toFixed(2)}${volTag}`
+    : `🟡 UPDATED: ${item.stock} (Count: ${item.count || 2})${volTag}`;
+
+  const secPart = item.sector ? `Sector: ${item.sector}\n` : '';
+  const scanPart = item.scan_name ? `Scan: ${item.scan_name}\n` : '';
+  const body = `${secPart}${scanPart}Time: ${item.time_ist || 'Now'} IST`;
   const icon = '/res/icon.svg';
   const tag = `stock-${item.stock}`;
   const tvUrl = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(item.stock)}`;
@@ -2302,8 +2654,10 @@ function sortData(data, cfg) {
   const dir = cfg.dir === 'asc' ? 1 : -1;
   return [...data].sort((a, b) => {
     const col = cfg.col;
-    if (col === 'ts_ist' || col === 'count' || col === 'trigger_price') {
-      return dir * ((a[col] ?? 0) - (b[col] ?? 0));
+    if (col === 'ts_ist' || col === 'count' || col === 'trigger_price' || col === 'rel_vol') {
+      const aVal = (a[col] == null || a[col] === '') ? -Infinity : Number(a[col]);
+      const bVal = (b[col] == null || b[col] === '') ? -Infinity : Number(b[col]);
+      return dir * (aVal - bVal);
     }
     return dir * String(a[col] ?? '').localeCompare(String(b[col] ?? ''));
   });
@@ -2555,6 +2909,7 @@ window.addEventListener('keydown', (e) => {
       activeEl.blur();
       closePositionSizer();
       closeHotkeys();
+      closeTvModal();
     }
     return;
   }
@@ -2562,6 +2917,7 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closePositionSizer();
     closeHotkeys();
+    closeTvModal();
     document.getElementById('confirm-modal')?.classList.add('hidden');
     return;
   }
@@ -2575,6 +2931,25 @@ window.addEventListener('keydown', (e) => {
       const url = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(latest.stock)}`;
       window.open(url, '_blank', 'noopener,noreferrer');
       showToast(`Opened ${latest.stock} chart`, 'new', 'TradingView');
+    }
+  }
+
+  // V -> Toggle Inline TradingView Preview modal
+  if (e.key === 'v' || e.key === 'V') {
+    e.preventDefault();
+    const modal = document.getElementById('tv-modal');
+    if (modal && !modal.classList.contains('hidden')) {
+      closeTvModal();
+    } else if (latest) {
+      openTvModal(latest.stock, latest.trigger_price, latest.sector, latest.rel_vol);
+    }
+  }
+
+  // P -> Pin / Star latest stock for Watchlist
+  if (e.key === 'p' || e.key === 'P') {
+    e.preventDefault();
+    if (latest) {
+      toggleStar(latest.stock);
     }
   }
 
@@ -2683,13 +3058,159 @@ function setPage(which, p, filteredLen) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   LIVE MARKET TRADING SUITE HELPERS
+═══════════════════════════════════════════════════════════════ */
+function renderRelVolBadge(val) {
+  if (val == null || val === '') return '<span class="rv-na">—</span>';
+  const num = parseFloat(val);
+  if (isNaN(num)) return `<span class="rv-na">${val}</span>`;
+
+  let cls = 'rv-low';
+  let icon = '';
+  if (num >= 3.0) {
+    cls = 'rv-ultra';
+    icon = '🔥 ';
+  } else if (num >= 1.5) {
+    cls = 'rv-high';
+    icon = '🟢 ';
+  } else if (num >= 1.0) {
+    cls = 'rv-mid';
+  }
+
+  return `<span class="rel-vol-badge ${cls}" title="Relative volume vs 10-day average: ${num.toFixed(2)}x">${icon}${num.toFixed(1)}x</span>`;
+}
+
+// Inline TradingView Preview Modal
+function openTvModal(stock, price, sector, relVol) {
+  const modal = document.getElementById('tv-modal');
+  if (!modal) return;
+
+  document.getElementById('tv-modal-stock').textContent = stock;
+  document.getElementById('tv-modal-price').textContent = fmtPrice(price);
+
+  const secEl = document.getElementById('tv-modal-sector');
+  if (secEl) {
+    secEl.innerHTML = sector ? `<span class="sector-badge">${escapeHtml(sector)}</span>` : '';
+  }
+
+  const rvEl = document.getElementById('tv-modal-relvol');
+  if (rvEl) {
+    rvEl.innerHTML = renderRelVolBadge(relVol);
+  }
+
+  const extLink = document.getElementById('tv-modal-ext');
+  if (extLink) {
+    extLink.href = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(stock)}`;
+  }
+
+  const sizerBtn = document.getElementById('tv-modal-sizer');
+  if (sizerBtn) {
+    sizerBtn.onclick = () => {
+      closeTvModal();
+      openPositionSizer(stock, price);
+    };
+  }
+
+  const iframe = document.getElementById('tv-frame');
+  if (iframe) {
+    iframe.src = `https://s.tradingview.com/widgetembed/?symbol=NSE%3A${encodeURIComponent(stock)}&interval=5&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1`;
+  }
+
+  modal.classList.remove('hidden');
+}
+
+function closeTvModal() {
+  const modal = document.getElementById('tv-modal');
+  if (modal) modal.classList.add('hidden');
+  const iframe = document.getElementById('tv-frame');
+  if (iframe) iframe.src = '';
+}
+
+document.getElementById('tv-modal-close')?.addEventListener('click', closeTvModal);
+document.getElementById('tv-modal')?.addEventListener('click', (e) => {
+  if (e.target === document.getElementById('tv-modal')) closeTvModal();
+});
+
+// Watchlist Star Pinning
+function toggleStar(stock) {
+  if (starredStocks.has(stock)) {
+    starredStocks.delete(stock);
+    showToast(`Removed ${stock} from Watchlist`, 'info', 'Watchlist');
+  } else {
+    starredStocks.add(stock);
+    showToast(`Added ${stock} to Watchlist`, 'new', 'Watchlist');
+  }
+  try {
+    localStorage.setItem('stocks_starred', JSON.stringify([...starredStocks]));
+  } catch (_) {}
+  updateStarCount();
+  renderLive();
+}
+
+// Sector Ribbon
+function renderSectorRibbon() {
+  const ribbon = document.getElementById('sector-ribbon');
+  if (!ribbon) return;
+
+  const counts = {};
+  liveData.forEach((d) => {
+    if (d.sector) {
+      counts[d.sector] = (counts[d.sector] || 0) + 1;
+    }
+  });
+
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) {
+    ribbon.style.display = 'none';
+    return;
+  }
+
+  ribbon.style.display = 'flex';
+  ribbon.innerHTML = '<span class="ribbon-label">🏢 Sectors:</span>';
+
+  if (activeSectorFilter) {
+    const clearChip = document.createElement('button');
+    clearChip.className = 'sector-chip active';
+    clearChip.innerHTML = '✕ Clear Sector';
+    clearChip.onclick = () => {
+      activeSectorFilter = null;
+      renderLive();
+    };
+    ribbon.appendChild(clearChip);
+  }
+
+  entries.forEach(([sec, cnt]) => {
+    const chip = document.createElement('button');
+    chip.className = 'sector-chip' + (activeSectorFilter === sec ? ' active' : '');
+    chip.innerHTML = `${escapeHtml(sec)} <span class="sec-count">${cnt}</span>`;
+    chip.onclick = () => {
+      activeSectorFilter = (activeSectorFilter === sec) ? null : sec;
+      renderLive();
+    };
+    ribbon.appendChild(chip);
+  });
+}
+
+// Wire Quick Filter Buttons
+document.querySelectorAll('.filter-pill-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-pill-btn').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeQuickFilter = btn.dataset.qf || 'all';
+    livePage = 1;
+    renderLive();
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════
    TABLE RENDERING  (XSS-safe DOM construction)
 ═══════════════════════════════════════════════════════════════ */
 function buildRow(item, isHistory, hlClass) {
   const tr = document.createElement('tr');
   if (hlClass) tr.classList.add(hlClass);
+  const isStarred = starredStocks.has(item.stock);
 
-  // Time cell
+  // 1. Time cell
   const tdTime = document.createElement('td');
   tdTime.className = 'time-cell';
   if (isHistory && item.date_ist) {
@@ -2700,8 +3221,19 @@ function buildRow(item, isHistory, hlClass) {
   }
   tdTime.appendChild(document.createTextNode(item.time_ist ?? '—'));
 
-  // Stock cell
+  // 2. Stock cell (Star + Symbol link + Status badge)
   const tdStock = document.createElement('td');
+
+  const starBtn = document.createElement('button');
+  starBtn.className = 'btn-star' + (isStarred ? ' starred' : '');
+  starBtn.textContent = '★';
+  starBtn.title = isStarred ? 'Remove from Watchlist (P)' : 'Pin to Watchlist (P)';
+  starBtn.onclick = (e) => {
+    e.stopPropagation();
+    toggleStar(item.stock);
+  };
+  tdStock.appendChild(starBtn);
+
   const a = document.createElement('a');
   a.className = 'stock-link';
   a.href = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(item.stock)}`;
@@ -2714,7 +3246,6 @@ function buildRow(item, isHistory, hlClass) {
   a.appendChild(ext);
   tdStock.appendChild(a);
 
-  // High-contrast BADGE to differentiate new vs existing
   if (hlClass === 'hl-new') {
     const badge = document.createElement('span');
     badge.className = 'badge-tag new-tag';
@@ -2727,7 +3258,33 @@ function buildRow(item, isHistory, hlClass) {
     tdStock.appendChild(badge);
   }
 
-  // Count cell
+  // 3. Sector cell
+  const tdSector = document.createElement('td');
+  if (item.sector) {
+    const secBadge = document.createElement('span');
+    secBadge.className = 'sector-badge' + (activeSectorFilter === item.sector ? ' active-filter' : '');
+    secBadge.textContent = item.sector;
+    secBadge.title = `Click to filter by sector: ${item.sector}`;
+    secBadge.onclick = (e) => {
+      e.stopPropagation();
+      activeSectorFilter = (activeSectorFilter === item.sector) ? null : item.sector;
+      renderLive();
+    };
+    tdSector.appendChild(secBadge);
+  } else {
+    tdSector.innerHTML = '<span class="rv-na">—</span>';
+  }
+
+  // 4. Rel Vol (10d) cell
+  const tdRelVol = document.createElement('td');
+  tdRelVol.innerHTML = renderRelVolBadge(item.rel_vol);
+
+  // 5. Price cell
+  const tdPrice = document.createElement('td');
+  tdPrice.className = 'price-cell';
+  tdPrice.textContent = fmtPrice(item.trigger_price);
+
+  // 6. Count cell
   const tdCount = document.createElement('td');
   const badge = document.createElement('span');
   const cnt = item.count ?? 0;
@@ -2735,12 +3292,7 @@ function buildRow(item, isHistory, hlClass) {
   badge.textContent = cnt;
   tdCount.appendChild(badge);
 
-  // Price cell
-  const tdPrice = document.createElement('td');
-  tdPrice.className = 'price-cell';
-  tdPrice.textContent = fmtPrice(item.trigger_price);
-
-  // Scan cell
+  // 7. Scan cell with Multi-Scan Confluence indicator
   const tdScan = document.createElement('td');
   if (item.scan_name) {
     const scanName = item.scan_name;
@@ -2760,12 +3312,19 @@ function buildRow(item, isHistory, hlClass) {
       scanSpan.textContent = scanName;
       tdScan.appendChild(scanSpan);
     }
+
+    if (Array.isArray(item.scans) && item.scans.length > 1) {
+      const confBadge = document.createElement('span');
+      confBadge.className = 'confluence-badge';
+      confBadge.innerHTML = `⚡ ${item.scans.length}`;
+      confBadge.title = `Triggered in ${item.scans.length} scans:\n• ` + item.scans.join('\n• ');
+      tdScan.appendChild(confBadge);
+    }
   } else {
-    tdScan.textContent = '—';
-    tdScan.style.color = 'var(--text-dim)';
+    tdScan.innerHTML = '<span class="rv-na">—</span>';
   }
 
-  // Action / Execution cell
+  // 8. Action / Execution cell
   const tdExec = document.createElement('td');
   tdExec.className = 'exec-cell';
   tdExec.style.textAlign = 'right';
@@ -2773,20 +3332,30 @@ function buildRow(item, isHistory, hlClass) {
   const btnWrap = document.createElement('div');
   btnWrap.className = 'exec-btns';
 
-  // 1. Position Sizer
+  // Position Sizer
   const btnSizer = document.createElement('button');
   btnSizer.className = 'btn-mini btn-sizer';
-  btnSizer.title = 'Open Risk & Position Sizer (Hot-key: S)';
+  btnSizer.title = 'Open Risk & Position Sizer (S)';
   btnSizer.textContent = '⚡';
   btnSizer.addEventListener('click', (e) => {
     e.stopPropagation();
     openPositionSizer(item.stock, item.trigger_price);
   });
 
-  // 2. Copy Symbol
+  // TradingView Inline Preview Modal
+  const btnTvModal = document.createElement('button');
+  btnTvModal.className = 'btn-mini';
+  btnTvModal.title = 'Preview Chart Inline (V)';
+  btnTvModal.textContent = '📊';
+  btnTvModal.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openTvModal(item.stock, item.trigger_price, item.sector, item.rel_vol);
+  });
+
+  // Copy Symbol
   const btnCopy = document.createElement('button');
   btnCopy.className = 'btn-mini';
-  btnCopy.title = 'Copy Symbol to Clipboard (Hot-key: C)';
+  btnCopy.title = 'Copy Symbol to Clipboard (C)';
   btnCopy.textContent = '📋';
   btnCopy.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -2795,16 +3364,16 @@ function buildRow(item, isHistory, hlClass) {
     });
   });
 
-  // 3. TradingView Chart
+  // TradingView External Tab
   const btnTv = document.createElement('a');
   btnTv.className = 'btn-mini';
-  btnTv.title = 'Open Chart in TradingView (Hot-key: Space)';
+  btnTv.title = 'Open Chart in TradingView (Space)';
   btnTv.href = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(item.stock)}`;
   btnTv.target = '_blank';
   btnTv.rel = 'noopener noreferrer';
-  btnTv.textContent = '📈';
+  btnTv.textContent = '↗';
 
-  // 4. Zerodha Kite
+  // Zerodha Kite
   const btnKite = document.createElement('a');
   btnKite.className = 'btn-mini';
   btnKite.title = 'Open in Zerodha Kite';
@@ -2814,6 +3383,7 @@ function buildRow(item, isHistory, hlClass) {
   btnKite.textContent = '🪁';
 
   btnWrap.appendChild(btnSizer);
+  btnWrap.appendChild(btnTvModal);
   btnWrap.appendChild(btnCopy);
   btnWrap.appendChild(btnTv);
   btnWrap.appendChild(btnKite);
@@ -2821,8 +3391,10 @@ function buildRow(item, isHistory, hlClass) {
 
   tr.appendChild(tdTime);
   tr.appendChild(tdStock);
-  tr.appendChild(tdCount);
+  tr.appendChild(tdSector);
+  tr.appendChild(tdRelVol);
   tr.appendChild(tdPrice);
+  tr.appendChild(tdCount);
   tr.appendChild(tdScan);
   tr.appendChild(tdExec);
 
@@ -2836,12 +3408,33 @@ function renderTable(tbodyId, data, isHistory, hlMap = new Map()) {
   const search  = isHistory ? histFilter : liveFilter;
   const page    = isHistory ? historyPage : livePage;
 
-  const filtered = search
-    ? data.filter(r =>
-        [r.stock, r.scan_name, r.alert_name, r.time_ist, r.date_ist]
-          .some(v => v && String(v).toLowerCase().includes(search))
-      )
-    : data;
+  let filtered = data;
+
+  // Sector filter (Live tab)
+  if (!isHistory && activeSectorFilter) {
+    filtered = filtered.filter((r) => r.sector === activeSectorFilter);
+  }
+
+  // Quick filter pills (Live tab)
+  if (!isHistory) {
+    if (activeQuickFilter === 'rv2') {
+      filtered = filtered.filter((r) => Number(r.rel_vol) >= 2.0);
+    } else if (activeQuickFilter === 'rv1.5') {
+      filtered = filtered.filter((r) => Number(r.rel_vol) >= 1.5);
+    } else if (activeQuickFilter === 'confluence') {
+      filtered = filtered.filter((r) => (Array.isArray(r.scans) && r.scans.length > 1) || (Number(r.count) > 1));
+    } else if (activeQuickFilter === 'starred') {
+      filtered = filtered.filter((r) => starredStocks.has(r.stock));
+    }
+  }
+
+  // Search filter
+  if (search) {
+    filtered = filtered.filter((r) =>
+      [r.stock, r.sector, r.scan_name, r.alert_name, r.time_ist, r.date_ist, String(r.rel_vol ?? '')]
+        .some((v) => v && String(v).toLowerCase().includes(search))
+    );
+  }
 
   const sorted = sortData(filtered, cfg);
   const start  = (page - 1) * PAGE_SIZE;
@@ -2853,12 +3446,12 @@ function renderTable(tbodyId, data, isHistory, hlMap = new Map()) {
     const tr = document.createElement('tr');
     tr.className = 'empty-row';
     const td = document.createElement('td');
-    td.colSpan = 6;
+    td.colSpan = 8;
     td.innerHTML = `<span class="empty-icon">${isHistory ? '📂' : '📡'}</span>${isHistory ? 'No history records' : 'Waiting for alerts…'}`;
     tr.appendChild(td);
     tbody.appendChild(tr);
   } else {
-    paged.forEach(item => {
+    paged.forEach((item) => {
       const activeType = !isHistory ? (getHighlightType(item.stock) || (hlMap && hlMap.get(item.stock))) : null;
       const hlClass = activeType
         ? (activeType === 'new' ? 'hl-new' : 'hl-upd')
@@ -2874,8 +3467,16 @@ function renderTable(tbodyId, data, isHistory, hlMap = new Map()) {
   updateSortIcons(isHistory ? 'history-table' : 'live-table', cfg);
 }
 
-function renderLive(hlMap = new Map())    { renderTable('live-tbody',    liveData,    false, hlMap); renderMovers(); }
-function renderHistory(hlMap = new Map()) { renderTable('history-tbody', historyData, true,  hlMap); }
+function renderLive(hlMap = new Map()) {
+  renderTable('live-tbody', liveData, false, hlMap);
+  renderMovers();
+  renderSectorRibbon();
+  updateStarCount();
+}
+
+function renderHistory(hlMap = new Map()) {
+  renderTable('history-tbody', historyData, true, hlMap);
+}
 
 /* ═══════════════════════════════════════════════════════════════
    TOP MOVERS
@@ -2888,7 +3489,7 @@ function renderMovers() {
   }
   const top = [...liveData].sort((a, b) => (b.count ?? 0) - (a.count ?? 0)).slice(0, 5);
   grid.innerHTML = '';
-  top.forEach(s => {
+  top.forEach((s) => {
     const card = document.createElement('div');
     card.className = 'mover-card';
 
@@ -2903,7 +3504,10 @@ function renderMovers() {
 
     const cnt = document.createElement('div');
     cnt.className = 'mover-count';
-    cnt.innerHTML = `Count: <strong>${s.count ?? 0}</strong>`;
+    const rvPart = (s.rel_vol != null && !isNaN(Number(s.rel_vol)))
+      ? ` · <span style="color:#6ee7b7;font-weight:700;">${Number(s.rel_vol).toFixed(1)}x${Number(s.rel_vol) >= 2 ? '🔥' : ''}</span>`
+      : '';
+    cnt.innerHTML = `Count: <strong>${s.count ?? 0}</strong>${rvPart}`;
 
     const price = document.createElement('div');
     price.className = 'mover-price';
@@ -2929,7 +3533,9 @@ function renderMovers() {
     card.appendChild(meta);
 
     card.addEventListener('click', (e) => {
-      if (e.target !== link) link.click();
+      if (e.target !== link && e.target !== sizerBtn) {
+        openTvModal(s.stock, s.trigger_price, s.sector, s.rel_vol);
+      }
     });
     grid.appendChild(card);
   });
@@ -2954,17 +3560,19 @@ function downloadCSV(isHistory = false) {
   if (!data.length) { showToast('No data to export', 'info'); return; }
 
   const headers = isHistory
-    ? ['Date','Time(IST)','Stock','Count','Price','Scan','Alert']
-    : ['Time(IST)','Stock','Count','Price','Scan','Alert'];
+    ? ['Date','Time(IST)','Stock','Sector','Rel Vol (10d)','Price','Count','Scan','All Scans','Alert']
+    : ['Time(IST)','Stock','Sector','Rel Vol (10d)','Price','Count','Scan','All Scans','Alert'];
 
-  const rows = data.map(d => isHistory
-    ? [d.date_ist, d.time_ist, d.stock, d.count, d.trigger_price, d.scan_name ?? '', d.alert_name ?? '']
-    : [d.time_ist, d.stock, d.count, d.trigger_price, d.scan_name ?? '', d.alert_name ?? '']
-  );
+  const rows = data.map((d) => {
+    const scanList = Array.isArray(d.scans) ? d.scans.join('; ') : (d.scan_name ?? '');
+    return isHistory
+      ? [d.date_ist, d.time_ist, d.stock, d.sector ?? '', d.rel_vol ?? '', d.trigger_price, d.count, d.scan_name ?? '', scanList, d.alert_name ?? '']
+      : [d.time_ist, d.stock, d.sector ?? '', d.rel_vol ?? '', d.trigger_price, d.count, d.scan_name ?? '', scanList, d.alert_name ?? ''];
+  });
 
   // Escape CSV values
-  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const csv = [headers.map(esc).join(','), ...rows.map(r => r.map(esc).join(','))].join('\n');
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const csv = [headers.map(esc).join(','), ...rows.map((r) => r.map(esc).join(','))].join('\n');
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
@@ -2975,14 +3583,32 @@ function downloadCSV(isHistory = false) {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  showToast(`Exported ${data.length} rows`, 'info');
+  showToast(`Exported ${data.length} rows (includes Sector & Rel Vol)`, 'info');
 }
 
 function copyToTV() {
-  if (!liveData.length) { showToast('No live stocks to copy', 'info'); return; }
-  const list = [...new Set(liveData.map(x => x.stock))].join(',');
+  const data = liveData;
+  if (!data.length) { showToast('No live stocks to copy', 'info'); return; }
+
+  let targets = data;
+  if (activeQuickFilter === 'starred') {
+    targets = data.filter((x) => starredStocks.has(x.stock));
+  } else if (activeQuickFilter === 'rv2') {
+    targets = data.filter((x) => Number(x.rel_vol) >= 2.0);
+  } else if (activeQuickFilter === 'rv1.5') {
+    targets = data.filter((x) => Number(x.rel_vol) >= 1.5);
+  } else if (activeSectorFilter) {
+    targets = data.filter((x) => x.sector === activeSectorFilter);
+  }
+
+  if (!targets.length) {
+    showToast('No stocks matching current filter to copy', 'info');
+    return;
+  }
+
+  const list = [...new Set(targets.map((x) => `NSE:${x.stock}`))].join(',');
   navigator.clipboard.writeText(list)
-    .then(() => showToast(`${liveData.length} symbols copied`, 'new', 'Clipboard'))
+    .then(() => showToast(`${targets.length} symbols copied in TradingView format!`, 'new', 'TradingView Watchlist'))
     .catch(() => showToast('Copy failed — try manually', 'error'));
 }
 
@@ -3145,8 +3771,12 @@ document.getElementById('btn-clear-history').addEventListener('click', async () 
           registerHighlight(it.stock, type);
           sendSystemNotification(it, isNew);
           announceStock(it.stock, isNew);
+          const rvText = (it.rel_vol != null && !isNaN(Number(it.rel_vol)))
+            ? `  ·  Vol: ${Number(it.rel_vol).toFixed(1)}x${Number(it.rel_vol) >= 2 ? '🔥' : ''}`
+            : '';
+          const secText = it.sector ? `  ·  ${it.sector}` : '';
           showToast(
-            `${it.stock}  ${fmtPrice(it.trigger_price)}  ·  ${it.time_ist ?? ''}`,
+            `${it.stock}  ${fmtPrice(it.trigger_price)}${rvText}${secText}`,
             type,
             isNew ? 'New Stock Alert' : 'Stock Updated'
           );

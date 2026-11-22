@@ -43,9 +43,22 @@ async function initDB() {
       lastUpdated   TIMESTAMPTZ,
       scan_name     TEXT,
       scan_url      TEXT,
-      alert_name    TEXT
+      alert_name    TEXT,
+      scans         JSONB DEFAULT '[]'::jsonb,
+      sector        TEXT,
+      rel_vol       REAL,
+      extra_data    JSONB DEFAULT '{}'::jsonb
     )
   `);
+
+  // Safe incremental migrations for existing tables
+  await db.query(`
+    ALTER TABLE stocks ADD COLUMN IF NOT EXISTS scans JSONB DEFAULT '[]'::jsonb;
+    ALTER TABLE stocks ADD COLUMN IF NOT EXISTS sector TEXT;
+    ALTER TABLE stocks ADD COLUMN IF NOT EXISTS rel_vol REAL;
+    ALTER TABLE stocks ADD COLUMN IF NOT EXISTS extra_data JSONB DEFAULT '{}'::jsonb;
+  `);
+
   await db.query(
     `CREATE INDEX IF NOT EXISTS idx_datetime_stock ON stocks (datetime, stock)`
   );
@@ -84,6 +97,7 @@ const timeUtils = {
 // --- IST projection SQL fragment ---
 const SELECT_IST = `
   stock, trigger_price, count, scan_name, scan_url, alert_name,
+  sector, rel_vol, scans, extra_data,
   to_char(datetime AT TIME ZONE '${TZ}', 'YYYY-MM-DD')   AS date_ist,
   to_char(datetime AT TIME ZONE '${TZ}', 'HH12:MI AM')   AS time_ist,
   EXTRACT(EPOCH FROM (datetime AT TIME ZONE '${TZ}'))*1000 AS ts_ist,
@@ -110,21 +124,30 @@ const dbUtils = {
     const vals  = [];
     const parts = [];
     items.forEach((it, i) => {
-      const b = i * 8;
+      const b = i * 12;
       parts.push(
-        `($${b+1},$${b+2},$${b+3},$${b+4},$${b+5},$${b+6},$${b+7},$${b+8})`
+        `($${b+1},$${b+2},$${b+3},$${b+4},$${b+5},$${b+6},$${b+7},$${b+8},$${b+9}::jsonb,$${b+10},$${b+11},$${b+12}::jsonb)`
       );
       vals.push(
-        it.stock, it.trigger_price, it.datetimeUTC,
-        1, it.lastUpdatedUTC,
-        it.scan_name || null, it.scan_url || null, it.alert_name || null
+        it.stock,
+        it.trigger_price,
+        it.datetimeUTC,
+        1,
+        it.lastUpdatedUTC,
+        it.scan_name || null,
+        it.scan_url || null,
+        it.alert_name || null,
+        JSON.stringify(it.scans || []),
+        it.sector || null,
+        it.rel_vol != null ? it.rel_vol : null,
+        JSON.stringify(it.extra_data || {})
       );
     });
 
     const { rows } = await db.query(
       `WITH upserted AS (
          INSERT INTO stocks
-           (stock, trigger_price, datetime, count, lastUpdated, scan_name, scan_url, alert_name)
+           (stock, trigger_price, datetime, count, lastUpdated, scan_name, scan_url, alert_name, scans, sector, rel_vol, extra_data)
          VALUES ${parts.join(",")}
          ON CONFLICT (stock) DO UPDATE SET
            trigger_price = EXCLUDED.trigger_price,
@@ -133,7 +156,15 @@ const dbUtils = {
            lastUpdated   = EXCLUDED.lastUpdated,
            scan_name     = EXCLUDED.scan_name,
            scan_url      = EXCLUDED.scan_url,
-           alert_name    = EXCLUDED.alert_name
+           alert_name    = EXCLUDED.alert_name,
+           scans         = CASE
+                             WHEN EXCLUDED.scan_name IS NULL THEN COALESCE(stocks.scans, '[]'::jsonb)
+                             WHEN COALESCE(stocks.scans, '[]'::jsonb) @> jsonb_build_array(EXCLUDED.scan_name) THEN COALESCE(stocks.scans, '[]'::jsonb)
+                             ELSE COALESCE(stocks.scans, '[]'::jsonb) || jsonb_build_array(EXCLUDED.scan_name)
+                           END,
+           sector        = COALESCE(EXCLUDED.sector, stocks.sector),
+           rel_vol       = COALESCE(EXCLUDED.rel_vol, stocks.rel_vol),
+           extra_data    = COALESCE(stocks.extra_data, '{}'::jsonb) || EXCLUDED.extra_data
          RETURNING *
        )
        SELECT ${SELECT_IST} FROM upserted`,
@@ -153,22 +184,30 @@ const dbUtils = {
 let cache = { live: [], history: [] };
 
 async function refreshCache(full = false, deltaLive = []) {
-  const { startUTC, endUTC }  = timeUtils.dayBoundsUTC();
-  const fiveDaysAgoUTC = moment(startUTC).subtract(RETENTION_DAYS, "days").toDate();
-
-  const [live, history] = await Promise.all([
-    dbUtils.getRangeIST(startUTC, endUTC),
-    dbUtils.getRangeIST(fiveDaysAgoUTC, startUTC),
-  ]);
-  cache.live    = live;
-  cache.history = history;
-
   const broadcast = (payload) =>
     wss.clients.forEach((c) => c.readyState === WebSocket.OPEN && c.send(payload));
 
   if (full) {
+    const { startUTC, endUTC }  = timeUtils.dayBoundsUTC();
+    const fiveDaysAgoUTC = moment(startUTC).subtract(RETENTION_DAYS, "days").toDate();
+
+    const [live, history] = await Promise.all([
+      dbUtils.getRangeIST(startUTC, endUTC),
+      dbUtils.getRangeIST(fiveDaysAgoUTC, startUTC),
+    ]);
+    cache.live    = live;
+    cache.history = history;
+
     broadcast(JSON.stringify({ type: "init", liveStocks: live, historyStocks: history }));
   } else if (deltaLive.length) {
+    // Fast in-memory update without hitting PostgreSQL on every webhook delta
+    const byStock = new Map(cache.live.map((item) => [item.stock, item]));
+    deltaLive.forEach((row) => {
+      byStock.set(row.stock, row);
+    });
+    // Keep sorted by latest timestamp descending
+    cache.live = Array.from(byStock.values()).sort((a, b) => (b.ts_ist ?? 0) - (a.ts_ist ?? 0));
+
     broadcast(JSON.stringify({ type: "delta", liveDelta: deltaLive }));
   }
 }
@@ -182,23 +221,70 @@ function verifySecret(req, res, next) {
   next();
 }
 
+// Helper to safely extract column values regardless of case, spacing, or underscores
+function getCaseInsensitiveProp(obj, targetProp) {
+  if (!obj || typeof obj !== "object") return undefined;
+  const cleanTarget = targetProp.toLowerCase().replace(/[\s_-]/g, "");
+  for (const k of Object.keys(obj)) {
+    if (k.toLowerCase().replace(/[\s_-]/g, "") === cleanTarget) {
+      return obj[k];
+    }
+  }
+  return undefined;
+}
+
 // --- Transform Chartink webhook payload ---
 function transform(body) {
-  const { stocks, trigger_prices, triggered_at, scan_name, scan_url, alert_name } = body;
+  const { stocks, trigger_prices, triggered_at, scan_name, scan_url, alert_name, columns } = body;
   if (!stocks || !trigger_prices) return [];
 
   const stockArr = String(stocks).split(",").map((s) => s.trim()).filter(Boolean);
   const priceArr = String(trigger_prices).split(",").map((p) => parseFloat(p.trim()));
   const nowUTC   = timeUtils.nowUTC();
 
+  // Index custom columns by symbol
+  const colMap = new Map();
+  if (Array.isArray(columns)) {
+    columns.forEach((col) => {
+      if (col && col.symbol) {
+        colMap.set(String(col.symbol).trim().toUpperCase(), col);
+      }
+    });
+  }
+
   return stockArr
-    .map((s, i) => ({
-      stock:         s,
-      trigger_price: Number.isFinite(priceArr[i]) ? priceArr[i] : null,
-      datetimeUTC:   triggered_at ? timeUtils.parseISTTimeToUTC(triggered_at) : nowUTC,
-      lastUpdatedUTC: nowUTC,
-      scan_name, scan_url, alert_name,
-    }))
+    .map((s, i) => {
+      const colData = colMap.get(s.toUpperCase()) || {};
+
+      // Parse Relative Volume (handles 'Rel Vol', 'rel_vol', 'Relative Volume', etc.)
+      let relVol = null;
+      const rawRv = getCaseInsensitiveProp(colData, "relvol") ?? getCaseInsensitiveProp(colData, "relativevolume");
+      if (rawRv != null) {
+        const parsed = parseFloat(rawRv);
+        if (Number.isFinite(parsed)) relVol = parsed;
+      }
+
+      // Parse Sector
+      let sector = null;
+      const rawSector = getCaseInsensitiveProp(colData, "sector");
+      if (rawSector != null && String(rawSector).trim() !== "") {
+        sector = String(rawSector).trim();
+      }
+
+      return {
+        stock:          s,
+        trigger_price:  Number.isFinite(priceArr[i]) ? priceArr[i] : null,
+        datetimeUTC:    triggered_at ? timeUtils.parseISTTimeToUTC(triggered_at) : nowUTC,
+        lastUpdatedUTC: nowUTC,
+        scan_name,
+        scan_url,
+        alert_name,
+        scans:          scan_name ? [scan_name] : [],
+        sector,
+        rel_vol:        relVol,
+        extra_data:     colData,
+      };
+    })
     .filter((x) => x.stock && x.trigger_price !== null);
 }
 
@@ -240,9 +326,25 @@ function formatTelegramMessage(it) {
   const price = it.trigger_price ? `₹${Number(it.trigger_price).toFixed(2)}` : "—";
   const scan = it.scan_name ? `\n🔍 <b>Scan:</b> ${escapeHtml(it.scan_name)}` : "";
   const time = it.time_ist ? `\n⏱ <b>Time:</b> ${escapeHtml(it.time_ist)} IST` : "";
-  const chartUrl = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(it.stock)}`;
 
-  return `${headline}\n📈 <b>${escapeHtml(it.stock)}</b> @ ${price}${time}${scan}\n🔗 <a href="${chartUrl}">Open TradingView Chart</a>`;
+  let relVolStr = "";
+  if (it.rel_vol != null && !isNaN(Number(it.rel_vol))) {
+    const rv = Number(it.rel_vol);
+    const fire = rv >= 2.0 ? " 🔥" : "";
+    relVolStr = `\n📊 <b>Rel Vol (10d):</b> ${rv.toFixed(2)}x${fire}`;
+  }
+
+  const sectorStr = it.sector ? `\n🏢 <b>Sector:</b> ${escapeHtml(it.sector)}` : "";
+
+  let confluenceStr = "";
+  if (Array.isArray(it.scans) && it.scans.length > 1) {
+    confluenceStr = `\n⚡ <b>Confluence (${it.scans.length} scans):</b> ${it.scans.map((s) => escapeHtml(s)).join(", ")}`;
+  }
+
+  const chartUrl = `https://in.tradingview.com/chart/?symbol=NSE:${encodeURIComponent(it.stock)}`;
+  const kiteUrl  = `https://kite.zerodha.com/chart/ext/ciq/NSE/${encodeURIComponent(it.stock)}`;
+
+  return `${headline}\n📈 <b>${escapeHtml(it.stock)}</b> @ ${price}${relVolStr}${sectorStr}${time}${scan}${confluenceStr}\n🔗 <a href="${chartUrl}">TradingView</a> | <a href="${kiteUrl}">Zerodha Kite</a>`;
 }
 
 function sendTelegramRaw(text) {
