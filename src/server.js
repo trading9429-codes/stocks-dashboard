@@ -22,6 +22,17 @@ const SELF_URL       = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL; /
 const app    = express();
 app.use(express.json());                                      // built-in; body-parser not needed
 
+// --- CORS Middleware (allows cross-origin requests from Chartink Tampermonkey userscripts) ---
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-webhook-secret");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Disable caching for HTML, Service Worker & Manifest so client apps & WebViews always receive latest updates
 app.use(express.static(path.join(__dirname, "public"), {
   setHeaders: (res, filePath) => {

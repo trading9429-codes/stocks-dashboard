@@ -2703,54 +2703,171 @@
       <textarea id="tampermonkey-code" class="userscript-code" readonly>// ==UserScript==
 // @name         Chartink 4.5R Breadth Auto-Sync to Stocks Dashboard
 // @namespace    https://imbalance-stocks-dashboard.onrender.com/
-// @version      1.0
+// @version      2.0
 // @description  Automatically syncs 4.5R market breadth ratio from Chartink Atlas dashboard 508179 to your live trading dashboard
 // @author       Stocks Dashboard
-// @match        https://chartink.com/dashboard/508179*
+// @match        *://chartink.com/dashboard/508179*
+// @match        *://*.chartink.com/dashboard/508179*
 // @grant        GM_xmlhttpRequest
+// @grant        GM_addStyle
+// @connect      imbalance-stocks-dashboard.onrender.com
+// @connect      localhost
 // @connect      *
+// @run-at       document-end
 // ==/UserScript==
 
 (function() {
     'use strict';
-    const API = location.origin.includes('localhost')
-        ? 'http://localhost:5000/api/breadth'
-        : 'https://imbalance-stocks-dashboard.onrender.com/api/breadth';
 
-    let lastVal = null;
-    function sync() {
-        const tables = document.querySelectorAll('table');
-        for (const tbl of tables) {
-            const ths = Array.from(tbl.querySelectorAll('th'));
-            const idx = ths.findIndex(th => /4\.5r/i.test(th.textContent));
-            if (idx !== -1) {
-                const tr = tbl.querySelector('tbody tr');
-                if (tr) {
-                    const tds = tr.querySelectorAll('td');
-                    if (tds[idx]) {
-                        const val = parseFloat(tds[idx].textContent.trim());
-                        if (!isNaN(val) && isFinite(val) && val !== lastVal) {
-                            lastVal = val;
-                            console.log('[Breadth-Sync] 4.5R Ratio:', val);
-                            const payload = JSON.stringify({ ratio: val, source: 'chartink-userscript' });
-                            if (typeof GM_xmlhttpRequest !== 'undefined') {
-                                GM_xmlhttpRequest({
-                                    method: 'POST', url: API,
-                                    headers: { 'Content-Type': 'application/json' },
-                                    data: payload
-                                });
-                            } else {
-                                fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload }).catch(() => {});
-                            }
-                        }
-                    }
+    const DASHBOARD_ENDPOINT = 'https://imbalance-stocks-dashboard.onrender.com/api/breadth';
+    let lastRatio = null;
+
+    // 1. Inject Floating Live Status Pill in bottom-right corner of Chartink
+    const badge = document.createElement('div');
+    badge.id = 'breadth-sync-pill';
+    badge.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:999999;background:#0d1420;color:#e2e8f0;border:1.5px solid #3b82f6;border-radius:12px;padding:8px 14px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;box-shadow:0 8px 30px rgba(0,0,0,0.65);display:flex;align-items:center;gap:10px;backdrop-filter:blur(10px);user-select:none;';
+    badge.innerHTML = '<span id="bsp-status" style="display:flex;align-items:center;gap:6px;">⏳ Initializing sync…</span><button id="bsp-btn" style="background:#1e293b;border:1px solid #475569;color:#e2e8f0;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-weight:600;">🔄 Sync</button>';
+    document.body.appendChild(badge);
+
+    const statusEl = document.getElementById('bsp-status');
+    const syncBtn = document.getElementById('bsp-btn');
+
+    function updateBadge(html, borderColor) {
+        if (statusEl) statusEl.innerHTML = html;
+        if (badge && borderColor) badge.style.borderColor = borderColor;
+    }
+
+    // 2. High-precision extraction of 4.5R ratio
+    function extractRatio() {
+        // Strategy 1: Exact Vue-Good-Table attribute data-field="4-5r"
+        const cell = document.querySelector('td[data-field="4-5r"]') ||
+                     document.querySelector('td[data-field*="4-5"]') ||
+                     document.querySelector('td[data-field*="4.5"]');
+        if (cell) {
+            const val = parseFloat(cell.textContent.trim().replace(/,/g, ''));
+            if (!isNaN(val) && isFinite(val)) return val;
+        }
+
+        // Strategy 2: Look for 4.5r header column and matching row cell
+        const ths = Array.from(document.querySelectorAll('th'));
+        const idx = ths.findIndex(th => /4[-.]5r/i.test(th.textContent.trim()));
+        if (idx !== -1) {
+            const tr = document.querySelector('tbody tr');
+            if (tr) {
+                const tds = tr.querySelectorAll('td');
+                if (tds[idx]) {
+                    const val = parseFloat(tds[idx].textContent.trim().replace(/,/g, ''));
+                    if (!isNaN(val) && isFinite(val)) return val;
                 }
             }
         }
+
+        // Strategy 3: Scan all table cells inside MBI card
+        const allCells = document.querySelectorAll('.card td, table td');
+        for (const c of allCells) {
+            const txt = c.textContent.trim().replace(/,/g, '');
+            const v = parseFloat(txt);
+            if (!isNaN(v) && isFinite(v) && txt.length >= 2 && txt.length <= 8) {
+                const card = c.closest('.card') || c.closest('.vue-grid-item') || document.body;
+                if (/4[-.]5r/i.test(card.textContent)) return v;
+            }
+        }
+        return null;
     }
-    setInterval(sync, 45000);
-    setTimeout(sync, 3000);
-    setTimeout(sync, 7000);
+
+    // 3. Post to Stocks Dashboard
+    function postBreadth(ratio) {
+        if (ratio == null) {
+            updateBadge('⚠️ Waiting for 4.5R table…', '#f59e0b');
+            return;
+        }
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        const isGo = ratio > 350;
+        const icon = isGo ? '🟢' : '🔴';
+
+        const payload = JSON.stringify({
+            ratio: ratio,
+            source: 'chartink-tampermonkey'
+        });
+
+        const onOk = function() {
+            lastRatio = ratio;
+            console.log(`[Breadth-Sync] ✅ Synced 4.5R: ${ratio} at ${timeStr}`);
+            updateBadge(`${icon} <strong>4.5R: ${ratio.toFixed(2)}</strong> (${isGo ? 'GO' : 'NO-GO'}) · ${timeStr}`, isGo ? '#10b981' : '#ef4444');
+        };
+
+        const onFail = function(err) {
+            console.warn('[Breadth-Sync] ❌ Post error:', err);
+            updateBadge(`⚠️ Sync error (${ratio}): ${err}`, '#ef4444');
+        };
+
+        if (typeof GM_xmlhttpRequest !== 'undefined') {
+            GM_xmlhttpRequest({
+                method: 'POST',
+                url: DASHBOARD_ENDPOINT,
+                headers: { 'Content-Type': 'application/json' },
+                data: payload,
+                onload: function(r) {
+                    if (r.status >= 200 && r.status < 300) onOk();
+                    else onFail('HTTP ' + r.status);
+                },
+                onerror: function(e) {
+                    fallbackFetch(payload, onOk, onFail);
+                }
+            });
+        } else {
+            fallbackFetch(payload, onOk, onFail);
+        }
+    }
+
+    function fallbackFetch(payload, onOk, onFail) {
+        fetch(DASHBOARD_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            mode: 'cors'
+        })
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+        })
+        .then(onOk)
+        .catch(e => onFail(e.message));
+    }
+
+    function doSync() {
+        const ratio = extractRatio();
+        if (ratio !== null) {
+            postBreadth(ratio);
+        } else {
+            updateBadge('🔍 Searching for 4.5r cell…', '#f59e0b');
+        }
+    }
+
+    syncBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        updateBadge('🔄 Syncing…', '#3b82f6');
+        doSync();
+    });
+
+    // Instant observation: triggers the millisecond Vue renders or updates the table
+    const observer = new MutationObserver(() => {
+        const r = extractRatio();
+        if (r !== null && r !== lastRatio) {
+            doSync();
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Initial sync checks
+    setTimeout(doSync, 1000);
+    setTimeout(doSync, 3000);
+    setTimeout(doSync, 6000);
+
+    // Continuous heartbeat sync every 30 seconds
+    setInterval(doSync, 30000);
 })();</textarea>
     </div>
 
