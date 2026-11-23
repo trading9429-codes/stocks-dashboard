@@ -222,6 +222,50 @@
       border-color: var(--border);
     }
 
+    .chip.btn-stretch {
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+      background: var(--surface-2);
+      color: var(--text-muted);
+      border-color: var(--border-2);
+    }
+    .chip.btn-stretch:hover {
+      background: var(--surface-3);
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .chip.btn-stretch.active {
+      color: var(--accent);
+      border-color: rgba(16, 185, 129, 0.45);
+      background: rgba(16, 185, 129, 0.14);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+      font-weight: 600;
+    }
+
+    .chip.btn-fullscreen {
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+      background: var(--surface-2);
+      color: var(--text-muted);
+      border-color: var(--border-2);
+    }
+    .chip.btn-fullscreen:hover {
+      background: var(--surface-3);
+      border-color: var(--blue);
+      color: var(--blue);
+      transform: translateY(-1px);
+    }
+    .chip.btn-fullscreen.active {
+      color: #93c5fd;
+      border-color: rgba(59, 130, 246, 0.45);
+      background: rgba(59, 130, 246, 0.15);
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+      font-weight: 600;
+    }
+
     .clock {
       font-family: 'JetBrains Mono', monospace;
       font-size: 12px;
@@ -280,6 +324,60 @@
       max-width: 1300px;
       margin: 0 auto;
       padding: 16px 20px 32px;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       STRETCHED / FULL-WIDTH VIEW MODE (LAPTOP & DESKTOP)
+    ═══════════════════════════════════════════════════ */
+    body.stretched-view .container {
+      max-width: 100% !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding-left: 24px !important;
+      padding-right: 24px !important;
+      box-sizing: border-box !important;
+      transition: max-width 0.2s ease, padding 0.2s ease;
+    }
+    body.stretched-view .tabs-nav {
+      max-width: 100% !important;
+      width: 100% !important;
+      padding-left: 24px !important;
+      padding-right: 24px !important;
+      box-sizing: border-box !important;
+    }
+    body.stretched-view header {
+      padding-left: 24px !important;
+      padding-right: 24px !important;
+    }
+    body.stretched-view .panel {
+      width: 100% !important;
+    }
+    @media (min-width: 769px) {
+      body.stretched-view .table-scroll {
+        max-height: calc(100vh - 225px) !important;
+        min-height: 480px;
+      }
+      body.stretched-view .sector-badge {
+        max-width: 220px;
+      }
+      body.stretched-view .scan-tag {
+        max-width: 280px;
+      }
+      body.stretched-view table th.col-action,
+      body.stretched-view table th:last-child {
+        width: 265px !important;
+        min-width: 265px !important;
+      }
+      body.stretched-view table th,
+      body.stretched-view table td {
+        padding: 9px 12px;
+      }
+    }
+    .btn-stretch-btn.active {
+      background: rgba(16, 185, 129, 0.16) !important;
+      border-color: var(--accent) !important;
+      color: var(--accent) !important;
+      font-weight: 600 !important;
     }
 
     .tab-panel { display: none; }
@@ -2320,6 +2418,10 @@
         <span class="hotkey-desc">Copy Ticker of latest alert to clipboard</span>
       </div>
       <div class="hotkey-row">
+        <span class="hotkey-key">W</span>
+        <span class="hotkey-desc">Toggle Full Width / Stretch Dashboard View</span>
+      </div>
+      <div class="hotkey-row">
         <span class="hotkey-key">1 / 2</span>
         <span class="hotkey-desc">Switch between Live and History tabs</span>
       </div>
@@ -2383,6 +2485,14 @@
     <button id="hotkeys-btn" class="chip" title="View execution keyboard shortcuts" style="cursor:pointer;">
       <span>⌨️ Hotkeys</span>
     </button>
+    <button id="stretch-btn" class="chip btn-stretch" title="Toggle Full Width / Stretch Dashboard (W)">
+      <span id="stretch-icon">↔</span>
+      <span id="stretch-label">Stretch: ON</span>
+    </button>
+    <button id="fullscreen-btn" class="chip btn-fullscreen" title="Toggle Fullscreen Browser Mode (F11)">
+      <span id="fullscreen-icon">⛶</span>
+      <span id="fullscreen-label">Fullscreen</span>
+    </button>
     <span id="market-chip" class="chip market-closed">
       <span class="dot"></span>
       <span id="market-label">Checking…</span>
@@ -2439,6 +2549,7 @@
           <button class="search-clear" id="live-clear-search" title="Clear">×</button>
         </div>
         <div class="actions">
+          <button class="btn btn-stretch-btn" id="btn-stretch-live" title="Toggle Full Width Stretch Mode (W)">↔ Stretch Table</button>
           <button class="btn" id="btn-copy-tv" title="Copy active live stock symbols for TradingView watchlist">📋 Copy TV</button>
           <button class="btn" id="btn-dl-live" title="Download live table as CSV">⬇ CSV</button>
           <button class="btn danger" id="btn-clear-live">🗑 Clear Live</button>
@@ -2471,7 +2582,7 @@
               <th data-col="trigger_price">Price <span class="si">↕</span></th>
               <th data-col="count" style="width: 65px;">Count <span class="si">↕</span></th>
               <th data-col="scan_name">Scan <span class="si">↕</span></th>
-              <th style="text-align: right; width: 215px;">Action</th>
+              <th class="col-action" style="text-align: right; width: 225px;">Action</th>
             </tr>
           </thead>
           <tbody id="live-tbody"></tbody>
@@ -2494,6 +2605,7 @@
           <button class="search-clear" id="history-clear-search" title="Clear">×</button>
         </div>
         <div class="actions">
+          <button class="btn btn-stretch-btn" id="btn-stretch-hist" title="Toggle Full Width Stretch Mode (W)">↔ Stretch Table</button>
           <button class="btn" id="btn-dl-history">⬇ CSV</button>
           <button class="btn danger" id="btn-clear-history">🗑 Clear History</button>
         </div>
@@ -2512,7 +2624,7 @@
               <th data-col="trigger_price">Price <span class="si">↕</span></th>
               <th data-col="count" style="width: 65px;">Count <span class="si">↕</span></th>
               <th data-col="scan_name">Scan <span class="si">↕</span></th>
-              <th style="text-align: right; width: 215px;">Action</th>
+              <th class="col-action" style="text-align: right; width: 225px;">Action</th>
             </tr>
           </thead>
           <tbody id="history-tbody"></tbody>
@@ -3523,6 +3635,89 @@ if (voiceBtn) {
 }
 
 /* ═══════════════════════════════════════════════════
+   STRETCH / FULL-WIDTH VIEW & FULLSCREEN CONTROLS
+═══════════════════════════════════════════════════ */
+const savedStretch = (() => {
+  try { return localStorage.getItem('stocks_stretch_mode'); } catch (e) { return null; }
+})();
+// Default to true (stretched) for laptop/desktop screen optimization if not previously configured
+let isStretched = savedStretch !== null ? savedStretch === 'true' : true;
+
+function applyStretchMode(enabled, save = true) {
+  isStretched = !!enabled;
+  document.body.classList.toggle('stretched-view', isStretched);
+  if (save) {
+    try { localStorage.setItem('stocks_stretch_mode', isStretched ? 'true' : 'false'); } catch (_) {}
+  }
+
+  // Update header stretch button
+  const stretchBtn = document.getElementById('stretch-btn');
+  const stretchLbl = document.getElementById('stretch-label');
+  const stretchIcon = document.getElementById('stretch-icon');
+  if (stretchBtn) {
+    stretchBtn.classList.toggle('active', isStretched);
+    if (isStretched) {
+      if (stretchLbl) stretchLbl.textContent = 'Stretch: ON';
+      if (stretchIcon) stretchIcon.textContent = '⤢';
+      stretchBtn.title = 'Disable Full Width Stretch Mode (W)';
+    } else {
+      if (stretchLbl) stretchLbl.textContent = 'Stretch: OFF';
+      if (stretchIcon) stretchIcon.textContent = '↔';
+      stretchBtn.title = 'Stretch table to full screen width (W)';
+    }
+  }
+
+  // Update table toolbar buttons in Live and History panels
+  ['btn-stretch-live', 'btn-stretch-hist'].forEach((id) => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.classList.toggle('active', isStretched);
+      btn.innerHTML = isStretched ? '⤡ Compact View' : '↔ Stretch Table';
+      btn.title = isStretched ? 'Switch back to compact boxed layout (W)' : 'Stretch table across full screen width (W)';
+    }
+  });
+}
+
+function toggleStretchMode() {
+  hapticTap();
+  applyStretchMode(!isStretched, true);
+  showToast(isStretched ? 'Table stretched to full screen width' : 'Table returned to compact boxed view', 'new', 'Layout');
+}
+
+function toggleBrowserFullscreen() {
+  hapticTap();
+  if (!document.fullscreenElement) {
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (req) {
+      req.call(el).catch((err) => {
+        console.warn('Fullscreen request failed:', err);
+        showToast('Fullscreen not permitted by browser', 'warn', 'Fullscreen');
+      });
+    }
+  } else {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+    if (exit) exit.call(document).catch(() => {});
+  }
+}
+
+document.getElementById('stretch-btn')?.addEventListener('click', toggleStretchMode);
+document.getElementById('btn-stretch-live')?.addEventListener('click', toggleStretchMode);
+document.getElementById('btn-stretch-hist')?.addEventListener('click', toggleStretchMode);
+document.getElementById('fullscreen-btn')?.addEventListener('click', toggleBrowserFullscreen);
+
+document.addEventListener('fullscreenchange', () => {
+  const fsBtn = document.getElementById('fullscreen-btn');
+  const fsLbl = document.getElementById('fullscreen-label');
+  const isFs = !!document.fullscreenElement;
+  if (fsBtn) fsBtn.classList.toggle('active', isFs);
+  if (fsLbl) fsLbl.textContent = isFs ? 'Exit Full' : 'Fullscreen';
+});
+
+// Apply stretch layout immediately on load
+applyStretchMode(isStretched, false);
+
+/* ═══════════════════════════════════════════════════
    EXECUTION SUITE: KEYBOARD SHORTCUTS
 ═══════════════════════════════════════════════════ */
 function openHotkeys() {
@@ -3645,6 +3840,12 @@ window.addEventListener('keydown', (e) => {
   } else if (e.key === '2') {
     const histBtn = document.querySelector('.tab-btn[data-tab="history"]');
     if (histBtn) histBtn.click();
+  }
+
+  // W -> Toggle Full Width / Stretch Dashboard View
+  if (e.key === 'w' || e.key === 'W') {
+    e.preventDefault();
+    toggleStretchMode();
   }
 });
 

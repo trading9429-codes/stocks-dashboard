@@ -2,7 +2,7 @@
 // Service Worker — Mobile PWA & Push Notifications Engine
 // ============================================================
 
-const CACHE_NAME = "stock-dashboard-v4.0";
+const CACHE_NAME = "stock-dashboard-v5.0";
 const STATIC_ASSETS = [
   "/manifest.json",
   "/res/icon.svg",
