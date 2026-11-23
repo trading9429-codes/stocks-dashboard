@@ -2,7 +2,7 @@
 // Service Worker — Mobile PWA & Push Notifications Engine
 // ============================================================
 
-const CACHE_NAME = "stock-dashboard-v5.0";
+const CACHE_NAME = "stock-dashboard-v6.0";
 const STATIC_ASSETS = [
   "/manifest.json",
   "/res/icon.svg",
@@ -38,6 +38,7 @@ self.addEventListener("fetch", (event) => {
   if (
     url.protocol === "ws:" ||
     url.protocol === "wss:" ||
+    url.pathname.startsWith("/api/") ||
     url.pathname.startsWith("/new-stocks") ||
     url.pathname.startsWith("/clear") ||
     url.pathname.startsWith("/subscribe") ||

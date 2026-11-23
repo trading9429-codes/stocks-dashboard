@@ -68,6 +68,17 @@ try {
 
 const pushSubscriptions = new Map(); // endpoint -> subscription
 
+// --- Market Breadth State ---
+let breadthState = {
+  ratio: null,
+  status: "UNKNOWN", // "GO" | "NO_GO" | "UNKNOWN"
+  threshold: 350,
+  recorded_at: null,
+  time_ist: null,
+  source: null,
+  lastCheck: null,
+};
+
 // --- Database ---
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -118,6 +129,44 @@ async function initDB() {
     `CREATE INDEX IF NOT EXISTS idx_datetime_stock ON stocks (datetime, stock)`
   );
 
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS market_breadth (
+      id SERIAL PRIMARY KEY,
+      ratio REAL NOT NULL,
+      status TEXT NOT NULL,
+      threshold REAL DEFAULT 350,
+      source TEXT DEFAULT 'chartink-dashboard-508179',
+      recorded_at TIMESTAMPTZ DEFAULT NOW(),
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_breadth_recorded ON market_breadth (recorded_at DESC)
+  `);
+
+  // Load latest breadth reading
+  try {
+    const { rows } = await db.query(`
+      SELECT ratio, status, threshold, source,
+             to_char(recorded_at AT TIME ZONE '${TZ}', 'HH12:MI AM') AS time_ist,
+             recorded_at
+        FROM market_breadth
+       ORDER BY recorded_at DESC LIMIT 1
+    `);
+    if (rows.length) {
+      breadthState.ratio = parseFloat(rows[0].ratio);
+      breadthState.status = rows[0].status;
+      breadthState.threshold = parseFloat(rows[0].threshold || 350);
+      breadthState.source = rows[0].source;
+      breadthState.time_ist = rows[0].time_ist;
+      breadthState.recorded_at = rows[0].recorded_at;
+      console.log(`[breadth] loaded latest breadth state: ratio=${breadthState.ratio}, status=${breadthState.status}`);
+    }
+  } catch (err) {
+    console.warn("[breadth] warning initializing breadth cache:", err.message);
+  }
+
   // Load active push subscriptions into memory
   try {
     const res = await db.query(`SELECT subscription FROM push_subscriptions`);
@@ -161,6 +210,14 @@ const timeUtils = {
     if (day === 0 || day === 6) return false;
     const mins = now.hours() * 60 + now.minutes();
     return mins >= 9 * 60 + 10 && mins <= 15 * 60 + 5;
+  },
+  // Returns true if current IST time is within active market trading hours (9:15 AM – 3:30 PM IST, Mon–Fri)
+  isMarketHoursIST: () => {
+    const now = moment().tz(TZ);
+    const day = now.day(); // 0=Sun … 6=Sat
+    if (day === 0 || day === 6) return false;
+    const mins = now.hours() * 60 + now.minutes();
+    return mins >= 9 * 60 + 15 && mins <= 15 * 60 + 30;
   },
 };
 
@@ -257,6 +314,11 @@ const dbUtils = {
 // --- In-memory cache ---
 let cache = { live: [], history: [] };
 
+function broadcastBreadth() {
+  const payload = JSON.stringify({ type: "breadth", breadth: breadthState });
+  wss.clients.forEach((c) => c.readyState === WebSocket.OPEN && c.send(payload));
+}
+
 async function refreshCache(full = false, deltaLive = []) {
   const broadcast = (payload) =>
     wss.clients.forEach((c) => c.readyState === WebSocket.OPEN && c.send(payload));
@@ -272,7 +334,12 @@ async function refreshCache(full = false, deltaLive = []) {
     cache.live    = live;
     cache.history = history;
 
-    broadcast(JSON.stringify({ type: "init", liveStocks: live, historyStocks: history }));
+    broadcast(JSON.stringify({
+      type: "init",
+      liveStocks: live,
+      historyStocks: history,
+      breadth: breadthState,
+    }));
   } else if (deltaLive.length) {
     // Fast in-memory update without hitting PostgreSQL on every webhook delta
     const byStock = new Map(cache.live.map((item) => [item.stock, item]));
@@ -375,6 +442,7 @@ wss.on("connection", (ws) => {
     type: "init",
     liveStocks: cache.live,
     historyStocks: cache.history,
+    breadth: breadthState,
   }));
 });
 
@@ -547,6 +615,78 @@ async function notifyPush(items) {
   }
 }
 
+// --- Market Breadth Helper ---
+async function updateBreadth(ratioVal, source = "manual", thresholdVal = null) {
+  const ratio = parseFloat(ratioVal);
+  if (isNaN(ratio) || !isFinite(ratio)) {
+    throw new Error("Invalid ratio value: must be a finite number");
+  }
+
+  const threshold = thresholdVal != null && !isNaN(parseFloat(thresholdVal))
+    ? parseFloat(thresholdVal)
+    : (breadthState.threshold || 350);
+
+  const oldStatus = breadthState.status;
+  const status = ratio > threshold ? "GO" : "NO_GO";
+  const now = new Date();
+  const timeIst = moment().tz(TZ).format("hh:mm A");
+
+  breadthState.ratio = Math.round(ratio * 100) / 100;
+  breadthState.status = status;
+  breadthState.threshold = threshold;
+  breadthState.recorded_at = now;
+  breadthState.time_ist = timeIst;
+  breadthState.source = source;
+  breadthState.lastCheck = now;
+
+  try {
+    await db.query(
+      `INSERT INTO market_breadth (ratio, status, threshold, source, recorded_at) VALUES ($1, $2, $3, $4, $5)`,
+      [breadthState.ratio, status, threshold, source, now]
+    );
+  } catch (err) {
+    console.error("[breadth] failed to persist:", err.message);
+  }
+
+  broadcastBreadth();
+
+  // If status flipped, notify via Telegram and Web Push!
+  if (oldStatus !== status) {
+    const isGo = status === "GO";
+    const banner = isGo
+      ? "🟢 <b>MARKET BREADTH REGIME: TRADE ON (GO)</b>"
+      : "🔴 <b>MARKET BREADTH REGIME: NO TRADING (NO-GO)</b>";
+    const advice = isGo
+      ? "✅ Intraday market breadth ratio is strong (&gt;350). Intraday long trades permitted."
+      : "⛔ Intraday market breadth ratio is weak (≤350). Do NOT open new intraday positions!";
+
+    const msg = `${banner}\n\n` +
+      `📊 <b>Ratio (4.5R):</b> <code>${breadthState.ratio.toFixed(2)}</code>\n` +
+      `🎯 <b>Threshold:</b> &gt; ${threshold}\n` +
+      `⏱ <b>Time:</b> ${timeIst} IST\n` +
+      `📡 <b>Source:</b> ${escapeHtml(source)}\n\n` +
+      `${advice}`;
+
+    sendTelegramRaw(msg).catch((err) => {
+      console.warn("[telegram] failed to send breadth notice:", err.message);
+    });
+
+    if (webpush && pushSubscriptions.size) {
+      const pushMsg = JSON.stringify({
+        title: isGo ? "🟢 Breadth GO: Trading Allowed" : "🔴 Breadth NO-GO: Trading Blocked",
+        body: `Ratio 4.5R is ${breadthState.ratio.toFixed(1)} (${isGo ? 'Permitted' : 'Do not open positions'}).`,
+        stock: "BREADTH",
+        price: breadthState.ratio,
+      });
+      for (const [endpoint, sub] of pushSubscriptions.entries()) {
+        webpush.sendNotification(sub, pushMsg).catch(() => {});
+      }
+    }
+  }
+
+  return breadthState;
+}
+
 // Health check (also used by keep-alive pings)
 app.get("/health", (req, res) =>
   res.json({
@@ -554,9 +694,47 @@ app.get("/health", (req, res) =>
     uptime: Math.floor(process.uptime()),
     clients: wss.clients.size,
     pushSubscribers: pushSubscriptions.size,
+    breadth: breadthState,
     telegramConfigured: Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),
   })
 );
+
+// --- Market Breadth API Endpoints ---
+app.get("/api/breadth", async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT id, ratio, status, threshold, source,
+              to_char(recorded_at AT TIME ZONE '${TZ}', 'YYYY-MM-DD') AS date_ist,
+              to_char(recorded_at AT TIME ZONE '${TZ}', 'HH12:MI AM') AS time_ist,
+              EXTRACT(EPOCH FROM (recorded_at AT TIME ZONE '${TZ}'))*1000 AS ts_ist,
+              recorded_at
+         FROM market_breadth
+        ORDER BY recorded_at DESC LIMIT 50`
+    );
+    res.json({
+      status: "ok",
+      current: breadthState,
+      history: rows,
+    });
+  } catch (err) {
+    console.error("[/api/breadth GET]", err.message);
+    res.status(500).json({ error: err.message, current: breadthState, history: [] });
+  }
+});
+
+app.post("/api/breadth", async (req, res) => {
+  try {
+    const { ratio, source, threshold } = req.body || {};
+    if (ratio == null || isNaN(parseFloat(ratio))) {
+      return res.status(400).json({ error: "Missing or invalid 'ratio' value. Must be a number." });
+    }
+    const result = await updateBreadth(ratio, source || "manual", threshold);
+    res.json({ status: "ok", breadth: result });
+  } catch (err) {
+    console.error("[/api/breadth POST]", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Web Push VAPID public key endpoint
 app.get("/vapid-public-key", (req, res) => {
@@ -705,6 +883,81 @@ setInterval(async () => {
     console.error("[cleanup]", e.message);
   }
 }, 60 * 60 * 1000);
+
+// Smart Chartink Market Breadth Poller (Dashboard 508179 - 4.5R Ratio)
+// Only polls during active trading hours (09:15–15:30 IST, Mon–Fri) AND when active WebSocket clients are connected.
+// Outside market hours or when zero users are connected, Render sleeps undisturbed.
+async function pollChartinkBreadth() {
+  if (!timeUtils.isMarketHoursIST()) {
+    return; // Outside NSE trading hours -> sleep
+  }
+  if (wss.clients.size === 0) {
+    return; // No connected clients -> sleep
+  }
+
+  try {
+    const dashRes = await fetch("https://chartink.com/dashboard/508179", {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+      signal: AbortSignal.timeout(10000)
+    });
+
+    if (!dashRes.ok) return;
+    const html = await dashRes.text();
+    const csrfMatch = html.match(/<meta name="csrf-token" content="([^"]+)"/);
+    if (!csrfMatch) return;
+    const csrf = csrfMatch[1];
+
+    let cookieHeader = "";
+    if (typeof dashRes.headers.getSetCookie === "function") {
+      cookieHeader = dashRes.headers.getSetCookie().map(c => c.split(";")[0]).join("; ");
+    } else {
+      const raw = dashRes.headers.get("set-cookie");
+      cookieHeader = raw ? raw.split(",").map(c => c.split(";")[0].trim()).join("; ") : "";
+    }
+
+    const form = new URLSearchParams();
+    form.set("scan_clause", "( {cash} 1 = 1 )");
+    form.set("column_clause", '( ( groupcount( {cash} 1 where daily "close - 1 candle ago close / 1 candle ago close * 100" >= 4.5 ) * 100 ) / ( groupcount( {cash} 1 where daily "close - 1 candle ago close / 1 candle ago close * 100" <= -4.5 ) ) ) as \'4.5R\'');
+    form.set("order_clause", "ORDER BY 1 desc");
+
+    const postRes = await fetch("https://chartink.com/screener/process", {
+      method: "POST",
+      headers: {
+        "Host": "chartink.com",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "X-CSRF-TOKEN": csrf,
+        "X-Requested-With": "XMLHttpRequest",
+        "Cookie": cookieHeader,
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Referer": "https://chartink.com/dashboard/508179",
+        "Origin": "https://chartink.com",
+      },
+      body: form.toString(),
+      signal: AbortSignal.timeout(12000)
+    });
+
+    if (!postRes.ok) return;
+    const json = await postRes.json();
+    if (Array.isArray(json?.data) && json.data.length > 0) {
+      const row = json.data[0];
+      const val = row["4.5R"] ?? row["4.5r"] ?? row["ratio"] ?? Object.values(row)[0];
+      const parsedVal = parseFloat(val);
+      if (!isNaN(parsedVal) && isFinite(parsedVal)) {
+        await updateBreadth(parsedVal, "chartink-server-poller");
+        console.log(`[breadth] poller updated ratio to ${parsedVal}`);
+      }
+    }
+  } catch (err) {
+    console.warn(`[breadth] poller notice: ${err.message}`);
+  }
+}
+
+setInterval(pollChartinkBreadth, 2 * 60 * 1000);
 
 // Self-ping every 4 min during market keep-alive window (9:10–15:05 IST, Mon–Fri)
 // Prevents Render free-tier from sleeping during market hours.
