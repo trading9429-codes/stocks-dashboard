@@ -1139,9 +1139,8 @@ async function getChartinkSession(forceRefresh = false) {
 }
 
 async function fetchAndUpdateChartinkBreadth(force = false) {
-  if (!force) {
-    if (!timeUtils.isMarketHoursIST()) return null;
-    if (wss.clients.size === 0) return null;
+  if (!force && !timeUtils.isMarketHoursIST()) {
+    return null; // Strictly auto-fetch only during NSE market hours (09:15–15:30 IST, Mon–Fri)
   }
   if (isBreadthPolling) return null;
 
@@ -1192,7 +1191,7 @@ app.post("/api/breadth/poll", async (req, res) => {
   }
 });
 
-// Live auto-fetch every 45s during NSE market hours while clients are connected
+// Live auto-fetch every 45s strictly during NSE market hours (09:15–15:30 IST, Mon–Fri)
 setInterval(() => {
   fetchAndUpdateChartinkBreadth(false).catch((err) => {
     console.warn(`[breadth] poller notice: ${err.message}`);
@@ -1234,10 +1233,12 @@ async function main() {
     }
     server.listen(PORT, () => {
       console.log(`[server] listening on port ${PORT}`);
-      // Initial non-blocking 4.5R breadth sync on startup
-      fetchAndUpdateChartinkBreadth(true).catch((err) => {
-        console.warn(`[breadth] initial startup sync notice: ${err.message}`);
-      });
+      // Auto-fetch on boot only during market hours (or if no reading exists yet in DB)
+      if (timeUtils.isMarketHoursIST() || breadthState.ratio == null) {
+        fetchAndUpdateChartinkBreadth(breadthState.ratio == null).catch((err) => {
+          console.warn(`[breadth] initial startup sync notice: ${err.message}`);
+        });
+      }
     });
   } catch (e) {
     console.error("[startup] fatal:", e);
