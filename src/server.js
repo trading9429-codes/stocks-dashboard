@@ -1053,80 +1053,103 @@ setInterval(async () => {
   }
 }, 60 * 60 * 1000);
 
-// Smart Chartink Market Breadth Poller (Dashboard 508179 - 4.5R Ratio)
-// Only polls during active trading hours (09:15–15:30 IST, Mon–Fri) AND when active WebSocket clients are connected.
-// Outside market hours or when zero users are connected, Render sleeps undisturbed.
-async function pollChartinkBreadth() {
-  if (!timeUtils.isMarketHoursIST()) {
-    return; // Outside NSE trading hours -> sleep
+// Smart Chartink Market Breadth Poller (4.5R Ratio)
+// Computes (count >= +4.5% * 100) / (count <= -4.5%) directly from Chartink /screener/process.
+// Automatically polls during active trading hours (09:15–15:30 IST, Mon–Fri) when clients are connected.
+async function fetchChartinkScanCount(csrf, cookieHeader, scanClause) {
+  const form = new URLSearchParams();
+  form.set("scan_clause", scanClause);
+
+  const res = await fetch("https://chartink.com/screener/process", {
+    method: "POST",
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+      "Accept": "application/json, text/plain, */*",
+      "Accept-Language": "en-US,en;q=0.9",
+      "X-CSRF-TOKEN": csrf,
+      "X-Requested-With": "XMLHttpRequest",
+      "Cookie": cookieHeader,
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+      "Referer": "https://chartink.com/screener",
+      "Origin": "https://chartink.com",
+    },
+    body: form.toString(),
+    signal: AbortSignal.timeout(12000),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Chartink HTTP ${res.status}`);
   }
-  if (wss.clients.size === 0) {
-    return; // No connected clients -> sleep
-  }
-
-  try {
-    const dashRes = await fetch("https://chartink.com/dashboard/508179", {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      },
-      signal: AbortSignal.timeout(10000)
-    });
-
-    if (!dashRes.ok) return;
-    const html = await dashRes.text();
-    const csrfMatch = html.match(/<meta name="csrf-token" content="([^"]+)"/);
-    if (!csrfMatch) return;
-    const csrf = csrfMatch[1];
-
-    let cookieHeader = "";
-    if (typeof dashRes.headers.getSetCookie === "function") {
-      cookieHeader = dashRes.headers.getSetCookie().map(c => c.split(";")[0]).join("; ");
-    } else {
-      const raw = dashRes.headers.get("set-cookie");
-      cookieHeader = raw ? raw.split(",").map(c => c.split(";")[0].trim()).join("; ") : "";
-    }
-
-    const form = new URLSearchParams();
-    form.set("scan_clause", "( {cash} 1 = 1 )");
-    form.set("column_clause", '( ( groupcount( {cash} 1 where daily "close - 1 candle ago close / 1 candle ago close * 100" >= 4.5 ) * 100 ) / ( groupcount( {cash} 1 where daily "close - 1 candle ago close / 1 candle ago close * 100" <= -4.5 ) ) ) as \'4.5R\'');
-    form.set("order_clause", "ORDER BY 1 desc");
-
-    const postRes = await fetch("https://chartink.com/screener/process", {
-      method: "POST",
-      headers: {
-        "Host": "chartink.com",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "en-US,en;q=0.9",
-        "X-CSRF-TOKEN": csrf,
-        "X-Requested-With": "XMLHttpRequest",
-        "Cookie": cookieHeader,
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "Referer": "https://chartink.com/dashboard/508179",
-        "Origin": "https://chartink.com",
-      },
-      body: form.toString(),
-      signal: AbortSignal.timeout(12000)
-    });
-
-    if (!postRes.ok) return;
-    const json = await postRes.json();
-    if (Array.isArray(json?.data) && json.data.length > 0) {
-      const row = json.data[0];
-      const val = row["4.5R"] ?? row["4.5r"] ?? row["ratio"] ?? Object.values(row)[0];
-      const parsedVal = parseFloat(val);
-      if (!isNaN(parsedVal) && isFinite(parsedVal)) {
-        await updateBreadth(parsedVal, "chartink-server-poller");
-        console.log(`[breadth] poller updated ratio to ${parsedVal}`);
-      }
-    }
-  } catch (err) {
-    console.warn(`[breadth] poller notice: ${err.message}`);
-  }
+  const json = await res.json();
+  return Number(json?.recordsTotal ?? json?.data?.length ?? 0);
 }
 
-setInterval(pollChartinkBreadth, 2 * 60 * 1000);
+async function fetchAndUpdateChartinkBreadth(force = false) {
+  if (!force) {
+    if (!timeUtils.isMarketHoursIST()) return null;
+    if (wss.clients.size === 0) return null;
+  }
+
+  const dashRes = await fetch("https://chartink.com/dashboard/508179", {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    },
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!dashRes.ok) {
+    throw new Error(`Chartink dashboard HTTP ${dashRes.status}`);
+  }
+  const html = await dashRes.text();
+  const csrfMatch = html.match(/<meta name="csrf-token" content="([^"]+)"/);
+  if (!csrfMatch) {
+    throw new Error("Chartink CSRF token not found");
+  }
+  const csrf = csrfMatch[1];
+
+  let cookieHeader = "";
+  if (typeof dashRes.headers.getSetCookie === "function") {
+    cookieHeader = dashRes.headers.getSetCookie().map(c => c.split(";")[0]).join("; ");
+  } else {
+    const raw = dashRes.headers.get("set-cookie") || "";
+    const parts = raw.match(/(?:XSRF-TOKEN|ci_session)=[^;]+/g) || [];
+    cookieHeader = parts.join("; ");
+  }
+
+  const upClause = "( {cash} ( ( ( latest close - 1 day ago close ) / 1 day ago close ) * 100 >= 4.5 ) )";
+  const dnClause = "( {cash} ( ( ( latest close - 1 day ago close ) / 1 day ago close ) * 100 <= -4.5 ) )";
+
+  const [upCount, downCount] = await Promise.all([
+    fetchChartinkScanCount(csrf, cookieHeader, upClause),
+    fetchChartinkScanCount(csrf, cookieHeader, dnClause),
+  ]);
+
+  const ratio = downCount > 0
+    ? Math.round(((upCount * 100) / downCount) * 100) / 100
+    : (upCount > 0 ? upCount * 100 : 0);
+
+  const source = force ? "chartink-manual-sync" : "chartink-server-poller";
+  const breadth = await updateBreadth(ratio, source);
+  console.log(`[breadth] synced 4.5R=${breadth.ratio} (Up >=4.5%: ${upCount}, Down <=-4.5%: ${downCount})`);
+  return { breadth, upCount, downCount };
+}
+
+app.post("/api/breadth/poll", async (req, res) => {
+  try {
+    const result = await fetchAndUpdateChartinkBreadth(true);
+    res.json({ status: "ok", ...result });
+  } catch (err) {
+    console.warn("[/api/breadth/poll]", err.message);
+    res.status(502).json({ error: err.message });
+  }
+});
+
+setInterval(() => {
+  fetchAndUpdateChartinkBreadth(false).catch((err) => {
+    console.warn(`[breadth] poller notice: ${err.message}`);
+  });
+}, 2 * 60 * 1000);
 
 // Self-ping every 4 min during market keep-alive window (9:10–15:05 IST, Mon–Fri)
 // Prevents Render free-tier from sleeping during market hours.
@@ -1161,9 +1184,13 @@ async function main() {
     } else {
       console.log("[telegram] disabled — TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set");
     }
-    server.listen(PORT, () =>
-      console.log(`[server] listening on port ${PORT}`)
-    );
+    server.listen(PORT, () => {
+      console.log(`[server] listening on port ${PORT}`);
+      // Initial non-blocking 4.5R breadth sync on startup
+      fetchAndUpdateChartinkBreadth(true).catch((err) => {
+        console.warn(`[breadth] initial startup sync notice: ${err.message}`);
+      });
+    });
   } catch (e) {
     console.error("[startup] fatal:", e);
     process.exit(1);
