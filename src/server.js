@@ -101,28 +101,39 @@ const db = new Pool({
         : { rejectUnauthorized: false },
 });
 
+// --- Alert Gating Rules (persisted in app_settings) ---
+let alertRules = {
+  gateByBreadth: false,      // mute Telegram/Push/Sound when breadth == NO_GO
+  highConvictionOnly: false, // only alert when rel_vol >= minRelVol or multi-scan >= 2
+  minRelVol: 2.0,
+  mutedScans: [],
+};
+
 async function initDB() {
   await db.query(`
     CREATE TABLE IF NOT EXISTS stocks (
-      stock         TEXT PRIMARY KEY,
-      trigger_price REAL,
-      datetime      TIMESTAMPTZ,
-      count         INTEGER,
-      lastUpdated   TIMESTAMPTZ,
-      scan_name     TEXT,
-      scan_url      TEXT,
-      alert_name    TEXT,
-      scans         JSONB DEFAULT '[]'::jsonb,
-      sector        TEXT,
-      rel_vol       REAL,
-      pct_change    REAL,
-      adr_pct       REAL,
-      extra_data    JSONB DEFAULT '{}'::jsonb
+      stock          TEXT NOT NULL,
+      trade_date_ist DATE NOT NULL DEFAULT (NOW() AT TIME ZONE '${TZ}')::date,
+      trigger_price  REAL,
+      datetime       TIMESTAMPTZ,
+      count          INTEGER,
+      lastUpdated    TIMESTAMPTZ,
+      scan_name      TEXT,
+      scan_url       TEXT,
+      alert_name     TEXT,
+      scans          JSONB DEFAULT '[]'::jsonb,
+      sector         TEXT,
+      rel_vol        REAL,
+      pct_change     REAL,
+      adr_pct        REAL,
+      extra_data     JSONB DEFAULT '{}'::jsonb,
+      PRIMARY KEY (stock, trade_date_ist)
     )
   `);
 
   // Safe incremental migrations for existing tables
   await db.query(`
+    ALTER TABLE stocks ADD COLUMN IF NOT EXISTS trade_date_ist DATE;
     ALTER TABLE stocks ADD COLUMN IF NOT EXISTS scans JSONB DEFAULT '[]'::jsonb;
     ALTER TABLE stocks ADD COLUMN IF NOT EXISTS sector TEXT;
     ALTER TABLE stocks ADD COLUMN IF NOT EXISTS rel_vol REAL;
@@ -130,6 +141,47 @@ async function initDB() {
     ALTER TABLE stocks ADD COLUMN IF NOT EXISTS adr_pct REAL;
     ALTER TABLE stocks ADD COLUMN IF NOT EXISTS extra_data JSONB DEFAULT '{}'::jsonb;
   `);
+
+  // Backfill trade_date_ist and migrate single-column PK (stock) -> composite PK (stock, trade_date_ist)
+  await db.query(`
+    UPDATE stocks
+       SET trade_date_ist = (COALESCE(datetime, NOW()) AT TIME ZONE '${TZ}')::date
+     WHERE trade_date_ist IS NULL;
+    ALTER TABLE stocks ALTER COLUMN trade_date_ist SET NOT NULL;
+  `);
+
+  try {
+    const pkRes = await db.query(`
+      SELECT c.conname, array_length(c.conkey, 1) AS col_count
+        FROM pg_constraint c
+        JOIN pg_class t ON c.conrelid = t.oid
+       WHERE t.relname = 'stocks' AND c.contype = 'p'
+    `);
+    if (pkRes.rows.length && Number(pkRes.rows[0].col_count) === 1) {
+      const pkName = pkRes.rows[0].conname.replace(/"/g, '""');
+      await db.query(`ALTER TABLE stocks DROP CONSTRAINT "${pkName}"`);
+      await db.query(`ALTER TABLE stocks ADD PRIMARY KEY (stock, trade_date_ist)`);
+      console.log("[db] migrated stocks PK to composite (stock, trade_date_ist)");
+    }
+  } catch (err) {
+    console.warn("[db] PK migration notice:", err.message);
+  }
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key   TEXT PRIMARY KEY,
+      value JSONB NOT NULL
+    )
+  `);
+
+  try {
+    const ruleRes = await db.query(`SELECT value FROM app_settings WHERE key = 'alert_rules'`);
+    if (ruleRes.rows.length && ruleRes.rows[0].value) {
+      alertRules = { ...alertRules, ...ruleRes.rows[0].value };
+    }
+  } catch (err) {
+    console.warn("[db] could not load alert_rules:", err.message);
+  }
 
   await db.query(`
     CREATE TABLE IF NOT EXISTS push_subscriptions (
@@ -265,12 +317,14 @@ const dbUtils = {
     const vals  = [];
     const parts = [];
     items.forEach((it, i) => {
-      const b = i * 14;
+      const b = i * 15;
+      const tradeDateIST = moment(it.datetimeUTC).tz(TZ).format("YYYY-MM-DD");
       parts.push(
-        `($${b+1},$${b+2},$${b+3},$${b+4},$${b+5},$${b+6},$${b+7},$${b+8},$${b+9}::jsonb,$${b+10},$${b+11},$${b+12},$${b+13},$${b+14}::jsonb)`
+        `($${b+1},$${b+2}::date,$${b+3},$${b+4},$${b+5},$${b+6},$${b+7},$${b+8},$${b+9},$${b+10}::jsonb,$${b+11},$${b+12},$${b+13},$${b+14},$${b+15}::jsonb)`
       );
       vals.push(
         it.stock,
+        tradeDateIST,
         it.trigger_price,
         it.datetimeUTC,
         1,
@@ -290,14 +344,11 @@ const dbUtils = {
     const { rows } = await db.query(
       `WITH upserted AS (
          INSERT INTO stocks
-           (stock, trigger_price, datetime, count, lastUpdated, scan_name, scan_url, alert_name, scans, sector, rel_vol, pct_change, adr_pct, extra_data)
+           (stock, trade_date_ist, trigger_price, datetime, count, lastUpdated, scan_name, scan_url, alert_name, scans, sector, rel_vol, pct_change, adr_pct, extra_data)
          VALUES ${parts.join(",")}
-         ON CONFLICT (stock) DO UPDATE SET
+         ON CONFLICT (stock, trade_date_ist) DO UPDATE SET
            trigger_price = EXCLUDED.trigger_price,
            count         = CASE
-                             -- If existing record was from a previous day (IST), reset count to 1 for today
-                             WHEN date_trunc('day', stocks.datetime AT TIME ZONE '${TZ}') != date_trunc('day', EXCLUDED.datetime AT TIME ZONE '${TZ}')
-                               THEN 1
                              -- If alert arrived at the same time (same minute IST or within 60 seconds), do not increment count
                              WHEN date_trunc('minute', stocks.datetime AT TIME ZONE '${TZ}') = date_trunc('minute', EXCLUDED.datetime AT TIME ZONE '${TZ}')
                                OR abs(EXTRACT(EPOCH FROM (EXCLUDED.datetime - stocks.datetime))) < 60
@@ -305,19 +356,12 @@ const dbUtils = {
                              -- Different candle / later time today: increment trigger count
                              ELSE stocks.count + 1
                            END,
-           datetime      = CASE
-                             WHEN date_trunc('day', stocks.datetime AT TIME ZONE '${TZ}') != date_trunc('day', EXCLUDED.datetime AT TIME ZONE '${TZ}')
-                               THEN EXCLUDED.datetime
-                             ELSE GREATEST(stocks.datetime, EXCLUDED.datetime)
-                           END,
+           datetime      = GREATEST(stocks.datetime, EXCLUDED.datetime),
            lastUpdated   = EXCLUDED.lastUpdated,
            scan_name     = EXCLUDED.scan_name,
            scan_url      = EXCLUDED.scan_url,
            alert_name    = EXCLUDED.alert_name,
            scans         = CASE
-                             -- New trading day: start fresh with today's scan
-                             WHEN date_trunc('day', stocks.datetime AT TIME ZONE '${TZ}') != date_trunc('day', EXCLUDED.datetime AT TIME ZONE '${TZ}')
-                               THEN CASE WHEN EXCLUDED.scan_name IS NULL THEN '[]'::jsonb ELSE jsonb_build_array(EXCLUDED.scan_name) END
                              WHEN EXCLUDED.scan_name IS NULL THEN COALESCE(stocks.scans, '[]'::jsonb)
                              WHEN COALESCE(stocks.scans, '[]'::jsonb) @> jsonb_build_array(EXCLUDED.scan_name) THEN COALESCE(stocks.scans, '[]'::jsonb)
                              ELSE COALESCE(stocks.scans, '[]'::jsonb) || jsonb_build_array(EXCLUDED.scan_name)
@@ -345,6 +389,21 @@ const dbUtils = {
 // --- In-memory cache ---
 let cache = { live: [], history: [] };
 
+function attachStreakDays(rows) {
+  const dayMap = new Map();
+  cache.history.forEach((h) => {
+    if (!h.stock || !h.date_ist) return;
+    const key = h.stock.toUpperCase();
+    if (!dayMap.has(key)) dayMap.set(key, new Set());
+    dayMap.get(key).add(h.date_ist);
+  });
+  return rows.map((r) => {
+    const key = r.stock ? r.stock.toUpperCase() : "";
+    const pastDays = dayMap.get(key) ? dayMap.get(key).size : 0;
+    return { ...r, streak_days: pastDays + 1 };
+  });
+}
+
 function broadcastBreadth() {
   const payload = JSON.stringify({ type: "breadth", breadth: breadthState });
   wss.clients.forEach((c) => c.readyState === WebSocket.OPEN && c.send(payload));
@@ -358,29 +417,31 @@ async function refreshCache(full = false, deltaLive = []) {
     const { startUTC, endUTC }  = timeUtils.dayBoundsUTC();
     const fiveDaysAgoUTC = moment(startUTC).subtract(RETENTION_DAYS, "days").toDate();
 
-    const [live, history] = await Promise.all([
+    const [liveRaw, history] = await Promise.all([
       dbUtils.getRangeIST(startUTC, endUTC),
       dbUtils.getRangeIST(fiveDaysAgoUTC, startUTC),
     ]);
-    cache.live    = live;
     cache.history = history;
+    cache.live    = attachStreakDays(liveRaw);
 
     broadcast(JSON.stringify({
       type: "init",
-      liveStocks: live,
-      historyStocks: history,
+      liveStocks: cache.live,
+      historyStocks: cache.history,
       breadth: breadthState,
+      alertRules,
     }));
   } else if (deltaLive.length) {
+    const enrichedDelta = attachStreakDays(deltaLive);
     // Fast in-memory update without hitting PostgreSQL on every webhook delta
     const byStock = new Map(cache.live.map((item) => [item.stock, item]));
-    deltaLive.forEach((row) => {
+    enrichedDelta.forEach((row) => {
       byStock.set(row.stock, row);
     });
     // Keep sorted by latest timestamp descending
     cache.live = Array.from(byStock.values()).sort((a, b) => (b.ts_ist ?? 0) - (a.ts_ist ?? 0));
 
-    broadcast(JSON.stringify({ type: "delta", liveDelta: deltaLive }));
+    broadcast(JSON.stringify({ type: "delta", liveDelta: enrichedDelta }));
   }
 }
 
@@ -610,6 +671,7 @@ wss.on("connection", (ws) => {
     liveStocks: cache.live,
     historyStocks: cache.history,
     breadth: breadthState,
+    alertRules,
   }));
 
   // Trigger immediate live 4.5R refresh on connect during market hours if stale (>30s)
@@ -740,6 +802,25 @@ function sendTelegramRaw(text) {
   });
 }
 
+function shouldNotifyItem(it) {
+  if (!it) return false;
+  if (alertRules.gateByBreadth && breadthState.status === "NO_GO") {
+    return false;
+  }
+  const scanName = String(it.scan_name || "").trim().toLowerCase();
+  if (scanName && Array.isArray(alertRules.mutedScans)) {
+    const isMuted = alertRules.mutedScans.some((m) => String(m).trim().toLowerCase() === scanName);
+    if (isMuted) return false;
+  }
+  if (alertRules.highConvictionOnly) {
+    const minRv = Number(alertRules.minRelVol) || 2.0;
+    const hasHighVol = it.rel_vol != null && Number(it.rel_vol) >= minRv;
+    const hasConfluence = Array.isArray(it.scans) && it.scans.length >= 2;
+    if (!hasHighVol && !hasConfluence) return false;
+  }
+  return true;
+}
+
 function notifyTelegram(items) {
   const token  = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -748,7 +829,7 @@ function notifyTelegram(items) {
   }
   if (!items?.length) return;
 
-  items.forEach((it) => {
+  items.filter(shouldNotifyItem).forEach((it) => {
     const text = formatTelegramMessage(it);
     sendTelegramRaw(text).catch((err) => {
       console.error(`[telegram] failed to send alert for ${it.stock}:`, err.message);
@@ -760,7 +841,7 @@ function notifyTelegram(items) {
 async function notifyPush(items) {
   if (!webpush || !pushSubscriptions.size || !items?.length) return;
 
-  for (const it of items) {
+  for (const it of items.filter(shouldNotifyItem)) {
     const isHighVol = Number(it.rel_vol) >= 2.0;
     const volTag = (it.rel_vol != null && !isNaN(Number(it.rel_vol)))
       ? ` · Vol: ${Number(it.rel_vol).toFixed(1)}x${isHighVol ? '🔥' : ''}`
@@ -1197,6 +1278,139 @@ setInterval(() => {
     console.warn(`[breadth] poller notice: ${err.message}`);
   });
 }, 45 * 1000);
+
+// --- Smart Alert Gating Rules API ---
+app.get("/api/alert-rules", (req, res) => {
+  res.json({ status: "ok", alertRules });
+});
+
+app.post("/api/alert-rules", async (req, res) => {
+  try {
+    const body = req.body || {};
+    alertRules = {
+      gateByBreadth: Boolean(body.gateByBreadth),
+      highConvictionOnly: Boolean(body.highConvictionOnly),
+      minRelVol: Number.isFinite(parseFloat(body.minRelVol)) ? parseFloat(body.minRelVol) : 2.0,
+      mutedScans: Array.isArray(body.mutedScans)
+        ? body.mutedScans.map((s) => String(s).trim()).filter(Boolean)
+        : [],
+    };
+    await db.query(
+      `INSERT INTO app_settings (key, value) VALUES ('alert_rules', $1::jsonb)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+      [JSON.stringify(alertRules)]
+    );
+    const payload = JSON.stringify({ type: "alertRules", alertRules });
+    wss.clients.forEach((c) => c.readyState === WebSocket.OPEN && c.send(payload));
+    res.json({ status: "ok", alertRules });
+  } catch (err) {
+    console.error("[/api/alert-rules POST]", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- Automated 3:35 PM IST EOD Telegram Summary ---
+let lastEodSentDateIST = null;
+
+async function sendEodTelegramDigest() {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) {
+    throw new Error("Telegram bot not configured");
+  }
+
+  const todayIST = moment().tz(TZ).format("YYYY-MM-DD");
+  const { startUTC, endUTC } = timeUtils.dayBoundsUTC();
+  const [liveRows, breadthRes] = await Promise.all([
+    dbUtils.getRangeIST(startUTC, endUTC),
+    db.query(
+      `SELECT ratio, status FROM market_breadth
+        WHERE recorded_at >= $1 AND recorded_at < $2
+        ORDER BY recorded_at ASC`,
+      [startUTC, endUTC]
+    ),
+  ]);
+
+  const ratios = breadthRes.rows.map((r) => Number(r.ratio)).filter(Number.isFinite);
+  const bHigh = ratios.length ? Math.max(...ratios).toFixed(1) : "—";
+  const bLow  = ratios.length ? Math.min(...ratios).toFixed(1) : "—";
+  const bClose = ratios.length ? ratios[ratios.length - 1].toFixed(1) : (breadthState.ratio != null ? breadthState.ratio.toFixed(1) : "—");
+  const bRegime = breadthState.status === "GO" ? "🟢 GO" : (breadthState.status === "NO_GO" ? "🔴 NO-GO" : "🛡️ —");
+
+  // Top 5 Stocks by (scan confluence * 2 + count)
+  const topStocks = liveRows
+    .slice()
+    .sort((a, b) => {
+      const aScore = ((Array.isArray(a.scans) ? a.scans.length : 1) * 2) + Number(a.count || 1);
+      const bScore = ((Array.isArray(b.scans) ? b.scans.length : 1) * 2) + Number(b.count || 1);
+      return bScore - aScore;
+    })
+    .slice(0, 5);
+
+  // Top 3 Sectors by count & avg % chg
+  const secStats = {};
+  liveRows.forEach((r) => {
+    if (!r.sector) return;
+    if (!secStats[r.sector]) secStats[r.sector] = { count: 0, pctSum: 0, pctN: 0 };
+    secStats[r.sector].count++;
+    if (r.pct_change != null && Number.isFinite(Number(r.pct_change))) {
+      secStats[r.sector].pctSum += Number(r.pct_change);
+      secStats[r.sector].pctN++;
+    }
+  });
+  const topSectors = Object.entries(secStats)
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 3);
+
+  const stockLines = topStocks.length
+    ? topStocks.map((s, i) => {
+        const scansN = Array.isArray(s.scans) ? s.scans.length : 1;
+        const rv = s.rel_vol != null ? ` · ${Number(s.rel_vol).toFixed(1)}x` : "";
+        return `${i + 1}. <b>${escapeHtml(s.stock)}</b> ₹${Number(s.trigger_price || 0).toFixed(1)} (⚡${scansN} scans, ${s.count || 1}x${rv})`;
+      }).join("\n")
+    : "No signals recorded today.";
+
+  const secLines = topSectors.length
+    ? topSectors.map(([sec, st]) => {
+        const avgPct = st.pctN ? `${(st.pctSum / st.pctN) >= 0 ? "+" : ""}${(st.pctSum / st.pctN).toFixed(2)}%` : "—";
+        return `• <b>${escapeHtml(sec)}</b>: ${st.count} stocks (Avg ${avgPct})`;
+      }).join("\n")
+    : "No sector data.";
+
+  const msg =
+    `📊 <b>EOD MARKET DIGEST (${todayIST})</b>\n\n` +
+    `🛡️ <b>4.5R Breadth:</b> ${bRegime} (Close: <code>${bClose}</code> | H: ${bHigh} | L: ${bLow})\n` +
+    `📡 <b>Total Signals:</b> ${liveRows.length}\n\n` +
+    `🔥 <b>Top 5 Momentum / Confluence:</b>\n${stockLines}\n\n` +
+    `🏢 <b>Top 3 Leading Sectors:</b>\n${secLines}`;
+
+  await sendTelegramRaw(msg);
+  lastEodSentDateIST = todayIST;
+  return { sent: true, date: todayIST, signals: liveRows.length };
+}
+
+app.post("/api/eod-summary", async (req, res) => {
+  try {
+    const result = await sendEodTelegramDigest();
+    res.json({ status: "ok", ...result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Check every minute for 15:35–15:45 IST Mon–Fri EOD digest
+setInterval(() => {
+  const now = moment().tz(TZ);
+  const day = now.day();
+  if (day === 0 || day === 6) return;
+  const mins = now.hours() * 60 + now.minutes();
+  const todayIST = now.format("YYYY-MM-DD");
+  if (mins >= 15 * 60 + 35 && mins <= 15 * 60 + 45 && lastEodSentDateIST !== todayIST) {
+    sendEodTelegramDigest()
+      .then(() => console.log(`[eod] sent Telegram EOD digest for ${todayIST}`))
+      .catch((err) => console.warn("[eod] skipped/failed:", err.message));
+  }
+}, 60 * 1000);
 
 // Self-ping every 4 min during market keep-alive window (9:10–15:05 IST, Mon–Fri)
 // Prevents Render free-tier from sleeping during market hours.

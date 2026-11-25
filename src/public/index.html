@@ -3572,6 +3572,49 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════
+     SMART ALERT GATING & EOD DIGEST MODAL
+═══════════════════════════════════════════════════ -->
+<div id="rules-modal" class="modal-overlay hidden">
+  <div class="modal" style="width: min(460px, calc(100vw - 28px));">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div>
+        <span class="breadth-badge" style="background:rgba(59,130,246,0.16);color:#93c5fd;">🎛️ ZERO-NOISE ALERT ENGINE</span>
+        <h3 style="margin:2px 0 0;font-size:16px;">Smart Alert Rules</h3>
+      </div>
+      <button id="rules-close" class="modal-close-x" title="Close (Esc)">×</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;cursor:pointer;">
+        <input type="checkbox" id="rule-gate-breadth" style="margin-top:3px;accent-color:#10b981;width:16px;height:16px;" />
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);">🛡️ Mute Alerts on Breadth NO-GO (≤350)</div>
+          <div style="font-size:11.5px;color:var(--text-dim);">Silences sound, voice, and Telegram/push alerts when 4.5R ≤ 350 (still logs stocks to table).</div>
+        </div>
+      </label>
+
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;cursor:pointer;">
+        <input type="checkbox" id="rule-high-conv" style="margin-top:3px;accent-color:#10b981;width:16px;height:16px;" />
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);">🔥 High-Conviction Alerts Only</div>
+          <div style="font-size:11.5px;color:var(--text-dim);">Only alert when Rel Vol ≥ 2.0x OR Multi-Scan Confluence ≥ 2 scans.</div>
+        </div>
+      </label>
+
+      <div style="padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;">
+        <label for="rule-muted-scans" style="display:block;font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">🔇 Muted Scanner Names (comma-separated)</label>
+        <input type="text" id="rule-muted-scans" class="sizer-input" placeholder="e.g. Noisy Scan 1, Test Scan" style="font-size:12.5px;padding:7px 10px;" />
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button id="btn-save-rules" class="btn primary" type="button" style="flex:1;padding:9px 14px;">💾 Save &amp; Sync Rules</button>
+      <button id="btn-send-eod" class="btn" type="button" style="padding:9px 12px;font-size:12px;" title="Send today's EOD Market Digest to Telegram right now">📊 Send EOD Digest</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
      HEADER
 ═══════════════════════════════════════════════════ -->
 <header>
@@ -3617,6 +3660,10 @@
       <button id="voice-btn" class="chip btn-voice" title="Toggle Voice Announcer (speaks stock name out loud)">
         <span id="voice-icon">🗣️</span>
         <span id="voice-label">Voice: OFF</span>
+      </button>
+      <button id="rules-btn" class="chip" title="Smart Alert Gating Rules & EOD Digest" style="cursor:pointer;">
+        <span>🎛️</span>
+        <span id="rules-label">Rules</span>
       </button>
       <button id="stretch-btn" class="chip btn-stretch" title="Toggle Full Width / Stretch Dashboard (W)">
         <span id="stretch-icon">↔</span>
@@ -5406,26 +5453,41 @@ function toggleStar(stock) {
   renderLive();
 }
 
-// Sector Ribbon
+// Sector Momentum Leaderboard Ribbon
 function renderSectorRibbon() {
   const ribbon = document.getElementById('sector-ribbon');
   if (!ribbon) return;
 
-  const counts = {};
+  const stats = {};
   liveData.forEach((d) => {
-    if (d.sector) {
-      counts[d.sector] = (counts[d.sector] || 0) + 1;
+    if (!d.sector) return;
+    if (!stats[d.sector]) stats[d.sector] = { count: 0, pctSum: 0, pctN: 0, rvSum: 0, rvN: 0 };
+    stats[d.sector].count++;
+    if (d.pct_change != null && Number.isFinite(Number(d.pct_change))) {
+      stats[d.sector].pctSum += Number(d.pct_change);
+      stats[d.sector].pctN++;
+    }
+    const effRv = getEffectiveRelVol(d.rel_vol);
+    if (effRv != null && effRv < 10000) {
+      stats[d.sector].rvSum += effRv;
+      stats[d.sector].rvN++;
     }
   });
 
-  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const entries = Object.entries(stats).sort((a, b) => {
+    if (b[1].count !== a[1].count) return b[1].count - a[1].count;
+    const aPct = a[1].pctN ? a[1].pctSum / a[1].pctN : 0;
+    const bPct = b[1].pctN ? b[1].pctSum / b[1].pctN : 0;
+    return bPct - aPct;
+  });
+
   if (!entries.length) {
     ribbon.style.display = 'none';
     return;
   }
 
   ribbon.style.display = 'flex';
-  ribbon.innerHTML = '<span class="ribbon-label">🏢 Sectors:</span>';
+  ribbon.innerHTML = '<span class="ribbon-label">🏢 Sector Leaders:</span>';
 
   if (activeSectorFilter) {
     const clearChip = document.createElement('button');
@@ -5438,10 +5500,18 @@ function renderSectorRibbon() {
     ribbon.appendChild(clearChip);
   }
 
-  entries.forEach(([sec, cnt]) => {
+  entries.forEach(([sec, st]) => {
     const chip = document.createElement('button');
     chip.className = 'sector-chip' + (activeSectorFilter === sec ? ' active' : '');
-    chip.innerHTML = `🏢 ${escapeHtml(sec)} <span class="sec-count">${cnt}</span>`;
+    const avgPct = st.pctN ? (st.pctSum / st.pctN) : null;
+    const avgRv = st.rvN ? (st.rvSum / st.rvN) : null;
+    const pctHtml = avgPct != null
+      ? `<span style="color:${avgPct >= 0 ? '#34d399' : '#f87171'};font-family:'JetBrains Mono',monospace;font-size:10.5px;">${avgPct >= 0 ? '+' : ''}${avgPct.toFixed(1)}%</span>`
+      : '';
+    const rvHtml = avgRv != null
+      ? `<span style="color:#93c5fd;font-family:'JetBrains Mono',monospace;font-size:10.5px;">${avgRv.toFixed(1)}x</span>`
+      : '';
+    chip.innerHTML = `🏢 ${escapeHtml(sec)} <span class="sec-count">${st.count}</span>${pctHtml}${rvHtml ? ' · ' + rvHtml : ''}`;
     chip.onclick = () => {
       activeSectorFilter = (activeSectorFilter === sec) ? null : sec;
       renderLive();
@@ -5524,6 +5594,15 @@ function buildRow(item, isHistory, hlClass) {
     badge.className = 'badge-tag upd-tag';
     badge.textContent = 'UPDATED';
     tdStock.appendChild(badge);
+  }
+
+  if (Number(item.streak_days) >= 2) {
+    const streakTag = document.createElement('span');
+    streakTag.className = 'badge-tag';
+    streakTag.style.cssText = 'background:rgba(168,85,247,0.18);border:1px solid rgba(168,85,247,0.45);color:#d8b4fe;';
+    streakTag.title = `Triggered ${item.streak_days} trading days in the last 5 days`;
+    streakTag.textContent = `📅 ${item.streak_days}d`;
+    tdStock.appendChild(streakTag);
   }
 
   if (currentBreadth.status === 'NO_GO') {
@@ -6582,8 +6661,12 @@ fetch('/api/breadth')
         historyData = Array.isArray(msg.historyStocks) ? msg.historyStocks.map(normalizeStockItem) : [];
         livePage = historyPage = 1;
         if (msg.breadth) updateBreadthUI(msg.breadth);
+        if (msg.alertRules) applyAlertRulesUI(msg.alertRules);
         renderLive();
         renderHistory();
+
+      } else if (msg.type === 'alertRules' && msg.alertRules) {
+        applyAlertRulesUI(msg.alertRules);
 
       } else if (msg.type === 'breadth' && msg.breadth) {
         updateBreadthUI(msg.breadth);
@@ -6598,41 +6681,51 @@ fetch('/api/breadth')
         let hasNew = false;
         let hasUpdate = false;
         let hasHighVol = false;
+        let hasAllowedAlert = false;
+
         msg.liveDelta.forEach(it => {
           const isNew = !liveData.some(d => d.stock === it.stock);
           const type = isNew ? 'new' : 'update';
-          if (isNew) hasNew = true; else hasUpdate = true;
-          if (Number(it.rel_vol) >= 2.0) hasHighVol = true;
+          const allowNotify = shouldAlertClient(it);
           hlMap.set(it.stock, type);
           registerHighlight(it.stock, type);
-          sendSystemNotification(it, isNew);
-          announceStock(it.stock, isNew);
-          const rvText = (it.rel_vol != null && !isNaN(Number(it.rel_vol)))
-            ? `  ·  Vol: ${Number(it.rel_vol).toFixed(1)}x${Number(it.rel_vol) >= 2 ? '🔥' : ''}`
-            : '';
-          const chgText = (it.pct_change != null && !isNaN(Number(it.pct_change)))
-            ? `  ·  ${Number(it.pct_change) > 0 ? '+' : ''}${Number(it.pct_change).toFixed(2)}%`
-            : '';
-          const secText = it.sector ? `  ·  ${it.sector}` : '';
-          showToast(
-            `${it.stock}  ${fmtPrice(it.trigger_price)}${chgText}${rvText}${secText}`,
-            type,
-            isNew ? 'New Stock Alert' : 'Stock Updated'
-          );
+
+          if (allowNotify) {
+            hasAllowedAlert = true;
+            if (isNew) hasNew = true; else hasUpdate = true;
+            if ((getEffectiveRelVol(it.rel_vol) ?? 0) >= 2.0) hasHighVol = true;
+            sendSystemNotification(it, isNew);
+            announceStock(it.stock, isNew);
+            const effRv = getEffectiveRelVol(it.rel_vol);
+            const rvText = (effRv != null && effRv < 10000)
+              ? `  ·  Vol: ${effRv < 1 ? effRv.toFixed(2) : effRv.toFixed(1)}x${effRv >= 2 ? '🔥' : ''}`
+              : '';
+            const chgText = (it.pct_change != null && !isNaN(Number(it.pct_change)))
+              ? `  ·  ${Number(it.pct_change) > 0 ? '+' : ''}${Number(it.pct_change).toFixed(2)}%`
+              : '';
+            const secText = it.sector ? `  ·  ${it.sector}` : '';
+            showToast(
+              `${it.stock}  ${fmtPrice(it.trigger_price)}${chgText}${rvText}${secText}`,
+              type,
+              isNew ? 'New Stock Alert' : 'Stock Updated'
+            );
+          }
         });
 
-        // Mobile tactile vibration pattern
-        if ('vibrate' in navigator) {
-          try {
-            if (hasHighVol) {
-              navigator.vibrate([250, 80, 250, 80, 250]); // Institutional high vol alert
-            } else if (hasNew) {
-              navigator.vibrate([150, 60, 150]);
-            }
-          } catch (_) {}
+        // Mobile tactile vibration pattern & alert sound only if not gated
+        if (hasAllowedAlert) {
+          if ('vibrate' in navigator) {
+            try {
+              if (hasHighVol) {
+                navigator.vibrate([250, 80, 250, 80, 250]);
+              } else if (hasNew) {
+                navigator.vibrate([150, 60, 150]);
+              }
+            } catch (_) {}
+          }
+          playAlert(hasNew ? 'new' : 'update');
         }
 
-        playAlert(hasNew ? 'new' : 'update');
         upsertLiveDelta(msg.liveDelta);
         renderLive(hlMap);
       }
@@ -6641,6 +6734,103 @@ fetch('/api/breadth')
 
   connect();
 })();
+
+// Smart Alert Rules Helpers & Modal Wiring
+let clientAlertRules = { gateByBreadth: false, highConvictionOnly: false, minRelVol: 2.0, mutedScans: [] };
+try {
+  const savedRules = localStorage.getItem('stocks_alert_rules');
+  if (savedRules) clientAlertRules = { ...clientAlertRules, ...JSON.parse(savedRules) };
+} catch (_) {}
+
+function applyAlertRulesUI(rules) {
+  if (!rules) return;
+  clientAlertRules = { ...clientAlertRules, ...rules };
+  try { localStorage.setItem('stocks_alert_rules', JSON.stringify(clientAlertRules)); } catch (_) {}
+  const gEl = document.getElementById('rule-gate-breadth');
+  const hEl = document.getElementById('rule-high-conv');
+  const mEl = document.getElementById('rule-muted-scans');
+  if (gEl) gEl.checked = Boolean(clientAlertRules.gateByBreadth);
+  if (hEl) hEl.checked = Boolean(clientAlertRules.highConvictionOnly);
+  if (mEl) mEl.value = Array.isArray(clientAlertRules.mutedScans) ? clientAlertRules.mutedScans.join(', ') : '';
+
+  const btn = document.getElementById('rules-btn');
+  const lbl = document.getElementById('rules-label');
+  const activeCount = (clientAlertRules.gateByBreadth ? 1 : 0)
+    + (clientAlertRules.highConvictionOnly ? 1 : 0)
+    + ((clientAlertRules.mutedScans && clientAlertRules.mutedScans.length) ? 1 : 0);
+  if (lbl) lbl.textContent = activeCount > 0 ? `Rules (${activeCount})` : 'Rules';
+  if (btn) btn.classList.toggle('active', activeCount > 0);
+}
+
+function shouldAlertClient(it) {
+  if (!it) return false;
+  if (clientAlertRules.gateByBreadth && currentBreadth.status === 'NO_GO') return false;
+  const scanName = String(it.scan_name || '').trim().toLowerCase();
+  if (scanName && Array.isArray(clientAlertRules.mutedScans)) {
+    if (clientAlertRules.mutedScans.some((m) => String(m).trim().toLowerCase() === scanName)) return false;
+  }
+  if (clientAlertRules.highConvictionOnly) {
+    const effRv = getEffectiveRelVol(it.rel_vol) ?? 0;
+    const hasHighVol = effRv >= (Number(clientAlertRules.minRelVol) || 2.0);
+    const hasConfluence = Array.isArray(it.scans) && it.scans.length >= 2;
+    if (!hasHighVol && !hasConfluence) return false;
+  }
+  return true;
+}
+
+applyAlertRulesUI(clientAlertRules);
+
+document.getElementById('rules-btn')?.addEventListener('click', () => {
+  hapticTap();
+  applyAlertRulesUI(clientAlertRules);
+  document.getElementById('rules-modal')?.classList.remove('hidden');
+});
+document.getElementById('rules-close')?.addEventListener('click', () => {
+  document.getElementById('rules-modal')?.classList.add('hidden');
+});
+document.getElementById('rules-modal')?.addEventListener('click', (e) => {
+  if (e.target === document.getElementById('rules-modal')) {
+    document.getElementById('rules-modal')?.classList.add('hidden');
+  }
+});
+document.getElementById('btn-save-rules')?.addEventListener('click', async () => {
+  const gateByBreadth = Boolean(document.getElementById('rule-gate-breadth')?.checked);
+  const highConvictionOnly = Boolean(document.getElementById('rule-high-conv')?.checked);
+  const mutedRaw = document.getElementById('rule-muted-scans')?.value || '';
+  const mutedScans = mutedRaw.split(',').map((s) => s.trim()).filter(Boolean);
+  const payload = { gateByBreadth, highConvictionOnly, minRelVol: 2.0, mutedScans };
+  applyAlertRulesUI(payload);
+  try {
+    const res = await fetch('/api/alert-rules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    showToast('Smart Alert Rules saved & synced across devices', 'new', 'Alert Rules');
+    document.getElementById('rules-modal')?.classList.add('hidden');
+  } catch (err) {
+    showToast(`Saved locally (sync warning: ${err.message})`, 'info', 'Alert Rules');
+  }
+});
+document.getElementById('btn-send-eod')?.addEventListener('click', async () => {
+  const btn = document.getElementById('btn-send-eod');
+  if (!btn) return;
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Sending…';
+  try {
+    const res = await fetch('/api/eod-summary', { method: 'POST' });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+    showToast(`EOD Digest sent to Telegram (${json.signals} signals)`, 'new', 'Telegram EOD');
+  } catch (err) {
+    showToast(`EOD Digest failed: ${err.message}`, 'info', 'Telegram EOD');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+});
 
 // Clear PWA app badge when user switches focus to the dashboard tab
 window.addEventListener('focus', () => {
