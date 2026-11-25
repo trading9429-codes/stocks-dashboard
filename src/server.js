@@ -551,14 +551,9 @@ function transform(body) {
       const colData = colMap.get(s.toUpperCase()) || {};
 
       // Parse Relative Volume (handles 'Rel Vol', 'rel_vol', 'Relative Volume', etc.)
+      // Store exact value from Chartink; UI handles unit/scale display cleanly
       const rawRv = extractColumnValue(colData, "Rel Vol", "rel_vol", "relvol", "relativevolume");
-      let relVol = Number.isFinite(parseFloat(rawRv)) ? parseFloat(rawRv) : null;
-      if (relVol !== null) {
-        // Auto-detect percentage scale from Chartink scans (e.g. 100% -> 1.0x, 250% -> 2.5x)
-        if (relVol >= 25 && relVol < 2000) {
-          relVol = Math.round((relVol / 100) * 100) / 100;
-        }
-      }
+      const relVol = Number.isFinite(parseFloat(rawRv)) ? parseFloat(rawRv) : null;
 
       // Parse Sector with flexible key matching and NSE Master fallback
       const rawSector = extractColumnValue(
@@ -644,14 +639,13 @@ function formatTelegramMessage(it) {
 
   let relVolStr = "";
   if (it.rel_vol != null && !isNaN(Number(it.rel_vol))) {
-    let rv = Number(it.rel_vol);
-    if (rv >= 25 && rv < 2000) rv = Math.round((rv / 100) * 100) / 100;
-    if (rv >= 2000) {
-      const formatted = rv >= 1e6 ? (rv / 1e6).toFixed(1) + "M" : Math.round(rv / 1e3) + "K";
-      relVolStr = `\n📊 <b>Volume:</b> ${formatted} shares`;
+    const rv = Number(it.rel_vol);
+    if (rv >= 10000) {
+      const formatted = rv >= 1e6 ? (rv / 1e6).toFixed(2) + "M" : (rv / 1e3).toFixed(1) + "K";
+      relVolStr = `\n📊 <b>Rel Vol / Vol:</b> ${formatted}`;
     } else {
       const fire = rv >= 2.0 ? " 🔥" : "";
-      relVolStr = `\n📊 <b>Rel Vol:</b> ${rv.toFixed(2)}x${fire}`;
+      relVolStr = `\n📊 <b>Rel Vol:</b> ${rv < 1 ? rv.toFixed(2) : rv.toFixed(1)}x${fire}`;
     }
   }
 

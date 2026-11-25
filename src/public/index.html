@@ -3732,6 +3732,7 @@
         <button class="filter-pill-btn" data-qf="open">🚀 Open Drive</button>
         <button class="filter-pill-btn" data-qf="power">🔥 Power Hour</button>
         <button class="filter-pill-btn star" data-qf="starred">⭐ Watchlist (<span id="star-count">0</span>)</button>
+        <button id="relvol-mode-btn" type="button" class="filter-pill-btn" style="margin-left:auto;border-color:rgba(59,130,246,0.35);color:#93c5fd;" title="Switch Rel Vol display format (Direct x / % ÷100 / Raw)">📊 Rel Vol: Direct (x)</button>
       </div>
 
       <div class="table-scroll">
@@ -3957,6 +3958,21 @@ function getFallbackSector(stockSymbol) {
   return NSE_SECTOR_MAP[clean] || null;
 }
 
+let relVolMode = 'ratio'; // 'ratio' (Direct x) | 'pct100' (÷100 -> x) | 'raw' (Raw / Shares)
+try {
+  const savedRvMode = localStorage.getItem('stocks_relvol_mode');
+  if (savedRvMode === 'ratio' || savedRvMode === 'pct100' || savedRvMode === 'raw') {
+    relVolMode = savedRvMode;
+  }
+} catch (_) {}
+
+function getEffectiveRelVol(val) {
+  if (val == null || val === '') return null;
+  const num = parseFloat(val);
+  if (!Number.isFinite(num)) return null;
+  return relVolMode === 'pct100' ? (num / 100) : num;
+}
+
 function normalizeStockItem(it) {
   if (!it) return it;
   if (!it.sector || it.sector === '—' || it.sector === '-' || String(it.sector).trim() === '') {
@@ -3964,13 +3980,6 @@ function normalizeStockItem(it) {
       ?? getFallbackSector(it.stock);
     if (raw && String(raw).trim() !== '' && String(raw).trim() !== '—' && String(raw).trim() !== '-') {
       it.sector = String(raw).trim();
-    }
-  }
-  // Auto-normalize percentage scale from Chartink (e.g. 100% -> 1.0x, 250% -> 2.5x)
-  if (it.rel_vol != null && !isNaN(Number(it.rel_vol))) {
-    const rv = Number(it.rel_vol);
-    if (rv >= 25 && rv < 2000) {
-      it.rel_vol = Math.round((rv / 100) * 100) / 100;
     }
   }
   return it;
@@ -5241,22 +5250,23 @@ function setPage(which, p, filteredLen) {
 ═══════════════════════════════════════════════════════════════ */
 function renderRelVolBadge(val) {
   if (val == null || val === '') return '<span class="rv-na">—</span>';
-  let num = parseFloat(val);
-  if (isNaN(num)) return `<span class="rv-na">${val}</span>`;
+  const raw = parseFloat(val);
+  if (isNaN(raw)) return `<span class="rv-na">${escapeHtml(val)}</span>`;
 
-  // Raw share quantity fallback (e.g. 2,000+ shares)
-  if (num >= 2000) {
-    const formatted = num >= 1e6 ? (num / 1e6).toFixed(1) + 'M' : (num >= 1e3 ? Math.round(num / 1e3) + 'K' : Math.round(num));
-    return `<span class="rel-vol-badge rv-mid" title="Raw volume: ${num.toLocaleString('en-IN')} shares">${formatted} vol</span>`;
+  if (relVolMode === 'raw') {
+    const formatted = raw >= 1e6
+      ? (raw / 1e6).toFixed(2) + 'M'
+      : (raw >= 1e3 ? (raw / 1e3).toFixed(1) + 'K' : (Number.isInteger(raw) ? String(raw) : raw.toFixed(2)));
+    return `<span class="rel-vol-badge rv-mid" title="Raw value from Chartink: ${raw.toLocaleString('en-IN')}">${formatted}</span>`;
   }
 
-  // Chartink percentage scale (e.g. 100% -> 1.0x, 250% -> 2.5x)
-  let isPct = false;
-  let rawPct = num;
-  if (num >= 25) {
-    num = num / 100;
-    isPct = true;
+  // Raw share quantity fallback in Direct mode only for clearly large share counts (>= 10,000)
+  if (relVolMode === 'ratio' && raw >= 10000) {
+    const formatted = raw >= 1e6 ? (raw / 1e6).toFixed(2) + 'M' : (raw / 1e3).toFixed(1) + 'K';
+    return `<span class="rel-vol-badge rv-mid" title="Raw share volume: ${raw.toLocaleString('en-IN')}">${formatted} vol</span>`;
   }
+
+  const num = relVolMode === 'pct100' ? (raw / 100) : raw;
 
   let cls = 'rv-low';
   let icon = '';
@@ -5270,11 +5280,12 @@ function renderRelVolBadge(val) {
     cls = 'rv-mid';
   }
 
-  const tooltip = isPct
-    ? `Relative Volume: ${num.toFixed(2)}x (Chartink scan sent ${rawPct.toFixed(1)}%)`
-    : `Relative volume vs 10-day average: ${num.toFixed(2)}x`;
+  const displayNum = num < 1 ? num.toFixed(2) : num.toFixed(1);
+  const tooltip = relVolMode === 'pct100'
+    ? `Relative Volume: ${num.toFixed(2)}x (Chartink sent ${raw.toFixed(1)}%)`
+    : `Relative Volume: ${num.toFixed(2)}x`;
 
-  return `<span class="rel-vol-badge ${cls}" title="${tooltip}">${icon}${num.toFixed(1)}x</span>`;
+  return `<span class="rel-vol-badge ${cls}" title="${tooltip}">${icon}${displayNum}x</span>`;
 }
 
 function renderPctChangeBadge(val) {
@@ -5715,9 +5726,9 @@ function renderTable(tbodyId, data, isHistory, hlMap = new Map()) {
   // Quick filter pills (Live tab)
   if (!isHistory) {
     if (activeQuickFilter === 'rv2') {
-      filtered = filtered.filter((r) => Number(r.rel_vol) >= 2.0);
+      filtered = filtered.filter((r) => (getEffectiveRelVol(r.rel_vol) ?? 0) >= 2.0);
     } else if (activeQuickFilter === 'rv1.5') {
-      filtered = filtered.filter((r) => Number(r.rel_vol) >= 1.5);
+      filtered = filtered.filter((r) => (getEffectiveRelVol(r.rel_vol) ?? 0) >= 1.5);
     } else if (activeQuickFilter === 'gainers') {
       filtered = filtered.filter((r) => Number(r.pct_change) >= 2.0);
     } else if (activeQuickFilter === 'confluence') {
@@ -5785,7 +5796,7 @@ function updateLiveKPIs() {
   const secCounts = {};
 
   liveData.forEach((d) => {
-    if (Number(d.rel_vol) >= 1.5) highVolCount++;
+    if ((getEffectiveRelVol(d.rel_vol) ?? 0) >= 1.5) highVolCount++;
     if ((Array.isArray(d.scans) && d.scans.length > 1) || Number(d.count) > 1) confCount++;
     if (d.sector) secCounts[d.sector] = (secCounts[d.sector] || 0) + 1;
   });
@@ -5838,6 +5849,24 @@ function updateLiveKPIs() {
     activeSectorFilter = (activeSectorFilter === currentTopSector) ? null : currentTopSector;
     livePage = 1;
     renderLive();
+  });
+
+  // Rel Vol display mode toggle (Direct x -> % ÷100 -> Raw)
+  const rvModeBtn = document.getElementById('relvol-mode-btn');
+  const updateRvModeBtn = () => {
+    if (!rvModeBtn) return;
+    if (relVolMode === 'ratio')       rvModeBtn.textContent = '📊 Rel Vol: Direct (x)';
+    else if (relVolMode === 'pct100') rvModeBtn.textContent = '📊 Rel Vol: % ÷ 100';
+    else                              rvModeBtn.textContent = '📊 Rel Vol: Raw';
+  };
+  updateRvModeBtn();
+  rvModeBtn?.addEventListener('click', () => {
+    hapticTap();
+    relVolMode = relVolMode === 'ratio' ? 'pct100' : (relVolMode === 'pct100' ? 'raw' : 'ratio');
+    try { localStorage.setItem('stocks_relvol_mode', relVolMode); } catch (_) {}
+    updateRvModeBtn();
+    renderLive();
+    renderHistory();
   });
 
   document.addEventListener('keydown', (e) => {
@@ -5990,9 +6019,9 @@ function copyToTV() {
   if (activeQuickFilter === 'starred') {
     targets = data.filter((x) => starredStocks.has(x.stock));
   } else if (activeQuickFilter === 'rv2') {
-    targets = data.filter((x) => Number(x.rel_vol) >= 2.0);
+    targets = data.filter((x) => (getEffectiveRelVol(x.rel_vol) ?? 0) >= 2.0);
   } else if (activeQuickFilter === 'rv1.5') {
-    targets = data.filter((x) => Number(x.rel_vol) >= 1.5);
+    targets = data.filter((x) => (getEffectiveRelVol(x.rel_vol) ?? 0) >= 1.5);
   } else if (activeSectorFilter) {
     targets = data.filter((x) => x.sector === activeSectorFilter);
   }
