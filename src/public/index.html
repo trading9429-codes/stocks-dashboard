@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="/res/icon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     /* ═══════════════════════════════════════════════════
        DESIGN TOKENS
@@ -2605,6 +2605,452 @@
       margin-top: 8px;
       box-sizing: border-box;
     }
+
+    /* ═══════════════════════════════════════════════════
+       MODERN INSTITUTIONAL TERMINAL OVERHAUL (v7.0)
+    ═══════════════════════════════════════════════════ */
+    :root {
+      --bg:          #050811;
+      --surface:     #0b1120;
+      --surface-2:   #10192d;
+      --surface-3:   #162238;
+      --border:      rgba(148, 163, 184, 0.10);
+      --border-2:    rgba(148, 163, 184, 0.18);
+      --glass:       rgba(11, 17, 32, 0.78);
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 80% 35% at 50% -10%, rgba(16, 185, 129, 0.08), transparent 70%),
+        radial-gradient(ellipse 60% 30% at 85% 0%, rgba(59, 130, 246, 0.06), transparent 65%);
+      background-attachment: fixed;
+      font-family: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    }
+
+    /* Custom Thin Dark Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.2);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.38); }
+
+    /* Tabular numerals for zero-jitter live market updates */
+    .price-cell, .clock, .kpi-val, .count-badge, .rel-vol-badge, .chg-badge, .adr-badge, .td-time {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Modern Header Architecture */
+    header {
+      padding: 10px 24px;
+      background: rgba(5, 8, 17, 0.82);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+      gap: 12px;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .header-status-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+    .logo {
+      font-size: 16.5px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      font-size: 17px;
+    }
+    .logo-text-wrap {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+    .logo-sub {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    /* Grouped Control Dock */
+    .header-dock {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px;
+      background: rgba(16, 25, 45, 0.75);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+    .header-dock .chip {
+      border-radius: 8px;
+      border-color: transparent;
+      background: transparent;
+      padding: 5px 9px;
+      font-size: 11.5px;
+      font-weight: 600;
+      transition: all 0.16s ease;
+    }
+    .header-dock .chip:hover {
+      background: rgba(255, 255, 255, 0.06);
+      transform: none;
+    }
+    .header-dock .chip.btn-stretch.active {
+      background: rgba(16, 185, 129, 0.16);
+      border-color: rgba(16, 185, 129, 0.35);
+      box-shadow: none;
+    }
+    .header-dock .chip.btn-fullscreen.active {
+      background: rgba(59, 130, 246, 0.16);
+      border-color: rgba(59, 130, 246, 0.35);
+      box-shadow: none;
+    }
+
+    .clock-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: 9px;
+      background: rgba(16, 25, 45, 0.65);
+      border: 1px solid var(--border);
+    }
+    .clock {
+      font-size: 12px;
+      font-weight: 600;
+      color: #cbd5e1;
+      letter-spacing: 0.2px;
+    }
+
+    /* Modern Segmented Tabs */
+    .tabs-nav {
+      padding: 10px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(11, 17, 32, 0.4);
+      gap: 8px;
+    }
+    .tab-btn {
+      border-radius: 9px;
+      border: 1px solid transparent;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      bottom: 0;
+      color: var(--text-muted);
+    }
+    .tab-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+    }
+    .tab-btn.active {
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.16) 0%, rgba(16, 185, 129, 0.06) 100%);
+      border-color: rgba(16, 185, 129, 0.32);
+      color: #ecfdf5;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.12);
+    }
+    .tab-btn.active .tab-pill {
+      background: var(--accent);
+      color: #03130d;
+      font-weight: 700;
+    }
+
+    /* Refined Regime Banner */
+    .regime-banner {
+      border-radius: 12px;
+      padding: 10px 16px;
+      margin-bottom: 14px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+    .regime-banner-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .regime-banner-desc {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    /* Live Market KPI Bento Strip */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .kpi-card {
+      background: linear-gradient(180deg, rgba(16, 25, 45, 0.85) 0%, rgba(11, 17, 32, 0.95) 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+    .kpi-card.clickable { cursor: pointer; }
+    .kpi-card.clickable:hover {
+      transform: translateY(-2px);
+      border-color: rgba(16, 185, 129, 0.35);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+    }
+    .kpi-card.active-kpi {
+      border-color: rgba(16, 185, 129, 0.55);
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.12) 0%, rgba(11, 17, 32, 0.95) 100%);
+    }
+    .kpi-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-dim);
+    }
+    .kpi-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 800;
+      color: #f8fafc;
+      letter-spacing: -0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .kpi-icon-box {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+    }
+    .kpi-icon-box.emerald { background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.25); }
+    .kpi-icon-box.amber   { background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.25); }
+    .kpi-icon-box.blue    { background: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.25); }
+    .kpi-icon-box.purple  { background: rgba(168, 85, 247, 0.12); border-color: rgba(168, 85, 247, 0.25); }
+
+    /* Top Movers Upgrade */
+    .top-movers { margin-bottom: 16px; }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .mover-card {
+      background: linear-gradient(180deg, rgba(16, 25, 45, 0.85) 0%, rgba(11, 17, 32, 0.95) 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 13px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+    .mover-card:hover {
+      border-color: rgba(16, 185, 129, 0.4);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Main Panel & Command Bar */
+    .panel {
+      background: rgba(11, 17, 32, 0.88);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      overflow: hidden;
+    }
+    .panel-toolbar {
+      padding: 12px 16px;
+      background: rgba(16, 25, 45, 0.45);
+      border-bottom: 1px solid var(--border);
+    }
+    .search-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search-icon {
+      position: absolute;
+      left: 11px;
+      font-size: 13px;
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+    .search-input {
+      background: rgba(5, 8, 17, 0.75);
+      border: 1px solid var(--border-2);
+      border-radius: 9px;
+      padding: 7px 52px 7px 32px;
+      font-size: 13px;
+      color: var(--text);
+      transition: border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.14);
+    }
+    .search-kbd {
+      position: absolute;
+      right: 28px;
+      padding: 1px 6px;
+      border-radius: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      pointer-events: none;
+    }
+
+    /* Filter Pills Bar */
+    .filter-pills-bar {
+      padding: 9px 16px;
+      background: rgba(11, 17, 32, 0.65);
+      border-bottom: 1px solid var(--border);
+      gap: 6px;
+    }
+    .filter-pill-btn {
+      border-radius: 8px;
+      padding: 5px 11px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: rgba(16, 25, 45, 0.6);
+      color: var(--text-muted);
+      transition: all 0.15s ease;
+    }
+    .filter-pill-btn:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--border-2);
+      color: var(--text);
+    }
+    .filter-pill-btn.active {
+      background: rgba(16, 185, 129, 0.16);
+      border-color: rgba(16, 185, 129, 0.45);
+      color: #34d399;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+    }
+
+    /* Crisp Modern Table */
+    thead th {
+      background: rgba(16, 25, 45, 0.94);
+      backdrop-filter: blur(8px);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      border-bottom: 1px solid var(--border-2);
+      padding: 10px 12px;
+    }
+    tbody tr {
+      transition: background-color 0.15s ease;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.06);
+    }
+    tbody tr:hover {
+      background: rgba(59, 130, 246, 0.06) !important;
+    }
+    .stock-link {
+      font-weight: 700;
+      font-size: 13.5px;
+      letter-spacing: -0.1px;
+      color: #f1f5f9;
+    }
+    .stock-link:hover { color: var(--accent); text-decoration: none; }
+
+    /* Sleek Action Mini-Buttons */
+    .btn-mini {
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: rgba(16, 25, 45, 0.85);
+      transition: all 0.14s ease;
+    }
+    .btn-mini:hover {
+      transform: translateY(-1px);
+      border-color: var(--border-2);
+      background: var(--surface-3);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Buttons */
+    .btn {
+      border-radius: 9px;
+      font-weight: 600;
+      border: 1px solid var(--border-2);
+      background: rgba(16, 25, 45, 0.85);
+      transition: all 0.15s ease;
+    }
+    .btn:hover {
+      background: var(--surface-3);
+      border-color: rgba(148, 163, 184, 0.3);
+    }
+
+    /* Responsive KPI Strip & Header */
+    @media (max-width: 900px) {
+      .kpi-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      header { padding: 10px 14px; }
+      .tabs-nav { padding: 8px 14px; }
+      .search-kbd { display: none; }
+    }
+    @media (max-width: 600px) {
+      .kpi-card { padding: 10px 12px; }
+      .kpi-val { font-size: 17px; }
+      .kpi-icon-box { width: 32px; height: 32px; font-size: 14px; }
+      .header-dock { flex-wrap: wrap; }
+      .logo-sub { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -3090,53 +3536,65 @@
      HEADER
 ═══════════════════════════════════════════════════ -->
 <header>
-  <div class="logo">
-    <div class="logo-icon">📈</div>
-    Stock Dashboard
+  <div class="header-left">
+    <div class="logo">
+      <div class="logo-icon">📈</div>
+      <div class="logo-text-wrap">
+        <span>Stock Dashboard</span>
+        <span class="logo-sub">LIVE INTRADAY TERMINAL</span>
+      </div>
+    </div>
+
+    <div class="header-status-group">
+      <span id="market-chip" class="chip market-closed">
+        <span class="dot"></span>
+        <span id="market-label">Checking…</span>
+      </span>
+      <span id="session-chip" class="chip session-chip" title="Active Market Session Window">
+        <span id="session-label">Session</span>
+      </span>
+      <span id="conn-chip" class="chip conn-warn">
+        <span class="dot"></span>
+        <span id="conn-label">Connecting</span>
+      </span>
+    </div>
   </div>
 
-  <div class="header-meta">
+  <div class="header-right">
     <button id="regime-chip" class="chip btn-regime regime-unknown" title="Market Breadth Regime (Threshold: >350). Click to view meter or override.">
       <span id="regime-icon">🛡️</span>
       <span id="regime-label">Regime: Checking…</span>
     </button>
-    <button id="sound-btn" class="chip btn-sound" title="Click to test alert sound or toggle mute">
-      <span id="sound-icon">🔊</span>
-      <span id="sound-label">Sound: ON</span>
-    </button>
-    <button id="notif-btn" class="chip btn-notif" title="Enable / Toggle Desktop & Mobile Alerts">
-      <span id="notif-icon">🔔</span>
-      <span id="notif-label">Alerts: OFF</span>
-    </button>
-    <button id="voice-btn" class="chip btn-voice" title="Toggle Voice Announcer (speaks stock name out loud)">
-      <span id="voice-icon">🗣️</span>
-      <span id="voice-label">Voice: OFF</span>
-    </button>
-    <button id="hotkeys-btn" class="chip" title="View execution keyboard shortcuts" style="cursor:pointer;">
-      <span>⌨️ Hotkeys</span>
-    </button>
-    <button id="stretch-btn" class="chip btn-stretch" title="Toggle Full Width / Stretch Dashboard (W)">
-      <span id="stretch-icon">↔</span>
-      <span id="stretch-label">Stretch: ON</span>
-    </button>
-    <button id="fullscreen-btn" class="chip btn-fullscreen" title="Toggle Fullscreen Browser Mode (F11)">
-      <span id="fullscreen-icon">⛶</span>
-      <span id="fullscreen-label">Fullscreen</span>
-    </button>
-    <span id="market-chip" class="chip market-closed">
-      <span class="dot"></span>
-      <span id="market-label">Checking…</span>
-    </span>
-    <span id="session-chip" class="chip session-chip" title="Active Market Session Window">
-      <span id="session-label">Session</span>
-    </span>
-    <span id="conn-chip" class="chip conn-warn">
-      <span class="dot"></span>
-      <span id="conn-label">Connecting</span>
-    </span>
-    <span class="chip" style="border:none;background:none;">
+
+    <div class="header-dock">
+      <button id="sound-btn" class="chip btn-sound" title="Click to test alert sound or toggle mute">
+        <span id="sound-icon">🔊</span>
+        <span id="sound-label">Sound: ON</span>
+      </button>
+      <button id="notif-btn" class="chip btn-notif" title="Enable / Toggle Desktop & Mobile Alerts">
+        <span id="notif-icon">🔔</span>
+        <span id="notif-label">Alerts: OFF</span>
+      </button>
+      <button id="voice-btn" class="chip btn-voice" title="Toggle Voice Announcer (speaks stock name out loud)">
+        <span id="voice-icon">🗣️</span>
+        <span id="voice-label">Voice: OFF</span>
+      </button>
+      <button id="stretch-btn" class="chip btn-stretch" title="Toggle Full Width / Stretch Dashboard (W)">
+        <span id="stretch-icon">↔</span>
+        <span id="stretch-label">Stretch: ON</span>
+      </button>
+      <button id="fullscreen-btn" class="chip btn-fullscreen" title="Toggle Fullscreen Browser Mode (F11)">
+        <span id="fullscreen-icon">⛶</span>
+        <span id="fullscreen-label">Fullscreen</span>
+      </button>
+      <button id="hotkeys-btn" class="chip" title="View execution keyboard shortcuts" style="cursor:pointer;">
+        <span>⌨️</span>
+      </button>
+    </div>
+
+    <div class="clock-pill">
       <span id="ist-clock" class="clock">--:--:-- --</span>
-    </span>
+    </div>
   </div>
 </header>
 
@@ -3145,10 +3603,10 @@
 ═══════════════════════════════════════════════════ -->
 <div class="tabs-nav">
   <button class="tab-btn active" data-tab="live">
-    Live <span class="tab-pill" id="live-pill">0</span>
+    ⚡ Live Scanner <span class="tab-pill" id="live-pill">0</span>
   </button>
   <button class="tab-btn" data-tab="history">
-    History <span class="tab-pill" id="history-pill">0</span>
+    📜 History <span class="tab-pill" id="history-pill">0</span>
   </button>
 </div>
 
@@ -3180,6 +3638,42 @@
       </div>
     </div>
 
+    <!-- Live Market KPI Bento Strip -->
+    <div class="kpi-strip" id="live-kpi-strip">
+      <div class="kpi-card clickable" id="kpi-card-total" title="Show all live signals">
+        <div class="kpi-info">
+          <span class="kpi-label">Active Signals</span>
+          <span class="kpi-val" id="kpi-total">0</span>
+          <span class="kpi-sub" id="kpi-total-sub">Today's live alerts</span>
+        </div>
+        <div class="kpi-icon-box emerald">📡</div>
+      </div>
+      <div class="kpi-card clickable" id="kpi-card-highvol" title="Click to filter Rel Vol ≥ 1.5x">
+        <div class="kpi-info">
+          <span class="kpi-label">High Rel Vol (≥1.5x)</span>
+          <span class="kpi-val" id="kpi-highvol">0</span>
+          <span class="kpi-sub" id="kpi-highvol-sub">Institutional volume</span>
+        </div>
+        <div class="kpi-icon-box amber">🔥</div>
+      </div>
+      <div class="kpi-card clickable" id="kpi-card-confluence" title="Click to filter Multi-Scan Confluence">
+        <div class="kpi-info">
+          <span class="kpi-label">Multi-Scan Confluence</span>
+          <span class="kpi-val" id="kpi-confluence">0</span>
+          <span class="kpi-sub">2+ scanners aligned</span>
+        </div>
+        <div class="kpi-icon-box blue">⚡</div>
+      </div>
+      <div class="kpi-card clickable" id="kpi-card-topsector" title="Click to filter by leading sector">
+        <div class="kpi-info">
+          <span class="kpi-label">Leading Sector</span>
+          <span class="kpi-val" id="kpi-topsector">—</span>
+          <span class="kpi-sub" id="kpi-topsector-sub">Waiting for alerts</span>
+        </div>
+        <div class="kpi-icon-box purple">🏢</div>
+      </div>
+    </div>
+
     <!-- Top Movers -->
     <div class="top-movers">
       <div class="section-label">🔥 Top Movers by Count</div>
@@ -3195,7 +3689,9 @@
     <div class="panel">
       <div class="panel-toolbar">
         <div class="search-wrap">
+          <span class="search-icon">🔍</span>
           <input id="live-search" class="search-input" type="text" placeholder="Search stocks, sectors, scans…" autocomplete="off" />
+          <kbd class="search-kbd">/</kbd>
           <button class="search-clear" id="live-clear-search" title="Clear">×</button>
         </div>
         <div class="actions">
@@ -3251,7 +3747,9 @@
     <div class="panel">
       <div class="panel-toolbar">
         <div class="search-wrap">
+          <span class="search-icon">🔍</span>
           <input id="history-search" class="search-input" type="text" placeholder="Search history…" autocomplete="off" />
+          <kbd class="search-kbd">/</kbd>
           <button class="search-clear" id="history-clear-search" title="Clear">×</button>
         </div>
         <div class="actions">
@@ -5253,11 +5751,94 @@ function renderTable(tbodyId, data, isHistory, hlMap = new Map()) {
   updateSortIcons(isHistory ? 'history-table' : 'live-table', cfg);
 }
 
+let currentTopSector = null;
+
+function updateLiveKPIs() {
+  const totalEl      = document.getElementById('kpi-total');
+  const highVolEl    = document.getElementById('kpi-highvol');
+  const confEl       = document.getElementById('kpi-confluence');
+  const topSecEl     = document.getElementById('kpi-topsector');
+  const topSecSubEl  = document.getElementById('kpi-topsector-sub');
+
+  const total = liveData.length;
+  let highVolCount = 0;
+  let confCount = 0;
+  const secCounts = {};
+
+  liveData.forEach((d) => {
+    if (Number(d.rel_vol) >= 1.5) highVolCount++;
+    if ((Array.isArray(d.scans) && d.scans.length > 1) || Number(d.count) > 1) confCount++;
+    if (d.sector) secCounts[d.sector] = (secCounts[d.sector] || 0) + 1;
+  });
+
+  if (totalEl)   totalEl.textContent   = total;
+  if (highVolEl) highVolEl.textContent = highVolCount;
+  if (confEl)    confEl.textContent    = confCount;
+
+  const topEntry = Object.entries(secCounts).sort((a, b) => b[1] - a[1])[0];
+  if (topEntry) {
+    currentTopSector = topEntry[0];
+    if (topSecEl)    topSecEl.textContent    = topEntry[0];
+    if (topSecSubEl) topSecSubEl.textContent = `${topEntry[1]} stock${topEntry[1] > 1 ? 's' : ''} active`;
+  } else {
+    currentTopSector = null;
+    if (topSecEl)    topSecEl.textContent    = '—';
+    if (topSecSubEl) topSecSubEl.textContent = 'Waiting for alerts';
+  }
+
+  // Highlight active KPI cards based on current filters
+  document.getElementById('kpi-card-total')?.classList.toggle('active-kpi', activeQuickFilter === 'all' && !activeSectorFilter);
+  document.getElementById('kpi-card-highvol')?.classList.toggle('active-kpi', activeQuickFilter === 'rv1.5');
+  document.getElementById('kpi-card-confluence')?.classList.toggle('active-kpi', activeQuickFilter === 'confluence');
+  document.getElementById('kpi-card-topsector')?.classList.toggle('active-kpi', Boolean(currentTopSector && activeSectorFilter === currentTopSector));
+}
+
+// Wire KPI Card Quick Actions & '/' Search Shortcut
+(function wireKpiAndSearch() {
+  const setQf = (qf) => {
+    activeQuickFilter = qf;
+    document.querySelectorAll('.filter-pill-btn').forEach((b) => {
+      b.classList.toggle('active', (b.dataset.qf || 'all') === qf);
+    });
+    livePage = 1;
+    renderLive();
+  };
+
+  document.getElementById('kpi-card-total')?.addEventListener('click', () => {
+    activeSectorFilter = null;
+    setQf('all');
+  });
+  document.getElementById('kpi-card-highvol')?.addEventListener('click', () => {
+    setQf(activeQuickFilter === 'rv1.5' ? 'all' : 'rv1.5');
+  });
+  document.getElementById('kpi-card-confluence')?.addEventListener('click', () => {
+    setQf(activeQuickFilter === 'confluence' ? 'all' : 'confluence');
+  });
+  document.getElementById('kpi-card-topsector')?.addEventListener('click', () => {
+    if (!currentTopSector) return;
+    activeSectorFilter = (activeSectorFilter === currentTopSector) ? null : currentTopSector;
+    livePage = 1;
+    renderLive();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      e.preventDefault();
+      const isHistActive = document.getElementById('tab-history')?.classList.contains('active');
+      const input = document.getElementById(isHistActive ? 'history-search' : 'live-search');
+      input?.focus();
+    }
+  });
+})();
+
 function renderLive(hlMap = new Map()) {
   renderTable('live-tbody', liveData, false, hlMap);
   renderMovers();
   renderSectorRibbon();
   updateStarCount();
+  updateLiveKPIs();
 
   // PWA App Badging
   if ('setAppBadge' in navigator) {
