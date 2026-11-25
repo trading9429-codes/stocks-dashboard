@@ -3449,6 +3449,13 @@ function normalizeStockItem(it) {
       it.sector = String(raw).trim();
     }
   }
+  // Auto-normalize percentage scale from Chartink (e.g. 100% -> 1.0x, 250% -> 2.5x)
+  if (it.rel_vol != null && !isNaN(Number(it.rel_vol))) {
+    const rv = Number(it.rel_vol);
+    if (rv >= 25 && rv < 2000) {
+      it.rel_vol = Math.round((rv / 100) * 100) / 100;
+    }
+  }
   return it;
 }
 
@@ -4717,8 +4724,22 @@ function setPage(which, p, filteredLen) {
 ═══════════════════════════════════════════════════════════════ */
 function renderRelVolBadge(val) {
   if (val == null || val === '') return '<span class="rv-na">—</span>';
-  const num = parseFloat(val);
+  let num = parseFloat(val);
   if (isNaN(num)) return `<span class="rv-na">${val}</span>`;
+
+  // Raw share quantity fallback (e.g. 2,000+ shares)
+  if (num >= 2000) {
+    const formatted = num >= 1e6 ? (num / 1e6).toFixed(1) + 'M' : (num >= 1e3 ? Math.round(num / 1e3) + 'K' : Math.round(num));
+    return `<span class="rel-vol-badge rv-mid" title="Raw volume: ${num.toLocaleString('en-IN')} shares">${formatted} vol</span>`;
+  }
+
+  // Chartink percentage scale (e.g. 100% -> 1.0x, 250% -> 2.5x)
+  let isPct = false;
+  let rawPct = num;
+  if (num >= 25) {
+    num = num / 100;
+    isPct = true;
+  }
 
   let cls = 'rv-low';
   let icon = '';
@@ -4732,7 +4753,11 @@ function renderRelVolBadge(val) {
     cls = 'rv-mid';
   }
 
-  return `<span class="rel-vol-badge ${cls}" title="Relative volume vs 10-day average: ${num.toFixed(2)}x">${icon}${num.toFixed(1)}x</span>`;
+  const tooltip = isPct
+    ? `Relative Volume: ${num.toFixed(2)}x (Chartink scan sent ${rawPct.toFixed(1)}%)`
+    : `Relative volume vs 10-day average: ${num.toFixed(2)}x`;
+
+  return `<span class="rel-vol-badge ${cls}" title="${tooltip}">${icon}${num.toFixed(1)}x</span>`;
 }
 
 function renderPctChangeBadge(val) {

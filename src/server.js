@@ -524,7 +524,13 @@ function transform(body) {
 
       // Parse Relative Volume (handles 'Rel Vol', 'rel_vol', 'Relative Volume', etc.)
       const rawRv = extractColumnValue(colData, "Rel Vol", "rel_vol", "relvol", "relativevolume");
-      const relVol = Number.isFinite(parseFloat(rawRv)) ? parseFloat(rawRv) : null;
+      let relVol = Number.isFinite(parseFloat(rawRv)) ? parseFloat(rawRv) : null;
+      if (relVol !== null) {
+        // Auto-detect percentage scale from Chartink scans (e.g. 100% -> 1.0x, 250% -> 2.5x)
+        if (relVol >= 25 && relVol < 2000) {
+          relVol = Math.round((relVol / 100) * 100) / 100;
+        }
+      }
 
       // Parse Sector with flexible key matching and NSE Master fallback
       const rawSector = extractColumnValue(
@@ -610,9 +616,15 @@ function formatTelegramMessage(it) {
 
   let relVolStr = "";
   if (it.rel_vol != null && !isNaN(Number(it.rel_vol))) {
-    const rv = Number(it.rel_vol);
-    const fire = rv >= 2.0 ? " 🔥" : "";
-    relVolStr = `\n📊 <b>Rel Vol:</b> ${rv.toFixed(2)}x${fire}`;
+    let rv = Number(it.rel_vol);
+    if (rv >= 25 && rv < 2000) rv = Math.round((rv / 100) * 100) / 100;
+    if (rv >= 2000) {
+      const formatted = rv >= 1e6 ? (rv / 1e6).toFixed(1) + "M" : Math.round(rv / 1e3) + "K";
+      relVolStr = `\n📊 <b>Volume:</b> ${formatted} shares`;
+    } else {
+      const fire = rv >= 2.0 ? " 🔥" : "";
+      relVolStr = `\n📊 <b>Rel Vol:</b> ${rv.toFixed(2)}x${fire}`;
+    }
   }
 
   let metricsStr = "";
