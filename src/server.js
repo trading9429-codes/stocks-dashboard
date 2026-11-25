@@ -386,6 +386,119 @@ function extractColumnValue(obj, ...possibleKeys) {
   return undefined;
 }
 
+// --- Comprehensive NSE Sector Master Map for Indian Equities ---
+const NSE_SECTOR_MAP = {
+  // Banking
+  "HDFCBANK": "Banking", "ICICIBANK": "Banking", "SBIN": "Banking", "KOTAKBANK": "Banking", "AXISBANK": "Banking",
+  "INDUSINDBK": "Banking", "BANKBARODA": "Banking", "PNB": "Banking", "CANBK": "Banking", "FEDERALBNK": "Banking",
+  "IDFCFIRSTB": "Banking", "AUBANK": "Banking", "BANDHANBNK": "Banking", "RBLBANK": "Banking", "UNIONBANK": "Banking",
+  "IOB": "Banking", "UCOBANK": "Banking", "CENTRALBK": "Banking", "BANKINDIA": "Banking", "MAHABANK": "Banking",
+  "KARURVYSYA": "Banking", "CUB": "Banking", "SOUTHBANK": "Banking", "YESBANK": "Banking", "PSB": "Banking",
+
+  // IT & Tech
+  "TCS": "IT", "INFY": "IT", "HCLTECH": "IT", "WIPRO": "IT", "TECHM": "IT", "LTIM": "IT",
+  "COFORGE": "IT", "PERSISTENT": "IT", "MPHASIS": "IT", "KPITTECH": "IT", "TATAELXSI": "IT", "LTTS": "IT",
+  "OFSS": "IT", "CYIENT": "IT", "SONATSOFTW": "IT", "BSOFT": "IT", "ZENSARTECH": "IT", "INTELLECT": "IT",
+  "MASTEK": "IT", "HEXAWARE": "IT", "HAPPSTMNDS": "IT", "ROUTE": "IT", "TANLA": "IT", "AFFLE": "IT", "RATEGAIN": "IT",
+
+  // Auto & Auto Ancillaries
+  "MARUTI": "Auto", "TATAMOTORS": "Auto", "M&M": "Auto", "BAJAJ-AUTO": "Auto", "HEROMOTOCO": "Auto",
+  "EICHERMOT": "Auto", "TVSMOTOR": "Auto", "BHARATFORG": "Auto", "ASHOKLEY": "Auto", "BALKRISIND": "Auto",
+  "APOLLOTYRE": "Auto", "MRF": "Auto", "MOTHERSON": "Auto", "BOSCHLTD": "Auto", "SONACOMS": "Auto",
+  "TIINDIA": "Auto", "EXIDEIND": "Auto", "AMARAJABAT": "Auto", "ARE&M": "Auto", "ENDURANCE": "Auto",
+  "CRAFTSMAN": "Auto", "CEATLTD": "Auto", "JKTYRE": "Auto", "GABRIEL": "Auto", "SUBROS": "Auto", "ESCORTS": "Auto",
+
+  // Pharma & Healthcare
+  "SUNPHARMA": "Pharma", "DRREDDY": "Pharma", "CIPLA": "Pharma", "DIVISLAB": "Pharma", "APOLLOHOSP": "Pharma",
+  "LUPIN": "Pharma", "AUROPHARMA": "Pharma", "BIOCON": "Pharma", "TORNTPHARM": "Pharma", "ALKEM": "Pharma",
+  "ZYDUSLIFE": "Pharma", "MANKIND": "Pharma", "MAXHEALTH": "Pharma", "FORTIS": "Pharma", "GLENMARK": "Pharma",
+  "GRANULES": "Pharma", "IPCALAB": "Pharma", "SYNGENE": "Pharma", "LAURUSLABS": "Pharma", "GLAND": "Pharma",
+  "ABBOTINDIA": "Pharma", "PFIZER": "Pharma", "SANOFI": "Pharma", "GLAXO": "Pharma", "AJANTPHARM": "Pharma",
+  "NATCOPHARM": "Pharma", "JBCHEPHARM": "Pharma", "ERIS": "Pharma", "MEDANTA": "Pharma", "NH": "Pharma",
+  "KIMS": "Pharma", "RAINBOW": "Pharma", "METROPOLIS": "Pharma", "LALPATHLAB": "Pharma", "SUVENPHAR": "Pharma",
+
+  // Energy, Oil & Gas, Power
+  "RELIANCE": "Energy", "ONGC": "Energy", "NTPC": "Energy", "POWERGRID": "Energy", "BPCL": "Energy",
+  "IOC": "Energy", "GAIL": "Energy", "TATAPOWER": "Energy", "ADANIGREEN": "Energy", "ADANIPOWER": "Energy",
+  "ADANIENSOL": "Energy", "JSWENERGY": "Energy", "COALINDIA": "Energy", "PETRONET": "Energy", "IGL": "Energy",
+  "MGL": "Energy", "GUJGASLTD": "Energy", "OIL": "Energy", "HINDPETRO": "Energy", "NHPC": "Energy",
+  "SJVN": "Energy", "TORNTPOWER": "Energy", "CESC": "Energy", "SUZLON": "Energy", "INOXWIND": "Energy",
+  "IREDA": "Energy", "GIPCL": "Energy",
+
+  // FMCG & Consumption
+  "ITC": "FMCG", "HINDUNILVR": "FMCG", "NESTLEIND": "FMCG", "BRITANNIA": "FMCG", "TATACONSUM": "FMCG",
+  "DABUR": "FMCG", "MARICO": "FMCG", "GODREJCP": "FMCG", "COLPAL": "FMCG", "VBL": "FMCG",
+  "RADICO": "FMCG", "UBL": "FMCG", "MCDOWELL-N": "FMCG", "PGHH": "FMCG", "EMAMILTD": "FMCG",
+  "BALRAMCHIN": "FMCG", "RENUKA": "FMCG", "EIDPARRY": "FMCG", "BIKAJI": "FMCG", "PATANJALI": "FMCG",
+  "HONASA": "FMCG", "DEVYANI": "FMCG", "JUBLFOOD": "FMCG", "WESTLIFE": "FMCG", "SAPPHIRE": "FMCG",
+
+  // Metals & Mining
+  "TATASTEEL": "Metals", "JSWSTEEL": "Metals", "HINDALCO": "Metals", "JINDALSTEL": "Metals", "VEDL": "Metals",
+  "NMDC": "Metals", "SAIL": "Metals", "NATIONALUM": "Metals", "HINDZINC": "Metals", "APLAPOLLO": "Metals",
+  "RATNAMANI": "Metals", "WELCORP": "Metals", "JINDALSAW": "Metals", "HINDCOPPER": "Metals", "KIOCL": "Metals",
+
+  // Financial Services & NBFC & Insurance
+  "BAJFINANCE": "Financial Services", "BAJAJFINSV": "Financial Services", "CHOLAFIN": "Financial Services",
+  "SHRIRAMFIN": "Financial Services", "MUTHOOTFIN": "Financial Services", "MANAPPURAM": "Financial Services",
+  "PFC": "Financial Services", "RECLTD": "Financial Services", "LICHSGFIN": "Financial Services",
+  "HDFCLIFE": "Financial Services", "SBILIFE": "Financial Services", "ICICIPRULI": "Financial Services",
+  "ICICIGI": "Financial Services", "HDFCAMC": "Financial Services", "NAM-INDIA": "Financial Services",
+  "SBICARD": "Financial Services", "LICI": "Financial Services", "JIOFIN": "Financial Services",
+  "POONAWALLA": "Financial Services", "M&MFIN": "Financial Services", "SUNDARMFIN": "Financial Services",
+  "CANFINHOME": "Financial Services", "HUDCO": "Financial Services", "IIFL": "Financial Services",
+  "ANGELONE": "Financial Services", "MOTILALOFS": "Financial Services", "BSE": "Financial Services",
+  "MCX": "Financial Services", "CDSL": "Financial Services", "CAMS": "Financial Services", "KFINTECH": "Financial Services",
+
+  // Realty & Construction
+  "DLF": "Realty", "GODREJPROP": "Realty", "LODHA": "Realty", "OBEROIRLTY": "Realty", "PHOENIXLTD": "Realty",
+  "BRIGADE": "Realty", "PRESTIGE": "Realty", "SOBHA": "Realty", "NBCC": "Realty", "SUNTECK": "Realty",
+  "MAHLIFE": "Realty", "SIGNATURE": "Realty", "IBREALEST": "Realty", "KOLTEPATIL": "Realty",
+
+  // Capital Goods, Defence, Infra & Engineering
+  "LT": "Capital Goods", "HAL": "Defence", "BEL": "Defence", "BHEL": "Capital Goods", "SIEMENS": "Capital Goods",
+  "ABB": "Capital Goods", "CUMMINSIND": "Capital Goods", "HAVELLS": "Capital Goods", "POLYCAB": "Capital Goods",
+  "KEI": "Capital Goods", "ASTRAL": "Capital Goods", "VOLTAS": "Capital Goods", "BLUESTARCO": "Capital Goods",
+  "CGPOWER": "Capital Goods", "MAZDOCK": "Defence", "COCHINSHIP": "Defence", "GRSE": "Defence", "BDL": "Defence",
+  "KAYNES": "Capital Goods", "DIXON": "Capital Goods", "AMBER": "Capital Goods", "TITAGARH": "Capital Goods",
+  "RAILTEL": "Infra", "RITES": "Infra", "IRFC": "Financial Services", "RVNL": "Infra", "IRCON": "Infra",
+  "GMRINFRA": "Infra", "ADANIPORTS": "Infra", "ADANIENT": "Conglomerate", "BEML": "Defence", "THERMAX": "Capital Goods",
+
+  // Chemicals & Fertilizers
+  "PIDILITIND": "Chemicals", "SRF": "Chemicals", "DEEPAKNTR": "Chemicals", "TATACHEM": "Chemicals",
+  "AARTIIND": "Chemicals", "PIIND": "Chemicals", "UPL": "Chemicals", "COROMANDEL": "Chemicals",
+  "CHAMBLFERT": "Chemicals", "GNFC": "Chemicals", "ATUL": "Chemicals", "NAVINFLUOR": "Chemicals",
+  "FLUOROCHEM": "Chemicals", "SUMICHEM": "Chemicals", "FINEORG": "Chemicals", "CLEAN": "Chemicals",
+  "ALKYLAMINE": "Chemicals", "BALAMINES": "Chemicals", "AETHER": "Chemicals", "ANUPAM": "Chemicals",
+
+  // Cement & Building Materials
+  "ULTRACEMCO": "Cement", "GRASIM": "Cement", "AMBUJACEM": "Cement", "ACC": "Cement", "DALBHARAT": "Cement",
+  "SHREECEM": "Cement", "JKCEMENT": "Cement", "RAMCOCEM": "Cement", "SUPREMEIND": "Building Materials",
+  "FINPIPE": "Building Materials", "PRINCEPIPE": "Building Materials", "KAJARIACER": "Building Materials",
+  "CENTURYPLY": "Building Materials",
+
+  // Telecom & Media
+  "BHARTIARTL": "Telecom", "IDEA": "Telecom", "INDUSTOWER": "Telecom", "TATACOMM": "Telecom",
+  "ZEEL": "Media", "SUNTV": "Media", "PVRINOX": "Media", "TV18BRDCST": "Media", "NETWORK18": "Media",
+
+  // Retail, Aviation & Services
+  "INDIGO": "Aviation", "SPICEJET": "Aviation", "DMART": "Retail", "TRENT": "Retail", "TITAN": "Retail",
+  "KALYANKJIL": "Retail", "SENCO": "Retail", "BATAINDIA": "Retail", "PAGEIND": "Retail", "MANYAVAR": "Retail",
+  "ZOMATO": "Consumer Tech", "SWIGGY": "Consumer Tech", "NYKAA": "Consumer Tech", "DELHIVERY": "Logistics",
+  "CONCOR": "Logistics", "BLUEDART": "Logistics", "TCIEXP": "Logistics", "IRCTC": "Consumer Services",
+  "INDHOTEL": "Hospitality", "EIHOTEL": "Hospitality", "LEMONTREE": "Hospitality"
+};
+
+function getFallbackSector(stockSymbol) {
+  if (!stockSymbol) return null;
+  const clean = String(stockSymbol)
+    .trim()
+    .toUpperCase()
+    .replace(/-EQ$/, "")
+    .replace(/\.NS$/, "")
+    .replace(/[^A-Z0-9&_\-]/g, "");
+  return NSE_SECTOR_MAP[clean] || null;
+}
+
 // --- Transform Chartink webhook payload ---
 function transform(body) {
   const { stocks, trigger_prices, triggered_at, scan_name, scan_url, alert_name, columns } = body;
@@ -413,9 +526,20 @@ function transform(body) {
       const rawRv = extractColumnValue(colData, "Rel Vol", "rel_vol", "relvol", "relativevolume");
       const relVol = Number.isFinite(parseFloat(rawRv)) ? parseFloat(rawRv) : null;
 
-      // Parse Sector
-      const rawSector = extractColumnValue(colData, "sector");
-      const sector = rawSector != null && String(rawSector).trim() !== "" ? String(rawSector).trim() : null;
+      // Parse Sector with flexible key matching and NSE Master fallback
+      const rawSector = extractColumnValue(
+        colData,
+        "sector",
+        "sector_name",
+        "sectorname",
+        "industry",
+        "industry_name",
+        "group"
+      );
+      const fallbackSector = getFallbackSector(s);
+      const sector = (rawSector != null && String(rawSector).trim() !== "" && String(rawSector).trim() !== "—" && String(rawSector).trim() !== "-")
+        ? String(rawSector).trim()
+        : fallbackSector;
 
       // Parse % Change (handles '%_change', 'change', 'pct_change', 'chg', etc.)
       const rawPct = extractColumnValue(colData, "%_change", "change", "pct_change", "pctchange", "chg");
