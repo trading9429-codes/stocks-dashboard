@@ -72,12 +72,22 @@ public class AndroidBridge {
                     PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
             );
 
+            // Action to open Fyers Web Terminal directly
+            Intent fyersIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://trade.fyers.in/?symbol=NSE:" + Uri.encode(stock) + "-EQ"));
+            PendingIntent fyersPendingIntent = PendingIntent.getActivity(
+                    activity,
+                    (int) System.currentTimeMillis() + 2,
+                    fyersIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+            );
+
             long[] vibPattern = relVol >= 2.0
                     ? new long[]{0, 300, 80, 300, 80, 300}
                     : new long[]{0, 150, 80, 150};
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(activity, CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_notification)
+                    .setColor(0xFF10B981)
                     .setContentTitle(title)
                     .setContentText(message)
                     .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
@@ -86,7 +96,8 @@ public class AndroidBridge {
                     .setVibrate(vibPattern)
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent)
-                    .addAction(R.drawable.ic_notification, "📊 5m Chart", tvPendingIntent);
+                    .addAction(R.drawable.ic_notification, "📊 5m Chart", tvPendingIntent)
+                    .addAction(R.drawable.ic_notification, "⚡ Fyers", fyersPendingIntent);
 
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(activity);
             int notifId = stock.hashCode();

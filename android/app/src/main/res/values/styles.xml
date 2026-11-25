@@ -3,10 +3,12 @@
     <style name="Theme.StockDashboard" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/accent_green</item>
         <item name="colorPrimaryVariant">@color/bg_dark</item>
+        <item name="colorSecondary">@color/accent_blue</item>
         <item name="colorOnPrimary">@color/white</item>
         <item name="android:statusBarColor">@color/bg_dark</item>
         <item name="android:navigationBarColor">@color/bg_dark</item>
         <item name="android:windowBackground">@color/bg_dark</item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 </resources>

@@ -15,6 +15,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -25,12 +26,17 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.android.material.button.MaterialButton;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_NOTIFICATIONS = 101;
     private WebView webView;
     private SwipeRefreshLayout swipeRefresh;
     private ProgressBar progressBar;
+    private LinearLayout loadingOverlay;
+    private LinearLayout errorOverlay;
+    private boolean hasMainFrameError = false;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -41,11 +47,26 @@ public class MainActivity extends AppCompatActivity {
         webView = findViewById(R.id.webview);
         swipeRefresh = findViewById(R.id.swipe_refresh);
         progressBar = findViewById(R.id.progress_bar);
+        loadingOverlay = findViewById(R.id.loading_overlay);
+        errorOverlay = findViewById(R.id.error_overlay);
+        MaterialButton btnRetry = findViewById(R.id.btn_retry);
 
-        // Configure SwipeRefreshLayout
+        btnRetry.setOnClickListener(v -> {
+            hasMainFrameError = false;
+            errorOverlay.setVisibility(View.GONE);
+            loadingOverlay.setAlpha(1f);
+            loadingOverlay.setVisibility(View.VISIBLE);
+            webView.clearCache(true);
+            webView.reload();
+        });
+
+        // Configure SwipeRefreshLayout (only pull-to-refresh when WebView is at top)
         swipeRefresh.setColorSchemeResources(R.color.accent_green, R.color.accent_blue);
         swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.surface_dark);
+        swipeRefresh.setOnChildScrollUpCallback((parent, child) -> webView.getScrollY() > 0);
         swipeRefresh.setOnRefreshListener(() -> {
+            hasMainFrameError = false;
+            errorOverlay.setVisibility(View.GONE);
             webView.clearCache(true);
             webView.reload();
         });
@@ -80,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
+                hasMainFrameError = false;
                 progressBar.setVisibility(View.VISIBLE);
             }
 
@@ -88,14 +110,24 @@ public class MainActivity extends AppCompatActivity {
                 super.onPageFinished(view, url);
                 progressBar.setVisibility(View.GONE);
                 swipeRefresh.setRefreshing(false);
+                if (!hasMainFrameError && loadingOverlay.getVisibility() == View.VISIBLE) {
+                    loadingOverlay.animate()
+                            .alpha(0f)
+                            .setDuration(220)
+                            .withEndAction(() -> loadingOverlay.setVisibility(View.GONE))
+                            .start();
+                }
             }
 
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
                 if (request.isForMainFrame()) {
+                    hasMainFrameError = true;
                     progressBar.setVisibility(View.GONE);
                     swipeRefresh.setRefreshing(false);
+                    loadingOverlay.setVisibility(View.GONE);
+                    errorOverlay.setVisibility(View.VISIBLE);
                 }
             }
 

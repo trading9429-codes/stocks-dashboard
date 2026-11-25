@@ -3044,6 +3044,25 @@
       .tabs-nav { padding: 8px 14px; }
       .search-kbd { display: none; }
     }
+    @media (max-width: 768px) {
+      #stretch-btn, #fullscreen-btn, #hotkeys-btn, .btn-stretch-btn {
+        display: none !important;
+      }
+      .search-input {
+        padding: 9px 34px 9px 34px !important;
+      }
+      .header-left, .header-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .header-dock {
+        padding: 2px;
+      }
+      .header-dock .chip {
+        padding: 5px 8px;
+        font-size: 11px;
+      }
+    }
     @media (max-width: 600px) {
       .kpi-card { padding: 10px 12px; }
       .kpi-val { font-size: 17px; }
