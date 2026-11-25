@@ -291,13 +291,30 @@ const dbUtils = {
          VALUES ${parts.join(",")}
          ON CONFLICT (stock) DO UPDATE SET
            trigger_price = EXCLUDED.trigger_price,
-           count         = stocks.count + 1,
-           datetime      = EXCLUDED.datetime,
+           count         = CASE
+                             -- If existing record was from a previous day (IST), reset count to 1 for today
+                             WHEN date_trunc('day', stocks.datetime AT TIME ZONE '${TZ}') != date_trunc('day', EXCLUDED.datetime AT TIME ZONE '${TZ}')
+                               THEN 1
+                             -- If alert arrived at the same time (same minute IST or within 60 seconds), do not increment count
+                             WHEN date_trunc('minute', stocks.datetime AT TIME ZONE '${TZ}') = date_trunc('minute', EXCLUDED.datetime AT TIME ZONE '${TZ}')
+                               OR abs(EXTRACT(EPOCH FROM (EXCLUDED.datetime - stocks.datetime))) < 60
+                               THEN stocks.count
+                             -- Different candle / later time today: increment trigger count
+                             ELSE stocks.count + 1
+                           END,
+           datetime      = CASE
+                             WHEN date_trunc('day', stocks.datetime AT TIME ZONE '${TZ}') != date_trunc('day', EXCLUDED.datetime AT TIME ZONE '${TZ}')
+                               THEN EXCLUDED.datetime
+                             ELSE GREATEST(stocks.datetime, EXCLUDED.datetime)
+                           END,
            lastUpdated   = EXCLUDED.lastUpdated,
            scan_name     = EXCLUDED.scan_name,
            scan_url      = EXCLUDED.scan_url,
            alert_name    = EXCLUDED.alert_name,
            scans         = CASE
+                             -- New trading day: start fresh with today's scan
+                             WHEN date_trunc('day', stocks.datetime AT TIME ZONE '${TZ}') != date_trunc('day', EXCLUDED.datetime AT TIME ZONE '${TZ}')
+                               THEN CASE WHEN EXCLUDED.scan_name IS NULL THEN '[]'::jsonb ELSE jsonb_build_array(EXCLUDED.scan_name) END
                              WHEN EXCLUDED.scan_name IS NULL THEN COALESCE(stocks.scans, '[]'::jsonb)
                              WHEN COALESCE(stocks.scans, '[]'::jsonb) @> jsonb_build_array(EXCLUDED.scan_name) THEN COALESCE(stocks.scans, '[]'::jsonb)
                              ELSE COALESCE(stocks.scans, '[]'::jsonb) || jsonb_build_array(EXCLUDED.scan_name)
@@ -508,6 +525,17 @@ function transform(body) {
   const priceArr = String(trigger_prices).split(",").map((p) => parseFloat(p.trim()));
   const nowUTC   = timeUtils.nowUTC();
 
+  // Deduplicate symbols within the same payload while preserving trigger prices
+  const seenSymbols = new Set();
+  const dedupedStocks = [];
+  stockArr.forEach((s, i) => {
+    const sym = s.toUpperCase();
+    if (!seenSymbols.has(sym)) {
+      seenSymbols.add(sym);
+      dedupedStocks.push({ stock: s, price: priceArr[i] });
+    }
+  });
+
   // Index custom columns by symbol
   const colMap = new Map();
   if (Array.isArray(columns)) {
@@ -518,8 +546,8 @@ function transform(body) {
     });
   }
 
-  return stockArr
-    .map((s, i) => {
+  return dedupedStocks
+    .map(({ stock: s, price: p }) => {
       const colData = colMap.get(s.toUpperCase()) || {};
 
       // Parse Relative Volume (handles 'Rel Vol', 'rel_vol', 'Relative Volume', etc.)
@@ -557,7 +585,7 @@ function transform(body) {
 
       return {
         stock:          s,
-        trigger_price:  Number.isFinite(priceArr[i]) ? priceArr[i] : null,
+        trigger_price:  Number.isFinite(p) ? p : null,
         datetimeUTC:    triggered_at ? timeUtils.parseISTTimeToUTC(triggered_at) : nowUTC,
         lastUpdatedUTC: nowUTC,
         scan_name,
