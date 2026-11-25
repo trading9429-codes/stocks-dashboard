@@ -3130,6 +3130,21 @@
       </div>
     </div>
 
+    <!-- Intraday 4.5R Trend Chart -->
+    <div id="breadth-chart-box" style="background: rgba(5, 8, 17, 0.72); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+        <span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px;">
+          📈 Intraday 4.5R Trend
+        </span>
+        <span id="breadth-trend-summary" style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text-dim);">
+          Waiting for readings…
+        </span>
+      </div>
+      <div id="breadth-chart-wrap" style="width: 100%; height: 140px; position: relative;">
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-dim);font-size:12px;">Loading chart…</div>
+      </div>
+    </div>
+
     <!-- Trading Rule Card -->
     <div class="breadth-rule-card">
       <strong>Core Trading Rule:</strong>
@@ -6299,12 +6314,105 @@ function closeBreadthModal() {
   if (m) m.classList.add('hidden');
 }
 
+function renderBreadthTrendChart(historyRows, threshold = 350) {
+  const wrap = document.getElementById('breadth-chart-wrap');
+  const sumEl = document.getElementById('breadth-trend-summary');
+  if (!wrap) return;
+
+  if (!Array.isArray(historyRows) || historyRows.length === 0) {
+    wrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-dim);font-size:12px;">No readings yet to plot</div>';
+    if (sumEl) sumEl.textContent = 'No data';
+    return;
+  }
+
+  // Sort chronologically (oldest -> newest)
+  const pts = historyRows
+    .slice()
+    .reverse()
+    .map(r => ({
+      val: Number(r.ratio),
+      time: r.time_ist || '',
+      date: r.date_ist || '',
+      status: r.status
+    }))
+    .filter(p => Number.isFinite(p.val));
+
+  if (!pts.length) return;
+
+  const vals = pts.map(p => p.val);
+  const minVal = Math.min(...vals, threshold);
+  const maxVal = Math.max(...vals, threshold);
+  const lo = Math.max(0, Math.floor(minVal * 0.85));
+  const hi = Math.max(lo + 50, Math.ceil(maxVal * 1.12));
+
+  const W = 520, H = 140;
+  const padL = 38, padR = 14, padT = 12, padB = 22;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  const xFor = (i) => pts.length === 1 ? padL + plotW / 2 : padL + (i / (pts.length - 1)) * plotW;
+  const yFor = (v) => padT + (1 - (v - lo) / (hi - lo)) * plotH;
+
+  const gateY = yFor(threshold);
+  const latest = pts[pts.length - 1];
+  const prev = pts.length > 1 ? pts[pts.length - 2] : latest;
+  const diff = latest.val - prev.val;
+  const isGo = latest.val > threshold;
+  const strokeColor = isGo ? '#10b981' : '#ef4444';
+  const fillTop = isGo ? 'rgba(16,185,129,0.28)' : 'rgba(239,68,68,0.28)';
+
+  const coords = pts.map((p, i) => ({ x: xFor(i), y: yFor(p.val), ...p }));
+  const polyPoints = coords.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
+  const areaPoints = `${coords[0].x.toFixed(1)},${(padT + plotH).toFixed(1)} ${polyPoints} ${coords[coords.length - 1].x.toFixed(1)},${(padT + plotH).toFixed(1)}`;
+
+  const hiReading = Math.max(...vals).toFixed(1);
+  const loReading = Math.min(...vals).toFixed(1);
+  const trendLabel = diff > 0.5 ? `↗ +${diff.toFixed(1)}` : (diff < -0.5 ? `↘ ${diff.toFixed(1)}` : '→ Flat');
+  if (sumEl) {
+    sumEl.innerHTML = `H: <strong style="color:#e2e8f0">${hiReading}</strong> · L: <strong style="color:#e2e8f0">${loReading}</strong> · <span style="color:${diff >= 0 ? '#34d399' : '#f87171'}">${trendLabel}</span>`;
+  }
+
+  const circles = coords.map((c, idx) => {
+    const r = idx === coords.length - 1 ? 4.2 : 2.6;
+    const dotCol = c.val > threshold ? '#10b981' : '#ef4444';
+    return `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${r}" fill="${dotCol}" stroke="#050811" stroke-width="1.2"><title>${escapeHtml(c.date)} ${escapeHtml(c.time)}: ${c.val.toFixed(2)} (${c.val > threshold ? 'GO' : 'NO-GO'})</title></circle>`;
+  }).join('');
+
+  const firstLbl = pts[0].time || '';
+  const lastLbl = latest.time || '';
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="none" style="overflow:visible;display:block;">
+      <defs>
+        <linearGradient id="breadthAreaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${fillTop}" />
+          <stop offset="100%" stop-color="rgba(5,8,17,0)" />
+        </linearGradient>
+      </defs>
+      <text x="${padL - 5}" y="${padT + 4}" text-anchor="end" font-size="9.5" fill="#64748b" font-family="JetBrains Mono, monospace">${hi}</text>
+      <text x="${padL - 5}" y="${padT + plotH}" text-anchor="end" font-size="9.5" fill="#64748b" font-family="JetBrains Mono, monospace">${lo}</text>
+
+      <!-- 350 Gatekeeper Threshold Line -->
+      <line x1="${padL}" y1="${gateY.toFixed(1)}" x2="${W - padR}" y2="${gateY.toFixed(1)}" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.85" />
+      <text x="${padL - 5}" y="${(gateY + 3).toFixed(1)}" text-anchor="end" font-size="9.5" font-weight="700" fill="#fbbf24" font-family="JetBrains Mono, monospace">${threshold}</text>
+
+      ${pts.length > 1 ? `<polygon points="${areaPoints}" fill="url(#breadthAreaGrad)" />` : ''}
+      ${pts.length > 1 ? `<polyline points="${polyPoints}" fill="none" stroke="${strokeColor}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />` : ''}
+      ${circles}
+
+      <text x="${padL}" y="${H - 4}" text-anchor="start" font-size="9.5" fill="#64748b" font-family="JetBrains Mono, monospace">${escapeHtml(firstLbl)}</text>
+      <text x="${W - padR}" y="${H - 4}" text-anchor="end" font-size="9.5" fill="#94a3b8" font-family="JetBrains Mono, monospace">${escapeHtml(lastLbl)}</text>
+    </svg>
+  `;
+}
+
 async function loadBreadthHistory() {
   try {
     const res = await fetch('/api/breadth');
     if (!res.ok) return;
     const json = await res.json();
     if (json.current) updateBreadthUI(json.current);
+    renderBreadthTrendChart(json.history, json.current?.threshold || 350);
 
     const tbody = document.getElementById('breadth-history-tbody');
     if (!tbody) return;
@@ -6479,6 +6587,10 @@ fetch('/api/breadth')
 
       } else if (msg.type === 'breadth' && msg.breadth) {
         updateBreadthUI(msg.breadth);
+        const bm = document.getElementById('breadth-modal');
+        if (bm && !bm.classList.contains('hidden')) {
+          loadBreadthHistory();
+        }
 
       } else if (msg.type === 'delta' && Array.isArray(msg.liveDelta)) {
         msg.liveDelta = msg.liveDelta.map(normalizeStockItem);
