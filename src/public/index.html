@@ -6272,7 +6272,10 @@ function updateBreadthModalGauge(breadth) {
 
   const metaEl = document.getElementById('gauge-meta-info');
   if (metaEl) {
-    metaEl.textContent = `Last sync: ${breadth.time_ist || '—'} IST · Source: ${breadth.source || 'Chartink Atlas Dashboard 508179'}`;
+    const countsPart = (breadth.upCount != null && breadth.downCount != null)
+      ? ` · Up ≥4.5%: ${breadth.upCount} | Down ≤-4.5%: ${breadth.downCount}`
+      : '';
+    metaEl.textContent = `Last sync: ${breadth.time_ist || '—'} IST${countsPart} · Auto-sync: ${breadth.pollIntervalSec || 45}s (Market Hours)`;
   }
 
   const input = document.getElementById('breadth-manual-input');

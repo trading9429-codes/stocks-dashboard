@@ -88,6 +88,9 @@ let breadthState = {
   time_ist: null,
   source: null,
   lastCheck: null,
+  upCount: null,
+  downCount: null,
+  pollIntervalSec: 45,
 };
 
 // --- Database ---
@@ -608,6 +611,14 @@ wss.on("connection", (ws) => {
     historyStocks: cache.history,
     breadth: breadthState,
   }));
+
+  // Trigger immediate live 4.5R refresh on connect during market hours if stale (>30s)
+  if (timeUtils.isMarketHoursIST()) {
+    const ageMs = breadthState.lastCheck ? (Date.now() - new Date(breadthState.lastCheck).getTime()) : Infinity;
+    if (ageMs > 30_000) {
+      fetchAndUpdateChartinkBreadth(false).catch(() => {});
+    }
+  }
 });
 
 setInterval(() => {
@@ -785,7 +796,7 @@ async function notifyPush(items) {
 }
 
 // --- Market Breadth Helper ---
-async function updateBreadth(ratioVal, source = "manual", thresholdVal = null) {
+async function updateBreadth(ratioVal, source = "manual", thresholdVal = null, counts = null) {
   const ratio = parseFloat(ratioVal);
   if (isNaN(ratio) || !isFinite(ratio)) {
     throw new Error("Invalid ratio value: must be a finite number");
@@ -807,6 +818,10 @@ async function updateBreadth(ratioVal, source = "manual", thresholdVal = null) {
   breadthState.time_ist = timeIst;
   breadthState.source = source;
   breadthState.lastCheck = now;
+  if (counts && typeof counts.upCount === "number" && typeof counts.downCount === "number") {
+    breadthState.upCount = counts.upCount;
+    breadthState.downCount = counts.downCount;
+  }
 
   try {
     await db.query(
@@ -1084,10 +1099,13 @@ async function fetchChartinkScanCount(csrf, cookieHeader, scanClause) {
   return Number(json?.recordsTotal ?? json?.data?.length ?? 0);
 }
 
-async function fetchAndUpdateChartinkBreadth(force = false) {
-  if (!force) {
-    if (!timeUtils.isMarketHoursIST()) return null;
-    if (wss.clients.size === 0) return null;
+let chartinkSession = { csrf: null, cookieHeader: "", fetchedAt: 0 };
+let isBreadthPolling = false;
+
+async function getChartinkSession(forceRefresh = false) {
+  const age = Date.now() - chartinkSession.fetchedAt;
+  if (!forceRefresh && chartinkSession.csrf && chartinkSession.cookieHeader && age < 10 * 60 * 1000) {
+    return chartinkSession;
   }
 
   const dashRes = await fetch("https://chartink.com/dashboard/508179", {
@@ -1106,7 +1124,6 @@ async function fetchAndUpdateChartinkBreadth(force = false) {
   if (!csrfMatch) {
     throw new Error("Chartink CSRF token not found");
   }
-  const csrf = csrfMatch[1];
 
   let cookieHeader = "";
   if (typeof dashRes.headers.getSetCookie === "function") {
@@ -1117,27 +1134,57 @@ async function fetchAndUpdateChartinkBreadth(force = false) {
     cookieHeader = parts.join("; ");
   }
 
-  const upClause = "( {cash} ( ( ( latest close - 1 day ago close ) / 1 day ago close ) * 100 >= 4.5 ) )";
-  const dnClause = "( {cash} ( ( ( latest close - 1 day ago close ) / 1 day ago close ) * 100 <= -4.5 ) )";
+  chartinkSession = { csrf: csrfMatch[1], cookieHeader, fetchedAt: Date.now() };
+  return chartinkSession;
+}
 
-  const [upCount, downCount] = await Promise.all([
-    fetchChartinkScanCount(csrf, cookieHeader, upClause),
-    fetchChartinkScanCount(csrf, cookieHeader, dnClause),
-  ]);
+async function fetchAndUpdateChartinkBreadth(force = false) {
+  if (!force) {
+    if (!timeUtils.isMarketHoursIST()) return null;
+    if (wss.clients.size === 0) return null;
+  }
+  if (isBreadthPolling) return null;
 
-  const ratio = downCount > 0
-    ? Math.round(((upCount * 100) / downCount) * 100) / 100
-    : (upCount > 0 ? upCount * 100 : 0);
+  isBreadthPolling = true;
+  try {
+    let session = await getChartinkSession(false);
+    const upClause = "( {cash} ( ( ( latest close - 1 day ago close ) / 1 day ago close ) * 100 >= 4.5 ) )";
+    const dnClause = "( {cash} ( ( ( latest close - 1 day ago close ) / 1 day ago close ) * 100 <= -4.5 ) )";
 
-  const source = force ? "chartink-manual-sync" : "chartink-server-poller";
-  const breadth = await updateBreadth(ratio, source);
-  console.log(`[breadth] synced 4.5R=${breadth.ratio} (Up >=4.5%: ${upCount}, Down <=-4.5%: ${downCount})`);
-  return { breadth, upCount, downCount };
+    let upCount, downCount;
+    try {
+      [upCount, downCount] = await Promise.all([
+        fetchChartinkScanCount(session.csrf, session.cookieHeader, upClause),
+        fetchChartinkScanCount(session.csrf, session.cookieHeader, dnClause),
+      ]);
+    } catch (err) {
+      // Refresh session once if CSRF/cookie expired (HTTP 419/403)
+      session = await getChartinkSession(true);
+      [upCount, downCount] = await Promise.all([
+        fetchChartinkScanCount(session.csrf, session.cookieHeader, upClause),
+        fetchChartinkScanCount(session.csrf, session.cookieHeader, dnClause),
+      ]);
+    }
+
+    const ratio = downCount > 0
+      ? Math.round(((upCount * 100) / downCount) * 100) / 100
+      : (upCount > 0 ? upCount * 100 : 0);
+
+    const source = force ? "chartink-manual-sync" : "chartink-server-poller";
+    const breadth = await updateBreadth(ratio, source, null, { upCount, downCount });
+    console.log(`[breadth] synced 4.5R=${breadth.ratio} (Up >=4.5%: ${upCount}, Down <=-4.5%: ${downCount})`);
+    return { breadth, upCount, downCount };
+  } finally {
+    isBreadthPolling = false;
+  }
 }
 
 app.post("/api/breadth/poll", async (req, res) => {
   try {
     const result = await fetchAndUpdateChartinkBreadth(true);
+    if (!result) {
+      return res.json({ status: "ok", breadth: breadthState, skipped: true });
+    }
     res.json({ status: "ok", ...result });
   } catch (err) {
     console.warn("[/api/breadth/poll]", err.message);
@@ -1145,11 +1192,12 @@ app.post("/api/breadth/poll", async (req, res) => {
   }
 });
 
+// Live auto-fetch every 45s during NSE market hours while clients are connected
 setInterval(() => {
   fetchAndUpdateChartinkBreadth(false).catch((err) => {
     console.warn(`[breadth] poller notice: ${err.message}`);
   });
-}, 2 * 60 * 1000);
+}, 45 * 1000);
 
 // Self-ping every 4 min during market keep-alive window (9:10–15:05 IST, Mon–Fri)
 // Prevents Render free-tier from sleeping during market hours.
